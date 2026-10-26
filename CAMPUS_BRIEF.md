@@ -89,9 +89,9 @@ Do these in order and check each before the next.
 
 1. **Wire-up (day 1).** Routes for `/campus` and `/create`; role → destination redirect in login. Nothing 3D. ✅ done
    - Check: student lands on `/create` → `/campus`, teacher lands on Studio, existing pages still work.
-2. **Character create (day 1–2).** Colour + hat + nickname, spinning 3D preview (OrbitControls + capsule+sphere character). Save to Context.
-3. **3D campus — the heart (day 2–4).** Ground + 6 low-poly buildings + warm lighting; click-to-walk avatar; hover → glow + label; click → open its 2D view. Check: 60fps on desktop.
-4. **Building interiors — 2D (day 4–5).** faculty + arena (student), data + plan (teacher, reuse existing charts), dorm (both, anonymous feedback).
+2. **Character create (day 1–2).** Colour + hat + nickname, spinning 3D preview (OrbitControls + capsule+sphere character). Save to Context. ✅ done
+3. **3D campus — the heart (day 2–4).** Ground + 6 low-poly buildings + warm lighting; click-to-walk avatar; hover → glow + label; click → open its 2D view. Check: 60fps on desktop. ✅ done
+4. **Building interiors — 2D (day 4–5).** faculty + arena (student), data + plan (teacher, reuse existing charts), dorm (both, anonymous feedback). ✅ done (teacher rooms reachable at /campus/data, /campus/plan, /campus/dorm until the phase 5 map)
 5. **Teacher 2D map + polish (day 5–6).** Top-down map; transitions; colour/light/label polish for filming.
 6. **Optional.** Real working buttons, mobile responsive, QR-scan access.
 

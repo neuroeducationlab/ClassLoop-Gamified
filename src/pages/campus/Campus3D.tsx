@@ -1,26 +1,322 @@
-import { Link } from 'react-router-dom'
-import { useApp } from '@/context/AppContext'
-import { CAMPUS_PALETTE } from '@/data/buildings'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { MathUtils, Vector3, type Group, type Mesh } from 'three'
+import { Shirt, LayoutGrid } from 'lucide-react'
+import { useApp, type Avatar } from '@/context/AppContext'
+import { BUILDINGS, CAMPUS_PALETTE, PLAZA_CENTER, type Building as BuildingConfig, type BuildingId } from '@/data/buildings'
+import Avatar3D from './components/Avatar3D'
+import Building from './components/Building'
+import { doorPoint, labelHeight } from './geometry'
+import Ground, { CAMPUS_RADIUS } from './components/Ground'
+
+const WALK_SPEED = 5 // units / second
+const CAMERA_OFFSET = new Vector3(0, 16, 17)
+/** Just inside the gate, so the gate arch doesn't hide the avatar from the camera. */
+const GATE_SPAWN: [number, number] = [0, 7]
 
 /**
- * Phase 1 placeholder for the student 3D campus. Full-screen, outside
- * StudentShell — the campus replaces the tab bar as the student's home.
- * Phase 3 swaps the body for the R3F scene.
+ * The camera looks halfway between the avatar and the plaza: the avatar stays
+ * in frame while the whole campus stays readable — this is filmed, not played.
  */
+function lookTarget(x: number, z: number, out: Vector3) {
+  return out.set((x + PLAZA_CENTER[0]) / 2, 0.8, (z + PLAZA_CENTER[1]) / 2)
+}
+
+/**
+ * Where the avatar stood when it last went into a building, so coming back
+ * out of an interior drops you at that door rather than back at the gate.
+ * Module scope on purpose: it is view memory, not app state.
+ */
+let lastSpot: [number, number] | null = null
+
+/** Screen-space label elements, keyed by building id or 'me' for the avatar. */
+type LabelMap = Map<string, HTMLDivElement>
+const AVATAR_LABEL_HEIGHT = 2.1
+
+/** Student 3D campus: click the ground to walk, click a building to walk in and open it. */
 export default function Campus3D() {
-  const { currentStudent } = useApp()
+  const { avatar, currentStudent, setRole, studentXP } = useApp()
+  const navigate = useNavigate()
+  const [hovered, setHovered] = useState<BuildingId | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const labels = useRef<LabelMap>(new Map())
+  const labelRef = (key: string) => (el: HTMLDivElement | null) => {
+    if (el) labels.current.set(key, el)
+    else labels.current.delete(key)
+  }
+
+  // the campus is a student surface — mirror StudentShell so direct URLs agree
+  useEffect(() => setRole('student'), [setRole])
+  useEffect(() => {
+    if (!toast) return
+    const id = setTimeout(() => setToast(null), 2600)
+    return () => clearTimeout(id)
+  }, [toast])
+  useEffect(() => () => void (document.body.style.cursor = ''), [])
+
+  const me: Avatar = avatar ?? { color: '#E89BC4', hat: 'grad', nickname: currentStudent.nickname }
+
+  const arrive = useCallback(
+    (b: BuildingConfig) => {
+      lastSpot = doorPoint(b)
+      if (b.studentSees === null) {
+        setToast(`${b.emoji} ${b.name.th} เป็นพื้นที่ของอาจารย์ · Teachers only`)
+        return
+      }
+      navigate(`/campus/${b.id}`)
+    },
+    [navigate],
+  )
+
+  const level = Math.floor(studentXP / 100) + 1
+  const progress = studentXP % 100
 
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center text-white"
-      style={{ backgroundColor: CAMPUS_PALETTE.sky }}
-    >
-      <p className="text-sm text-white/70">สวัสดี, {currentStudent.nickname}</p>
-      <h1 className="text-3xl font-bold">ClassLoop Campus</h1>
-      <p className="rounded-full bg-white/10 px-4 py-1.5 text-sm">เร็วๆ นี้: แคมปัส 3D · Coming soon: 3D campus</p>
-      <Link to="/student" className="text-sm font-semibold underline underline-offset-4">
-        ไปหน้าเดิม · Classic view
-      </Link>
+    <div className="fixed inset-0 select-none" style={{ backgroundColor: CAMPUS_PALETTE.sky }}>
+      {/* flat = no tone mapping, so the brief's palette renders as the actual hex colours */}
+      <Canvas flat shadows="percentage" dpr={[1, 1.75]} camera={{ fov: 45, position: [0, 20, 22] }}>
+        <color attach="background" args={[CAMPUS_PALETTE.sky]} />
+        <fog attach="fog" args={[CAMPUS_PALETTE.sky, 40, 70]} />
+        <hemisphereLight args={['#FFF1DC', '#6E7F4A', 1.6]} />
+        <directionalLight
+          position={[12, 20, 10]}
+          intensity={1.5}
+          color="#FFD9A0"
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+          shadow-camera-left={-26}
+          shadow-camera-right={26}
+          shadow-camera-top={26}
+          shadow-camera-bottom={-26}
+        />
+        <CampusScene me={me} hovered={hovered} onHover={setHovered} onArrive={arrive} labels={labels} />
+      </Canvas>
+
+      {/*
+        Floating labels are plain DOM moved every frame by CampusScene (projected
+        from 3D), not drei <Html> — that dropped a label at random under React 19.
+        Hidden until the first frame places them, so nothing flashes at 0,0.
+      */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {BUILDINGS.map((b) => {
+          const isHovered = hovered === b.id
+          const locked = b.studentSees === null
+          return (
+            <div key={b.id} ref={labelRef(b.id)} className="absolute left-0 top-0" style={{ visibility: 'hidden' }}>
+              <div
+                className="whitespace-nowrap rounded-full px-3 py-1 text-center text-sm font-bold text-white shadow-lg transition-transform duration-200"
+                style={{
+                  backgroundColor: b.color,
+                  transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+                  opacity: locked && !isHovered ? 0.75 : 1,
+                }}
+              >
+                <span className="mr-1">{b.emoji}</span>
+                {b.name.th}
+                {isHovered && (
+                  <span className="block text-[11px] font-semibold opacity-90">
+                    {locked ? '🔒 สำหรับอาจารย์' : 'คลิกเพื่อเข้า · Click to enter'}
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        })}
+        <div ref={labelRef('me')} className="absolute left-0 top-0" style={{ visibility: 'hidden' }}>
+          <span className="whitespace-nowrap rounded-full bg-white/90 px-2 py-0.5 text-xs font-bold text-ink shadow">
+            {me.nickname}
+          </span>
+        </div>
+      </div>
+
+      {/* HUD */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-black/30 px-4 py-3 text-white backdrop-blur">
+          <span className="h-9 w-9 rounded-full border-2 border-white" style={{ backgroundColor: me.color }} />
+          <div className="min-w-[9rem]">
+            <p className="text-sm font-bold leading-tight">{me.nickname}</p>
+            <p className="text-[11px] text-white/80">
+              Lv.{level} · {studentXP} XP
+            </p>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+              <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: CAMPUS_PALETTE.path }} />
+            </div>
+          </div>
+        </div>
+        <div className="pointer-events-auto flex gap-2">
+          <Link
+            to="/create"
+            className="flex items-center gap-1.5 rounded-xl bg-black/30 px-3 py-2 text-xs font-semibold text-white backdrop-blur hover:bg-black/40"
+          >
+            <Shirt className="h-4 w-4" /> แต่งตัว
+          </Link>
+          <Link
+            to="/student"
+            className="flex items-center gap-1.5 rounded-xl bg-black/30 px-3 py-2 text-xs font-semibold text-white backdrop-blur hover:bg-black/40"
+          >
+            <LayoutGrid className="h-4 w-4" /> หน้าเดิม
+          </Link>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center gap-2">
+        {toast && (
+          <p className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-lg animate-fadeIn">{toast}</p>
+        )}
+        <p className="rounded-full bg-black/30 px-4 py-1.5 text-xs text-white/90 backdrop-blur">
+          คลิกพื้นเพื่อเดิน · คลิกอาคารเพื่อเข้า — Click to walk, click a building to enter
+        </p>
+      </div>
     </div>
+  )
+}
+
+/* ------------------------------------------------------------------ scene -- */
+
+type SceneProps = {
+  me: Avatar
+  hovered: BuildingId | null
+  onHover: (id: BuildingId | null) => void
+  onArrive: (b: BuildingConfig) => void
+  labels: RefObject<LabelMap>
+}
+
+/** True when the segment a→b passes within `r` of point p (all on the ground plane). */
+function passesNear(a: [number, number], b: [number, number], p: [number, number], r: number) {
+  const [dx, dz] = [b[0] - a[0], b[1] - a[1]]
+  const len2 = dx * dx + dz * dz || 1
+  const t = MathUtils.clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / len2, 0, 1)
+  return Math.hypot(a[0] + dx * t - p[0], a[1] + dz * t - p[1]) < r
+}
+
+function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
+  const { camera, size } = useThree()
+  const avatarRef = useRef<Group>(null)
+  const markerRef = useRef<Mesh>(null)
+  const waypoints = useRef<[number, number][]>([])
+  const destination = useRef<BuildingConfig | null>(null)
+  const spawn = lastSpot ?? GATE_SPAWN
+
+  // start the camera already framing the avatar, no swoop on load
+  useEffect(() => {
+    const t = lookTarget(spawn[0], spawn[1], new Vector3())
+    camera.position.copy(t).add(CAMERA_OFFSET)
+    camera.lookAt(t)
+  }, [camera, spawn])
+
+  const walkTo = (target: [number, number], building: BuildingConfig | null) => {
+    const a = avatarRef.current
+    if (!a) return
+    const here: [number, number] = [a.position.x, a.position.z]
+    // Detour through the plaza when the straight line would clip another building.
+    const blocked = BUILDINGS.some(
+      (b) => b.id !== building?.id && passesNear(here, target, b.position, 3.2),
+    )
+    if (blocked) {
+      const ang = Math.atan2(target[0] - PLAZA_CENTER[0], target[1] - PLAZA_CENTER[1])
+      waypoints.current = [[PLAZA_CENTER[0] + Math.sin(ang) * 3.6, PLAZA_CENTER[1] + Math.cos(ang) * 3.6], target]
+    } else {
+      waypoints.current = [target]
+    }
+    destination.current = building
+    const m = markerRef.current
+    if (m) {
+      m.position.set(target[0], 0.05, target[1])
+      m.visible = true
+      m.scale.setScalar(1)
+    }
+  }
+
+  const walkGround = (x: number, z: number) => {
+    const r = Math.hypot(x, z)
+    const k = r > CAMPUS_RADIUS ? CAMPUS_RADIUS / r : 1
+    walkTo([x * k, z * k], null)
+  }
+
+  const look = new Vector3()
+  const proj = new Vector3()
+  /** Pin a DOM label over a world point; hide it when the point is behind the camera. */
+  const place = (key: string, x: number, y: number, z: number) => {
+    const el = labels.current.get(key)
+    if (!el) return
+    proj.set(x, y, z).project(camera)
+    const px = ((proj.x + 1) / 2) * size.width
+    const py = ((1 - proj.y) / 2) * size.height
+    el.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`
+    el.style.visibility = proj.z < 1 ? 'visible' : 'hidden'
+  }
+  useFrame((state, dt) => {
+    const a = avatarRef.current
+    if (!a) return
+    const next = waypoints.current[0]
+    let moving = false
+    if (next) {
+      const dx = next[0] - a.position.x
+      const dz = next[1] - a.position.z
+      const dist = Math.hypot(dx, dz)
+      const step = WALK_SPEED * dt
+      if (dist <= step) {
+        a.position.x = next[0]
+        a.position.z = next[1]
+        waypoints.current.shift()
+        if (waypoints.current.length === 0) {
+          if (markerRef.current) markerRef.current.visible = false
+          const b = destination.current
+          destination.current = null
+          if (b) onArrive(b)
+        }
+      } else {
+        a.position.x += (dx / dist) * step
+        a.position.z += (dz / dist) * step
+        moving = true
+      }
+      // turn smoothly toward the direction of travel (shortest way round)
+      const want = Math.atan2(dx, dz)
+      const diff = Math.atan2(Math.sin(want - a.rotation.y), Math.cos(want - a.rotation.y))
+      a.rotation.y += diff * Math.min(1, dt * 12)
+    }
+    // little hop while walking, settle when stopped
+    const hop = moving ? Math.abs(Math.sin(state.clock.elapsedTime * 11)) * 0.12 : 0
+    a.position.y = MathUtils.damp(a.position.y, hop, 20, dt)
+
+    const m = markerRef.current
+    if (m?.visible) m.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 6) * 0.12)
+
+    // camera follows with a soft lag
+    const k = 1 - Math.exp(-3 * dt)
+    lookTarget(a.position.x, a.position.z, look)
+    camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * k
+    camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * k
+    camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * k
+    camera.lookAt(look)
+
+    // labels last, so they use this frame's camera
+    for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+    place('me', a.position.x, a.position.y + AVATAR_LABEL_HEIGHT, a.position.z)
+  })
+
+  return (
+    <>
+      <Ground onWalk={walkGround} />
+      {BUILDINGS.map((b) => (
+        <Building
+          key={b.id}
+          building={b}
+          hovered={hovered === b.id}
+          onHover={onHover}
+          onSelect={(sel) => walkTo(doorPoint(sel), sel)}
+        />
+      ))}
+
+      <mesh ref={markerRef} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
+        <ringGeometry args={[0.35, 0.5, 24]} />
+        <meshBasicMaterial color="#FFFFFF" transparent opacity={0.85} />
+      </mesh>
+
+      <group ref={avatarRef} position={[spawn[0], 0, spawn[1]]} rotation={[0, Math.PI, 0]}>
+        <Avatar3D color={me.color} hat={me.hat} />
+      </group>
+    </>
   )
 }
