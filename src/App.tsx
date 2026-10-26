@@ -17,6 +17,8 @@ import StudentCommunity from '@/pages/student/StudentCommunity'
 import Profile from '@/pages/student/Profile'
 import Review from '@/pages/student/Review'
 import Assignments from '@/pages/student/Assignments'
+import CharacterCreate from '@/pages/create/CharacterCreate'
+import Campus3D from '@/pages/campus/Campus3D'
 
 export default function App() {
   return (
@@ -28,6 +30,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/create" element={<CharacterCreate />} />
+            <Route path="/campus" element={<Campus3D />} />
 
             <Route path="/teacher" element={<TeacherShell />}>
               <Route index element={<Studio />} />

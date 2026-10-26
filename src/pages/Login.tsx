@@ -41,7 +41,7 @@ export default function Login() {
     setError(null)
     setLoading(true)
     timer.current = setTimeout(
-      () => navigate(result.role === 'teacher' ? '/teacher' : '/student'),
+      () => navigate(result.role === 'teacher' ? '/teacher' : '/create'),
       800,
     )
   }
