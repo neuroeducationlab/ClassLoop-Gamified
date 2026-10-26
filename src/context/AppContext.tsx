@@ -36,6 +36,15 @@ import {
 
 export type Role = 'teacher' | 'student'
 
+export type AvatarHat = 'none' | 'cap' | 'grad' | 'beanie'
+
+/** The student's campus character, chosen on /create. */
+export type Avatar = {
+  color: string
+  hat: AvatarHat
+  nickname: string
+}
+
 export type LiveSession = {
   active: boolean
   currentQuestionIndex: number
@@ -306,6 +315,10 @@ type AppState = {
   studentXP: number
   addXP: (amount: number) => void
 
+  // campus character (null until the student creates one)
+  avatar: Avatar | null
+  setAvatar: (avatar: Avatar) => void
+
   // language internationalization state
   lang: 'th' | 'en'
   setLang: (lang: 'th' | 'en') => void
@@ -387,6 +400,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [expectations, setExpectations] = useState<ExpectationSticky[]>(INITIAL_EXPECTATIONS)
   const [activeActivity, setActiveActivity] = useState<Activity | null>(GENERATED_CONTENT.activities[0])
   const [studentXP, setStudentXP] = useState(120)
+  const [avatar, setAvatar] = useState<Avatar | null>(null)
   const [lang, setLang] = useState<Language>('th')
 
   const addXP = useCallback((amount: number) => {
@@ -690,6 +704,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     studentXP,
     addXP,
+
+    avatar,
+    setAvatar,
 
     lang,
     setLang,
