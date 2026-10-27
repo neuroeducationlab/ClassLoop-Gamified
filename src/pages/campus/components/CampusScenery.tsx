@@ -467,32 +467,32 @@ export function SPUInfinitySculpture({ position }: { position: [number, number, 
 export default function CampusScenery() {
   const treePositions = useMemo(
     () => [
-      // ── SPU Signature Pink Tabebuia Trees (Along plaza, pond, and walking avenues) ──
-      { pos: [-4.5, 0, 7.5], scale: 1.15 },
-      { pos: [1.8, 0, 9.8], scale: 1.2 },
-      { pos: [11.0, 0, 12.5], scale: 1.25 },
-      { pos: [7.5, 0, 12.0], scale: 1.05 },
-      { pos: [19.0, 0, 8.5], scale: 1.1 },
-      { pos: [-1.2, 0, -8.5], scale: 1.1 },
-      { pos: [5.5, 0, -8.5], scale: 1.0 },
-      { pos: [-12.5, 0, 2.5], scale: 1.15 },
-      { pos: [-8.5, 0, -12.5], scale: 1.2 },
+      // ── SPU Signature Pink Tabebuia Trees (Along wide pedestrian avenues) ──
+      { pos: [-6.5, 0, 9.5], scale: 1.15 },
+      { pos: [2.5, 0, 15.5], scale: 1.2 },
+      { pos: [14.0, 0, 16.5], scale: 1.25 },
+      { pos: [9.5, 0, 16.0], scale: 1.05 },
+      { pos: [24.0, 0, 10.5], scale: 1.1 },
+      { pos: [-1.5, 0, -14.5], scale: 1.1 },
+      { pos: [8.5, 0, -14.5], scale: 1.0 },
+      { pos: [-16.5, 0, 3.5], scale: 1.15 },
+      { pos: [-11.5, 0, -16.5], scale: 1.2 },
 
       // ── Lush Green Shade Trees (Park perimeter, court boundary, background green) ──
-      { pos: [22.0, 0, 18.0], scale: 1.35, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [10.5, 0, 21.0], scale: 1.25, color: '#15803D', crown: '#22C55E' },
-      { pos: [16.0, 0, 22.0], scale: 1.3, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [-6.5, 0, 17.5], scale: 1.2, color: '#15803D', crown: '#22C55E' },
-      { pos: [1.5, 0, 18.5], scale: 1.25, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [-15.5, 0, -10.5], scale: 1.3, color: '#15803D', crown: '#22C55E' },
-      { pos: [-18.0, 0, -16.0], scale: 1.4, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [19.0, 0, -16.0], scale: 1.35, color: '#15803D', crown: '#22C55E' },
-      { pos: [22.0, 0, -8.0], scale: 1.2, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [28.0, 0, 24.0], scale: 1.35, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [12.5, 0, 26.0], scale: 1.25, color: '#15803D', crown: '#22C55E' },
+      { pos: [20.0, 0, 28.0], scale: 1.3, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [-8.5, 0, 22.5], scale: 1.2, color: '#15803D', crown: '#22C55E' },
+      { pos: [2.0, 0, 24.5], scale: 1.25, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [-20.5, 0, -14.5], scale: 1.3, color: '#15803D', crown: '#22C55E' },
+      { pos: [-24.0, 0, -22.0], scale: 1.4, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [25.0, 0, -22.0], scale: 1.35, color: '#15803D', crown: '#22C55E' },
+      { pos: [28.0, 0, -10.0], scale: 1.2, color: '#16A34A', crown: '#4ADE80' },
 
       // ── Tropical Palms (By the pond & entrance avenue) ──
-      { pos: [4.2, 0, 5.0], scale: 1.1 },
-      { pos: [9.0, 0, 9.5], scale: 1.15 },
-      { pos: [-9.5, 0, 6.0], scale: 1.05 },
+      { pos: [5.5, 0, 8.0], scale: 1.1 },
+      { pos: [12.0, 0, 14.5], scale: 1.15 },
+      { pos: [-12.5, 0, 8.0], scale: 1.05 },
     ],
     [],
   )
@@ -500,19 +500,19 @@ export default function CampusScenery() {
   return (
     <group>
       {/* ── 1. SPU Sports Arena: Outdoor Basketball / Futsal Court (North-East lawn) ── */}
-      <SPUSportsCourt position={[16, 0, 16.5]} />
+      <SPUSportsCourt position={[20, 0, 22]} />
 
       {/* ── 2. SPU Botanical Pavilion & Zen Rest Gazebo (East lawn by pond) ── */}
-      <SPURestPavilion position={[18.5, 0, 3.5]} />
+      <SPURestPavilion position={[24, 0, 6.5]} />
 
       {/* ── 3. SPU Open-Air Coffee Terrace & Sun Umbrella Tables (East of Plaza) ── */}
-      <SPUCoffeeTerrace position={[10.5, 0, -4.5]} />
+      <SPUCoffeeTerrace position={[14, 0, -6.5]} />
 
       {/* ── 4. SPU Smart Mobility Station: Scooters & EV Bikes (Near Entrance & Viaduct) ── */}
-      <SPUMobilityStation position={[-14.5, 0, 7.5]} />
+      <SPUMobilityStation position={[-20, 0, 8]} />
 
       {/* ── 5. SPU Contemporary Art Infinity Sculpture (South-West lawn) ── */}
-      <SPUInfinitySculpture position={[-13.5, 0, -16.5]} />
+      <SPUInfinitySculpture position={[-18, 0, -22]} />
 
       {/* ── 6. Master Stylized Tree Canopy & Nature Flora across Campus ── */}
       {treePositions.map((t, idx) => {

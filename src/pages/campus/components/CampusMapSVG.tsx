@@ -53,18 +53,18 @@ export default function CampusMapSVG({
   const handleSvgClick = (e: MouseEvent<SVGSVGElement>) => {
     if (!onMapClick || !svgRef.current) return
     const rect = svgRef.current.getBoundingClientRect()
-    // SVG viewBox: -21 -16 39 32 (minX=-21, minY=-16, width=39, height=32)
+    // SVG viewBox: -25 -20 50 40 (minX=-25, minY=-20, width=50, height=40)
     const nx = (e.clientX - rect.left) / rect.width
     const ny = (e.clientY - rect.top) / rect.height
-    const worldX = -21 + nx * 39
-    const worldZ = -16 + ny * 32
+    const worldX = -25 + nx * 50
+    const worldZ = -20 + ny * 40
     onMapClick(worldX, worldZ)
   }
 
   return (
     <svg
       ref={svgRef}
-      viewBox="-21 -16 39 32"
+      viewBox="-25 -20 50 40"
       className={className}
       role="img"
       aria-label="แผนที่แคมปัส SPU"
@@ -72,7 +72,7 @@ export default function CampusMapSVG({
       style={{ cursor: onMapClick ? 'crosshair' : 'default' }}
     >
       {/* Base Campus Ground */}
-      <rect x={-19.5} y={-15} width={36} height={30} rx={3} fill={CAMPUS_PALETTE.grass} />
+      <rect x={-23} y={-18} width={46} height={36} rx={4} fill={CAMPUS_PALETTE.grass} />
 
       {/* Front Road (Phahonyothin) alongside the MRT */}
       <line
@@ -145,14 +145,20 @@ export default function CampusMapSVG({
             x2={dx}
             y2={dz}
             stroke={CAMPUS_PALETTE.path}
-            strokeWidth={1.3}
+            strokeWidth={2.4}
             strokeLinecap="round"
           />
         )
       })}
       {/* Central Crossroads Plaza */}
-      <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={2.5} fill={CAMPUS_PALETTE.path} />
-      <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={0.7} fill={CAMPUS_PALETTE.spuPink} />
+      <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={3.8} fill={CAMPUS_PALETTE.path} />
+      <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={1.0} fill={CAMPUS_PALETTE.spuPink} />
+
+      {/* Entrance Aprons at each building door */}
+      {BUILDINGS.map((b) => {
+        const [dx, dz] = doorPoint(b)
+        return <circle key={`apron-${b.id}`} cx={dx} cy={dz} r={2.0} fill={CAMPUS_PALETTE.path} />
+      })}
 
       {/* 6 Campus Buildings */}
       {BUILDINGS.map((b) => {

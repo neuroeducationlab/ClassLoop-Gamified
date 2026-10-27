@@ -36,7 +36,7 @@ import AvatarShopModal from './components/AvatarShopModal'
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
-const CAMERA_OFFSET = new Vector3(0, 16, 17)
+const CAMERA_OFFSET = new Vector3(0, 18, 19)
 /** First-person eye height (world units above the ground). */
 const FP_EYE_HEIGHT = 1.65
 const GATE = BUILDINGS.find((b) => b.id === 'entry')!
@@ -159,7 +159,7 @@ export default function Campus3D() {
 
   // ── View mode and time of day toggles ───
   const [fpMode, setFpMode] = useState<boolean>(false)
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday')
 
   const cycleTimeOfDay = () => {
     setTimeOfDay((prev) => {

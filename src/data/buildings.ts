@@ -31,27 +31,27 @@ export type Building = {
 }
 
 export const CAMPUS_PALETTE = {
-  sky: '#3A3D7A',
-  grass: '#7FB069',
-  path: '#F2C879',
+  sky: '#2563EB',
+  grass: '#4EA342',
+  path: '#EFE7D8',
   spuPink: '#E89BC4',
 } as const
 
 /** The central crossroads by the car parks, where every path meets. */
-export const PLAZA_CENTER: [x: number, z: number] = [1, 0]
+export const PLAZA_CENTER: [x: number, z: number] = [0, 0]
 
-/** MRT viaduct along the campus edge, from its far end to its near end. */
+/** MRT viaduct along the campus edge, extended continuously across the visible landscape. */
 export const MRT_LINE: { from: [x: number, z: number]; to: [x: number, z: number] } = {
-  from: [-19, -6],
-  to: [3, 18],
+  from: [-36, -15],
+  to: [18, 36],
 }
 
 /** Car parks and pond from the map — scenery shared by the 3D campus and the teacher map. */
 export const CAR_PARKS: { at: [x: number, z: number]; size: [w: number, d: number] }[] = [
-  { at: [-3.6, -2.4], size: [4.4, 3] },
-  { at: [6, 2], size: [4.4, 3] },
+  { at: [-6.8, -4.8], size: [4.8, 3.2] },
+  { at: [8.8, 4.2], size: [4.8, 3.2] },
 ]
-export const POND: { at: [x: number, z: number]; r: number } = { at: [6.5, 7.5], r: 2.8 }
+export const POND: { at: [x: number, z: number]; r: number } = { at: [8.5, 12.0], r: 3.6 }
 
 export const BUILDINGS: Building[] = [
   {
@@ -67,7 +67,7 @@ export const BUILDINGS: Building[] = [
     shape: 'gate',
     studentSees: 'login + pick role + character',
     teacherSees: null,
-    position: [-10, -1],
+    position: [-15.0, -1.0],
   },
   {
     id: 'faculty',
@@ -82,7 +82,7 @@ export const BUILDINGS: Building[] = [
     shape: 'hall',
     studentSees: 'lessons, pre-class video, quiz, graded test',
     teacherSees: null,
-    position: [-6, -8.5],
+    position: [-9.0, -13.0],
   },
   {
     id: 'arena',
@@ -97,7 +97,7 @@ export const BUILDINGS: Building[] = [
     shape: 'arena',
     studentSees: 'word/quiz games, leaderboard, points',
     teacherSees: null,
-    position: [0, 6.5],
+    position: [0, 13.0],
   },
   {
     id: 'dorm',
@@ -112,7 +112,7 @@ export const BUILDINGS: Building[] = [
     shape: 'house',
     studentSees: 'talk to teacher, name hidden (anonymous)',
     teacherSees: 'read feedback, names hidden',
-    position: [11.5, -3],
+    position: [16.0, -2.5],
   },
   {
     id: 'data',
@@ -127,7 +127,7 @@ export const BUILDINGS: Building[] = [
     shape: 'hub',
     studentSees: null,
     teacherSees: 'student stats, charts, research store',
-    position: [10, -10],
+    position: [15.5, -13.5],
   },
   {
     id: 'plan',
@@ -142,6 +142,6 @@ export const BUILDINGS: Building[] = [
     shape: 'office',
     studentSees: null,
     teacherSees: 'drop in syllabus → AI suggests activities → teacher picks',
-    position: [2, -6.5],
+    position: [4.0, -12.5],
   },
 ]

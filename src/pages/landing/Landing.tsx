@@ -29,13 +29,13 @@ const DIVE_SECONDS = 3.4
 const FADE_OUT_SECONDS = 0.45
 const VEIL_COLOR = '#F3EEE6'
 
-const ORBIT_RADIUS = 36
-const ORBIT_HEIGHT = 21
+const ORBIT_RADIUS = 42
+const ORBIT_HEIGHT = 24
 const ORBIT_SPEED = 0.045 // radians / second — slow, cinematic
 const ORBIT_FOV = 42
 /** Hover spot for the role cards: just above the cloud tops, half-way in. */
-const CLOUD_RADIUS = 22
-const CLOUD_HEIGHT = 18
+const CLOUD_RADIUS = 26
+const CLOUD_HEIGHT = 20
 /** Campus3D's first-person camera, which the dive ends exactly on. */
 const FP_EYE_HEIGHT = 1.65
 const FP_FOV = 75
@@ -274,27 +274,26 @@ export default function Landing() {
   }, [])
 
   return (
-    // Sky is a CSS golden-hour gradient behind a transparent canvas: the brief's dusk
-    // indigo fading through data-orange to a peach horizon, identical on every device.
-    <div className="fixed inset-0 select-none overflow-hidden bg-gradient-to-b from-[#3A3D7A] via-[#C9708A] via-45% to-[#F5B98A] font-campus">
+    // Sky is a vibrant crisp daytime university azure gradient matching the cumulus clouds
+    <div className="fixed inset-0 select-none overflow-hidden bg-gradient-to-b from-[#1D4ED8] via-[#3B82F6] via-45% to-[#BAE6FD] font-campus">
       <Canvas shadows="percentage" dpr={lowPower ? [1, 1.25] : [1, 1.75]} camera={{ fov: 42, position: [0, ORBIT_HEIGHT, ORBIT_RADIUS] }}>
-        <fog attach="fog" args={['#F5B98A', 60, 120]} />
-        <hemisphereLight args={['#FFF2DF', '#4C586B', 1.2]} />
+        <fog attach="fog" args={['#BAE6FD', 85, 220]} />
+        <hemisphereLight args={['#FFFFFF', '#384B66', 1.4]} />
         <directionalLight
-          position={[18, 22, 14]}
-          intensity={2.2}
-          color="#FFD6A4"
+          position={[20, 28, 16]}
+          intensity={2.6}
+          color="#FFFFFF"
           castShadow
           shadow-mapSize={lowPower ? [512, 512] : [1024, 1024]}
-          shadow-camera-left={-30}
-          shadow-camera-right={30}
-          shadow-camera-top={30}
-          shadow-camera-bottom={-30}
+          shadow-camera-left={-42}
+          shadow-camera-right={42}
+          shadow-camera-top={42}
+          shadow-camera-bottom={-42}
         />
         <Environment resolution={lowPower ? 64 : 256}>
-          <Lightformer form="rect" intensity={3.5} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
-          <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
-          <Lightformer form="ring" intensity={0.9} color="#FFF4D6" position={[0, 26, 0]} scale={[30, 30, 1]} />
+          <Lightformer form="rect" intensity={2.8} color="#93C5FD" position={[25, 14, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
+          <Lightformer form="rect" intensity={1.2} color="#60A5FA" position={[-25, 18, -22]} scale={[32, 16, 1]} />
+          <Lightformer form="ring" intensity={1.0} color="#FFFFFF" position={[0, 28, 0]} scale={[32, 32, 1]} />
         </Environment>
 
         <Ground onWalk={noop} />
@@ -327,15 +326,15 @@ export default function Landing() {
 
         {!lowPower && (
           <EffectComposer multisampling={4}>
-            <Bloom luminanceThreshold={0.72} luminanceSmoothing={0.3} intensity={0.95} mipmapBlur />
-            <N8AO aoRadius={1.5} distanceFalloff={0.2} intensity={1.6} />
-            <Vignette offset={0.28} darkness={0.62} />
+            <Bloom luminanceThreshold={0.75} luminanceSmoothing={0.3} intensity={0.8} mipmapBlur />
+            <N8AO aoRadius={1.5} distanceFalloff={0.2} intensity={1.4} />
+            <Vignette offset={0.35} darkness={0.25} />
           </EffectComposer>
         )}
       </Canvas>
 
-      {/* soft top/bottom shading so the title reads over any part of the scene */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/45" />
+      {/* Gentle top gradient so title and copy read clearly without muddying the horizon */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20" />
       {/* white mist while flying through the cloud band, and the final fade (opacity set per frame by CameraRig) */}
       <div ref={veil} className="pointer-events-none absolute inset-0" style={{ background: VEIL_COLOR, opacity: 0 }} />
 
