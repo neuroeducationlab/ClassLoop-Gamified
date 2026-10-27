@@ -348,8 +348,14 @@ export default function Landing() {
         )}
       </Canvas>
 
-      {/* Gentle top gradient so title and copy read clearly without muddying the horizon */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20" />
+      {/* Gentle top gradient so title and copy read clearly without muddying the horizon.
+          Only for the title: up at the clouds it would dim the white deck to grey (the role
+          cards carry their own dark backing). */}
+      <div
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 transition-opacity duration-1000 ${
+          phase === 'orbit' ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
       {/* white mist while flying through the cloud band, and the final fade (opacity set per frame by CameraRig) */}
       <div ref={veil} className="pointer-events-none absolute inset-0" style={{ background: VEIL_COLOR, opacity: 0 }} />
 
