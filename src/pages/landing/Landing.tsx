@@ -9,6 +9,8 @@ import { BUILDINGS, PLAZA_CENTER } from '@/data/buildings'
 import Building from '@/pages/campus/components/Building'
 import ContextBuildings from '@/pages/campus/components/ContextBuildings'
 import Ground from '@/pages/campus/components/Ground'
+import Hologram from '@/pages/campus/components/Hologram'
+import LightTrails from '@/pages/campus/components/LightTrails'
 import { isLowPower } from '@/pages/campus/lowPower'
 
 /** Seconds before the first tower rises, and between towers. */
@@ -146,6 +148,7 @@ export default function Landing() {
         </Environment>
 
         <Ground onWalk={noop} />
+        <LightTrails />
         <Rise delay={RISE_START - 0.3}>
           <ContextBuildings />
         </Rise>
@@ -157,6 +160,10 @@ export default function Landing() {
             <LightSweep delay={RISE_START + i * RISE_STEP + 0.6} />
           </group>
         ))}
+        {/* the ClassLoop hologram lands last — the brand is the climax of the build-up */}
+        <Rise delay={RISE_START + RISE_STEP * BUILDINGS.length + 0.2}>
+          <Hologram position={[PLAZA_CENTER[0], 13, PLAZA_CENTER[1]]} scale={2.2} />
+        </Rise>
 
         <CameraRig diving={diving} onDived={() => navigate('/login')} />
 
@@ -180,7 +187,7 @@ export default function Landing() {
         {/* soft dark halo so the copy stays legible over the towers */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[420px] w-[min(760px,120vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(20,18,40,0.55),transparent_70%)]" />
         <p className="rounded-full border border-white/40 bg-white/10 px-4 py-1 text-xs font-semibold tracking-[0.2em] backdrop-blur">
-          SPU · SRIPATUM UNIVERSITY
+          CLASSLOOP · 3D LEARNING CAMPUS
         </p>
         <h1 className="text-5xl font-bold leading-[1.05] drop-shadow-[0_4px_24px_rgba(0,0,0,0.45)] sm:text-7xl">
           ClassLoop <span className="text-[#F2C879]">Campus</span>
@@ -202,7 +209,7 @@ export default function Landing() {
           showTitle && !diving ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        6 อาคาร · 1 แคมปัส · Six buildings. One campus to explore.
+        ClassLoop Campus · SPU edition — สร้างให้มหาวิทยาลัยศรีปทุม
       </p>
 
       {diving && (

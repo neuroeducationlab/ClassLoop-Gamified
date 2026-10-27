@@ -11,7 +11,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Sky, Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
-import { Shirt, LayoutGrid, Eye, EyeOff, Globe } from 'lucide-react'
+import { LayoutGrid, Eye, EyeOff, Globe } from 'lucide-react'
 import { useApp, type Avatar } from '@/context/AppContext'
 import {
   BUILDINGS,
@@ -23,6 +23,8 @@ import {
 import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
 import ContextBuildings from './components/ContextBuildings'
+import Hologram from './components/Hologram'
+import LightTrails from './components/LightTrails'
 import { doorPoint, facingPlaza, labelHeight } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
 import { isLowPower } from './lowPower'
@@ -70,7 +72,6 @@ type Lang = 'th' | 'en'
 
 const UI = {
   th: {
-    dress: 'แต่งตัว',
     back: 'แดชบอร์ด',
     walkHint: 'คลิกพื้นหรือ WASD เพื่อเดิน · คลิกอาคารเพื่อเข้า',
     fpHint: 'WASD เดิน · ลากเมาส์หมุนมุมมอง · กด E หน้าประตูเพื่อเข้า',
@@ -87,7 +88,6 @@ const UI = {
     facultyOnly: 'เฉพาะอาจารย์',
   },
   en: {
-    dress: 'Change Outfit',
     back: 'Dashboard',
     walkHint: 'Click ground or WASD to walk · Click a building to enter',
     fpHint: 'WASD to walk · Mouse look / drag to rotate view · Press E near door',
@@ -349,14 +349,6 @@ export default function Campus3D() {
             <span className="hidden sm:inline">{fpMode ? t.fpModeLabel : t.tpModeLabel}</span>
           </button>
 
-          <Link
-            to="/create"
-            aria-label="แต่งตัว · Edit character"
-            className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
-          >
-            <Shirt className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.dress}</span>
-          </Link>
           <Link
             to="/student"
             aria-label="หน้าเดิม · Classic view"
@@ -893,6 +885,8 @@ function CampusScene({
     <>
       <Ground onWalk={walkGround} />
       <ContextBuildings />
+      <Hologram position={[PLAZA_CENTER[0], 6.2, PLAZA_CENTER[1]]} />
+      <LightTrails />
 
       {BUILDINGS.map((b) => (
         <Building

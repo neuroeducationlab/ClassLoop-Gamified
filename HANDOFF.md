@@ -83,7 +83,12 @@ The user picked a realistic, textured look in a **modern-university urban style,
 - Parallel split (27 Oct): **Antigravity** did steps 3–5 in `Campus3D.tsx`; **Claude** did lite mode, step 2
   (`src/pages/landing/Landing.tsx`, `/` route) and step 6 (`BuildingInterior.tsx`, `interiors/*`). On phones the
   campus HUD buttons are icon-only (labels from `sm:` up).
-- [ ] 7. Extra wow if time: holographic SPU logo, light-trail cars, confetti on level-up.
+- [x] 7. Extra wow: holographic **ClassLoop** logo over the plaza + landing finale (`components/Hologram.tsx`),
+      light-trail cars on the MRT road (`components/LightTrails.tsx`), ClassLoop "LEVEL UP!" confetti
+      (`LevelUpCelebration.tsx`, mounted in App, campus routes only).
+- Brand rule: **ClassLoop is the brand; SPU is the client** ("SPU edition"). Keep ClassLoop first in new copy.
+- Students now log in straight to `/campus` in first person (character creation parked; `/create` still exists
+  but nothing links to it). Quality: `?hq` / `?lite` are remembered per browser (localStorage), `?auto` resets.
 
 ## Verify before each push
 

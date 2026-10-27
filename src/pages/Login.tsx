@@ -41,7 +41,8 @@ export default function Login() {
     setError(null)
     setLoading(true)
     timer.current = setTimeout(
-      () => navigate(result.role === 'teacher' ? '/map' : '/create'),
+      // students go straight into the campus in first person (character creation is parked for now)
+      () => (result.role === 'teacher' ? navigate('/map') : navigate('/campus', { state: { arrival: true } })),
       800,
     )
   }
