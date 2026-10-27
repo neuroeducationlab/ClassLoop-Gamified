@@ -868,8 +868,9 @@ function CampusScene({
 
       if (isPointerLocked.current) {
         mouseYaw.current += e.movementX * 0.003
+        // three.js: positive rotation.x looks UP, so mouse moving down (movementY > 0) must lower pitch (ก้ม)
         mousePitch.current = MathUtils.clamp(
-          mousePitch.current + e.movementY * 0.0022,
+          mousePitch.current - e.movementY * 0.0022,
           -Math.PI / 3,
           Math.PI / 3,
         )
@@ -880,8 +881,9 @@ function CampusScene({
         lastY = e.clientY
 
         mouseYaw.current += dx * 0.0045
+        // drag up = look up (เงย), drag down = look down (ก้ม)
         mousePitch.current = MathUtils.clamp(
-          mousePitch.current + dy * 0.0035,
+          mousePitch.current - dy * 0.0035,
           -Math.PI / 3,
           Math.PI / 3,
         )
@@ -1029,11 +1031,12 @@ function CampusScene({
       if (k.has('ArrowRight') || (!nearDoorRef.current && k.has('KeyE'))) {
         mouseYaw.current += 2.6 * dt
       }
+      // ↑ = tilt up (เงย), ↓ = tilt down (ก้ม) — positive pitch looks up in three.js
       if (k.has('ArrowUp')) {
-        mousePitch.current = Math.max(-Math.PI / 3, mousePitch.current - 1.8 * dt)
+        mousePitch.current = Math.min(Math.PI / 3, mousePitch.current + 1.8 * dt)
       }
       if (k.has('ArrowDown')) {
-        mousePitch.current = Math.min(Math.PI / 3, mousePitch.current + 1.8 * dt)
+        mousePitch.current = Math.max(-Math.PI / 3, mousePitch.current - 1.8 * dt)
       }
 
       // First-person: movement is relative to look heading
