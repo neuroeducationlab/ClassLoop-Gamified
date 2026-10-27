@@ -19,6 +19,9 @@ const FOOTPRINT: Record<Exclude<BuildingShape, 'arena'>, [number, number]> = {
   house: [3.8, 3.2],
   hub: [4.2, 3.6],
   office: [3.8, 3.3],
+  library: [4.4, 3.6],
+  union: [4.2, 3.6],
+  lounge: [3.8, 3.2],
 }
 
 const MRT_ANGLE = (Math.atan2(MRT_LINE.to[1] - MRT_LINE.from[1], MRT_LINE.to[0] - MRT_LINE.from[0]) * 180) / Math.PI
@@ -261,7 +264,7 @@ function MapBuildingItem({
         <text
           x={x}
           y={z + (b.shape === 'gate' ? 1.9 : b.shape === 'arena' ? 3.9 : FOOTPRINT[b.shape][1] / 2 + 1.2)}
-          fontSize={0.9}
+          fontSize={b.id === 'data' || b.id === 'lounge' ? 0.8 : 0.9}
           fontWeight={700}
           textAnchor="middle"
           fill="#FFFFFF"
@@ -270,7 +273,9 @@ function MapBuildingItem({
           strokeLinejoin="round"
           paintOrder="stroke"
         >
-          {b.name[lang]}
+          {b.id === 'data'
+            ? (lang === 'th' ? 'ศูนย์ข้อมูลวิจัย' : 'Data Center')
+            : b.name[lang]}
         </text>
       )}
     </g>

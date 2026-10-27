@@ -12,7 +12,7 @@
 export type BuildingId = 'entry' | 'faculty' | 'arena' | 'dorm' | 'data' | 'plan' | 'library' | 'union' | 'lounge'
 
 /** Low-poly silhouette used by the 3D campus — one per building so each reads at a glance. */
-export type BuildingShape = 'gate' | 'hall' | 'arena' | 'house' | 'hub' | 'office'
+export type BuildingShape = 'gate' | 'hall' | 'arena' | 'house' | 'hub' | 'office' | 'library' | 'union' | 'lounge'
 
 export type Building = {
   id: BuildingId
@@ -192,7 +192,7 @@ export const BUILDINGS: Building[] = [
     emoji: '📚',
     spuRef: 'library',
     color: '#5B8DEF',
-    shape: 'hall',
+    shape: 'library',
     studentSees: 'review centre, course syllabus',
     teacherSees: null,
     position: [-8.0, 11.0],
@@ -207,7 +207,7 @@ export const BUILDINGS: Building[] = [
     emoji: '🎪',
     spuRef: 'student union',
     color: '#9B6BFF',
-    shape: 'hub',
+    shape: 'union',
     studentSees: 'community board, profile',
     teacherSees: null,
     position: [8.0, 19.0],
@@ -222,7 +222,7 @@ export const BUILDINGS: Building[] = [
     emoji: '☕',
     spuRef: 'staff room',
     color: '#E0B04B',
-    shape: 'office',
+    shape: 'lounge',
     studentSees: null,
     teacherSees: 'all teaching tools in one room',
     position: [13.0, -17.0],

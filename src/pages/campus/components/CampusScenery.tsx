@@ -502,8 +502,8 @@ export default function CampusScenery() {
       {/* ── 1. SPU Sports Arena: Outdoor Basketball / Futsal Court (North-East lawn) ── */}
       <SPUSportsCourt position={[18, 0, 24]} />
 
-      {/* ── 2. SPU Botanical Pavilion & Zen Rest Gazebo (North lawn by pond) ── */}
-      <SPURestPavilion position={[14, 0, 18]} />
+      {/* ── 2. SPU Botanical Pavilion & Zen Rest Gazebo (Lakeside lawn by pond) ── */}
+      <SPURestPavilion position={[14.5, 0, 11.5]} />
 
       {/* ── 3. SPU Open-Air Coffee Terrace & Sun Umbrella Tables (East of Plaza) ── */}
       <SPUCoffeeTerrace position={[14, 0, -6.5]} />

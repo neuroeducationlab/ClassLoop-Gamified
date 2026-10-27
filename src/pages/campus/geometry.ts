@@ -8,6 +8,9 @@ const DOOR_DISTANCE: Record<BuildingShape, number> = {
   house: 2.8,
   hub: 3.0,
   office: 2.8,
+  library: 3.2,
+  union: 3.0,
+  lounge: 2.8,
 }
 
 /** Rotation that turns a building's front (+z) to face the plaza. */
@@ -38,12 +41,18 @@ export function labelHeight(shape: BuildingShape) {
   switch (shape) {
     case 'hall':
       return 9.4
+    case 'library':
+      return 7.6
     case 'house':
       return 7.2
     case 'hub':
       return 7.0
+    case 'union':
+      return 6.8
     case 'office':
       return 6.2
+    case 'lounge':
+      return 6.4
     case 'gate':
       return 5.2
     case 'arena':

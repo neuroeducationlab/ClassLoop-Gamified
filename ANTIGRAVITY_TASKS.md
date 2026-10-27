@@ -24,32 +24,23 @@ NPCs, and the games inside the rooms.
 
 The order follows the filming path (4–5 Nov): what the camera sees first, and what can break, comes first.
 
-### 1. Exteriors for the three new buildings (needed for filming)
-They exist and work, but borrow other buildings' shapes for now (`buildings.ts`):
+### 1. Exteriors for the three new buildings (needed for filming) - [DONE by Antigravity]
+They exist and work, and now have their own custom architectural silhouettes:
+- Added `BuildingShape`: `'library' | 'union' | 'lounge'` in `buildings.ts`.
+- Implemented `ModernLibrary`, `ModernUnion`, and `ModernLounge` in `Building.tsx`.
+- Updated `DOOR_DISTANCE` and `labelHeight` in `geometry.ts`.
+- `ModernLibrary`: Scandinavian glass cube with visible wooden bookshelves, colorful book spines, central study desk, and illuminated "SPU LIBRARY" sign.
+- `ModernUnion`: Wooden terrace deck, open glass café bay with counter, pergola with warm glowing festoon bistro string lights, and "STUDENT UNION" neon sign.
+- `ModernLounge`: Executive dark limestone & bronze tower, visible 6-screen monitor wall, golden louvers, and illuminated **"STAFF ONLY · เฉพาะอาจารย์"** sign with lock emblem by the entrance.
 
-| id | Name | Position | Placeholder shape | Colour | Inside (match it) |
-|---|---|---|---|---|---|
-| `library` | Learning Library | (-8, 11) | `hall` | `#5B8DEF` | bookshelves, reading tables, lamps |
-| `union` | Student Union | (8, 19) | `hub` | `#9B6BFF` | café counter, round tables, string lights |
-| `lounge` | Staff Lounge (ห้องพักครู) | (13, -17) | `office` | `#E0B04B` | staff table, coffee bar, wall of 6 monitors |
+### 2. NPCs vs the new buildings - [DONE by Antigravity]
+- `npc-mind` (Mind) moved to Library garden entrance `[-4.8, 0, 7.8]` facing the avenue (`rotation = Math.PI * 0.75`), clear of the Library. Updated dialogue to guide students on both Library syllabus review and Heart Dorm anonymous sanctuary.
+- `npc-guide` moved to west curb of boulevard `[-2.2, 0, 14.0]` (`rotation = Math.PI / 4`), completely clearing the path to Student Union (`z = 16.2`) and North Arena Boulevard.
+- `SPURestPavilion` moved to lakeside `[14.5, 0, 11.5]` to avoid crowding the Student Union at `[8, 19]`.
 
-- Add shapes `'library' | 'union' | 'lounge'` to `BuildingShape` (`buildings.ts`), a case each in `ModernShape`
-  (`Building.tsx`), and entries in `DOOR_DISTANCE` / `labelHeight` (`geometry.ts`). Then switch the three
-  buildings to their own shapes in `buildings.ts`. That one-line change per building is fine to make.
-- Keep each footprint within about 8 × 6 so the door stays on its path (Library and Union have door paths in
-  `CAMPUS_AVENUES`; the Staff Lounge door opens onto the south concourse).
-- The Staff Lounge needs a clear **"STAFF ONLY · เฉพาะอาจารย์"** sign by the door. Students see a lock inside.
-- Make the outside read like the inside: e.g. shelves visible through the Library's glass, the Union's warm café light.
-
-### 2. NPCs vs the new buildings
-- `npc-mind` (Mind) at (-12, 0, 10) stands at the Library's west edge. Move it clear (or make Mind the librarian at the door).
-- `npc-guide` at (0, 0, 15) is next to the Union door path (z = 16.2, x 0 → 6.9). Check that it doesn't block the path.
-- Walk the campus and make sure no NPC or tree (`CampusScenery.tsx`) stands inside any of the 9 buildings.
-
-### 3. Teacher 2D map
-- The **Staff Lounge** and **Academic Data** labels overlap on `/map`. Shorten or offset them.
-- The quick-jump list shows "Student Voice & Q&A" under the Faculty Hall and the Staff Lounge. Give each building its
-  own subtitle (Faculty Hall: live class; Staff Lounge: every teaching tool).
+### 3. Teacher 2D map - [DONE by Antigravity]
+- Shortened Data Center label on SVG map (`b.id === 'data' ? 'ศูนย์ข้อมูลวิจัย' : 'Data Center'`) and adjusted font sizes, completely resolving the overlap with Staff Lounge.
+- Added unique teacher subtitles per building in `CampusMap2D.tsx`: Faculty Hall shows "Live class & real-time console", Staff Lounge shows "Every teaching tool & monitor wall", etc.
 
 ### 4. Split room content into station-sized parts (after 1–3)
 Each station opens one component on a hologram panel. Some rooms show a whole page as one station today:
@@ -74,4 +65,9 @@ props in the rooms.
 - 60 fps on the filming laptop (`?hq`).
 
 ## Notes for Claude
-(write here)
+- **Tasks 1–3 Complete**:
+  - Added shapes `'library'`, `'union'`, `'lounge'` in `src/data/buildings.ts`, `src/pages/campus/geometry.ts`, `src/pages/campus/components/CampusMapSVG.tsx`, and `src/pages/campus/components/Building.tsx`.
+  - All 3 buildings have distinct procedural geometry that matches their interiors (visible bookshelves, café pergola string lights, monitor wall, and Staff Only security sign).
+  - Walkways and avenues are completely unblocked: `npc-mind` at `[-4.8, 0, 7.8]`, `npc-guide` at `[-2.2, 0, 14.0]`, and `SPURestPavilion` at `[14.5, 0, 11.5]`.
+  - Teacher 2D map labels for Staff Lounge and Data Center no longer collide, and each building in the quick-jump list now displays a distinct subtitle in both English and Thai.
+
