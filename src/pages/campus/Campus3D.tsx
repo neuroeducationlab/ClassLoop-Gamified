@@ -12,6 +12,7 @@ import Building from './components/Building'
 import ContextBuildings from './components/ContextBuildings'
 import { doorPoint, facingPlaza, labelHeight } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
+import { isLowPower } from './lowPower'
 
 const WALK_SPEED = 5 // units / second
 const CAMERA_OFFSET = new Vector3(0, 16, 17)
@@ -57,14 +58,8 @@ export default function Campus3D() {
     else labels.current.delete(key)
   }
 
-  // Detect mobile device to disable postprocessing for 60fps performance
-  const isMobile = useMemo(() => {
-    if (typeof window === 'undefined') return false
-    return (
-      window.innerWidth < 768 ||
-      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    )
-  }, [])
+  // Phones, small screens and GPU-less machines skip postprocessing (see lowPower.ts; ?hq / ?lite override)
+  const isMobile = useMemo(isLowPower, [])
 
   // the campus is a student surface — mirror StudentShell so direct URLs agree
   useEffect(() => setRole('student'), [setRole])
