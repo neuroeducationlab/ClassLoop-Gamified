@@ -448,7 +448,7 @@ function FrontRoad() {
   const [tx, tz] = MRT_LINE.to
   const dx = tx - fx
   const dz = tz - fz
-  const length = Math.hypot(dx, dz) + 8
+  const length = Math.hypot(dx, dz) + 22
   const yaw = Math.atan2(dx, dz)
   const roadWidth = 3.8
 
@@ -491,10 +491,30 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
 
   return (
     <group>
-      {/* Campus Base Terrain / Modern Lawn */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
-        <circleGeometry args={[CAMPUS_RADIUS + 8, 64]} />
-        <meshStandardMaterial color={CAMPUS_PALETTE.grass} roughness={0.9} />
+      {/* Expansive Surrounding Landscape (Seamless ground covering camera view without cut-off) */}
+      <mesh position={[0, -0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
+        <planeGeometry args={[260, 260]} />
+        <meshStandardMaterial color="#64914E" roughness={0.95} />
+      </mesh>
+
+      {/* SPU Campus Boundary Base: Modern landscaped university zone (Based on SPU Blueprint Map) */}
+      <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
+        <planeGeometry args={[56, 52]} />
+        <meshStandardMaterial color={CAMPUS_PALETTE.grass} roughness={0.88} />
+      </mesh>
+
+      {/* Crisp Architectural Campus Perimeter Curb */}
+      <mesh position={[0, 0.005, -26]}>
+        <boxGeometry args={[56.2, 0.08, 0.25]} />
+        <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
+      </mesh>
+      <mesh position={[28, 0.005, 0]}>
+        <boxGeometry args={[0.25, 0.08, 52.2]} />
+        <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
+      </mesh>
+      <mesh position={[-28, 0.005, 0]}>
+        <boxGeometry args={[0.25, 0.08, 52.2]} />
+        <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
 
       {/* Front Highway (Phahonyothin Road alongside the MRT) */}

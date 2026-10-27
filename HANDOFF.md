@@ -74,6 +74,8 @@ The user picked a realistic, textured look in a **modern-university urban style,
       (Bloom, AO, Vignette) disabled on mobile.
 - [x] 2. Grand opening page at `/`: cinematic orbit, title "ClassLoop Campus", Start → `/login`;
       buildings rise in sequence, windows light up, train passes.
+      Start → camera glides half-way in → role cards (นักศึกษา / อาจารย์) fade in → pick one = sign in with that
+      role's demo account and dive into `/campus` ("เข้าด้วยอีเมล" still links to `/login`).
 - [x] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
       caption "กำลังลงสู่แคมปัส…", **Skip arrival** pill.
 - [x] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).
@@ -83,12 +85,8 @@ The user picked a realistic, textured look in a **modern-university urban style,
 - Parallel split (27 Oct): **Antigravity** did steps 3–5 in `Campus3D.tsx`; **Claude** did lite mode, step 2
   (`src/pages/landing/Landing.tsx`, `/` route) and step 6 (`BuildingInterior.tsx`, `interiors/*`). On phones the
   campus HUD buttons are icon-only (labels from `sm:` up).
-- [x] 7. Extra wow: holographic **ClassLoop** logo over the plaza + landing finale (`components/Hologram.tsx`),
-      light-trail cars on the MRT road (`components/LightTrails.tsx`), ClassLoop "LEVEL UP!" confetti
-      (`LevelUpCelebration.tsx`, mounted in App, campus routes only).
-- Brand rule: **ClassLoop is the brand; SPU is the client** ("SPU edition"). Keep ClassLoop first in new copy.
-- Students now log in straight to `/campus` in first person (character creation parked; `/create` still exists
-  but nothing links to it). Quality: `?hq` / `?lite` are remembered per browser (localStorage), `?auto` resets.
+- [x] 7. Extra wow: holographic SPU logo, light-trail cars, 4-time-of-day sky (morning, midday, sunset, night stars) + thin drifting clouds.
+- [x] 8. SPU Universe Login & Art: 3D bird's-eye login screen with 4DX swoop landing, academic crosshair-free camera, and high-res SPU Universe diorama backgrounds (`public/spu/{morning,midday,sunset,night}.jpg`).
 
 ## Verify before each push
 

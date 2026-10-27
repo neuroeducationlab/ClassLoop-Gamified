@@ -8,10 +8,10 @@ import {
 } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Sky, Environment, Lightformer } from '@react-three/drei'
+import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
-import { LayoutGrid, Eye, EyeOff, Globe } from 'lucide-react'
+import { Shirt, LayoutGrid, Eye, EyeOff, Globe } from 'lucide-react'
 import { useApp, type Avatar } from '@/context/AppContext'
 import {
   BUILDINGS,
@@ -23,13 +23,12 @@ import {
 import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
 import ContextBuildings from './components/ContextBuildings'
-import Hologram from './components/Hologram'
-import LightTrails from './components/LightTrails'
 import { doorPoint, facingPlaza, labelHeight } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
 import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
 import TouchJoystick from './components/TouchJoystick'
+import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './components/SPUUniverse'
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
@@ -72,6 +71,7 @@ type Lang = 'th' | 'en'
 
 const UI = {
   th: {
+    dress: 'แต่งตัว',
     back: 'แดชบอร์ด',
     walkHint: 'คลิกพื้นหรือ WASD เพื่อเดิน · คลิกอาคารเพื่อเข้า',
     fpHint: 'WASD เดิน · ลากเมาส์หมุนมุมมอง · กด E หน้าประตูเพื่อเข้า',
@@ -88,6 +88,7 @@ const UI = {
     facultyOnly: 'เฉพาะอาจารย์',
   },
   en: {
+    dress: 'Change Outfit',
     back: 'Dashboard',
     walkHint: 'Click ground or WASD to walk · Click a building to enter',
     fpHint: 'WASD to walk · Mouse look / drag to rotate view · Press E near door',
@@ -120,6 +121,17 @@ export default function Campus3D() {
   // ── Language & view mode toggles (default English, default First-Person) ───
   const [lang, setLang] = useState<Lang>('en')
   const [fpMode, setFpMode] = useState<boolean>(true)
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
+
+  const cycleTimeOfDay = () => {
+    setTimeOfDay((prev) => {
+      if (prev === 'morning') return 'midday'
+      if (prev === 'midday') return 'evening'
+      if (prev === 'evening') return 'night'
+      return 'morning'
+    })
+  }
+
   const fpModeRef = useRef<boolean>(true)
   useEffect(() => {
     fpModeRef.current = fpMode
@@ -199,46 +211,21 @@ export default function Campus3D() {
   const walkGroundRef = useRef<(x: number, z: number) => void>(() => {})
 
   return (
-    <div className="fixed inset-0 select-none font-campus" style={{ backgroundColor: '#D4B896' }}>
+    <div
+      className="fixed inset-0 select-none font-campus transition-all duration-1000"
+      style={{
+        background: `linear-gradient(to bottom, ${SKY_PRESETS[timeOfDay].skyGradient.join(', ')})`,
+      }}
+    >
       <Canvas
         shadows="percentage"
         dpr={isMobile ? [1, 1.25] : [1, 1.75]}
         camera={{ fov: fpMode ? 75 : 45, position: [0, 20, 22] }}
       >
-        <Sky
-          distance={450000}
-          sunPosition={[18, 8, 22]}
-          inclination={0.2}
-          azimuth={0.25}
-          turbidity={8}
-          rayleigh={2.4}
-          mieCoefficient={0.005}
-          mieDirectionalG={0.8}
-        />
-        <fog
-          attach="fog"
-          args={[
-            '#ECCDA5',
-            isArriving ? FOG_NEAR_ARRIVAL : FOG_NEAR_CLEAR,
-            isArriving ? FOG_FAR_ARRIVAL : FOG_FAR_CLEAR,
-          ]}
-        />
+        <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isArriving} />
 
-        <hemisphereLight args={['#FFF2DF', '#4C586B', 1.2]} />
-        <directionalLight
-          position={[18, 22, 14]}
-          intensity={2.2}
-          color="#FFD6A4"
-          castShadow
-          shadow-mapSize={isMobile ? [512, 512] : [1024, 1024]}
-          shadow-camera-left={-28}
-          shadow-camera-right={28}
-          shadow-camera-top={28}
-          shadow-camera-bottom={-28}
-        />
-
-        <Environment resolution={256}>
-          <Lightformer form="rect" intensity={3.5} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
+        <Environment resolution={isMobile ? 64 : 256}>
+          <Lightformer form="rect" intensity={2.5} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
           <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
           <Lightformer form="ring" intensity={0.9} color="#FFF4D6" position={[0, 26, 0]} scale={[30, 30, 1]} />
         </Environment>
@@ -345,6 +332,16 @@ export default function Campus3D() {
 
         {/* Action buttons */}
         <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
+          {/* Time of Day toggle: Morning / Midday / Sunset / Night */}
+          <button
+            onClick={cycleTimeOfDay}
+            className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/55 transition-colors shadow cursor-pointer"
+            title={`Time of Day: ${SKY_PRESETS[timeOfDay].label.en} (${SKY_PRESETS[timeOfDay].label.th})`}
+          >
+            <span className="text-sm">{SKY_PRESETS[timeOfDay].icon}</span>
+            <span className="hidden sm:inline font-bold">{SKY_PRESETS[timeOfDay].label[lang]}</span>
+          </button>
+
           {/* Language toggle: EN / TH */}
           <button
             onClick={() => setLang((l) => (l === 'en' ? 'th' : 'en'))}
@@ -388,6 +385,14 @@ export default function Campus3D() {
             </>
           ) : (
             <>
+              <Link
+                to="/create"
+                aria-label="แต่งตัว · Edit character"
+                className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
+              >
+                <Shirt className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.dress}</span>
+              </Link>
               <Link
                 to="/student"
                 aria-label="หน้าเดิม · Classic view"
@@ -652,7 +657,6 @@ function CampusScene({
   useEffect(() => {
     const canvas = document.querySelector('canvas')
     if (!canvas) return
-
     let isMouseDown = false
     let lastX = 0
     let lastY = 0
@@ -662,7 +666,6 @@ function CampusScene({
       isMouseDown = true
       lastX = e.clientX
       lastY = e.clientY
-      // Request pointer lock on canvas click if supported
       if (!isPointerLocked.current && canvas.requestPointerLock) {
         canvas.requestPointerLock()
       }
@@ -689,13 +692,11 @@ function CampusScene({
         return
       }
 
-      // Moving mouse right (dx > 0) turns heading right (East)
       mouseYaw.current += dx * 0.0025
-      // Moving mouse down (dy > 0) tilts camera down (pitch > 0)
       mousePitch.current = MathUtils.clamp(
         mousePitch.current + dy * 0.002,
-        -Math.PI / 3, // look up limit (~60 deg)
-        Math.PI / 3,  // look down limit (~60 deg)
+        -Math.PI / 3,
+        Math.PI / 3,
       )
     }
 
@@ -818,7 +819,6 @@ function CampusScene({
     const isFP = fpModeRef.current
 
     if (isFP) {
-      // First-person: movement is relative to look heading
       const fwdX = Math.sin(mouseYaw.current)
       const fwdZ = -Math.cos(mouseYaw.current)
       const rightX = Math.cos(mouseYaw.current)
@@ -843,12 +843,10 @@ function CampusScene({
 
       const joy = joystickRef.current
       if (joy) {
-        // In touch joystick, joy[1] < 0 is pushing UP (forward)
         vx += joy[0] * rightX - joy[1] * fwdX
         vz += joy[0] * rightZ - joy[1] * fwdZ
       }
     } else {
-      // Third-person: movement is world-axis aligned
       if (k.has('KeyW') || k.has('ArrowUp')) vz -= 1
       if (k.has('KeyS') || k.has('ArrowDown')) vz += 1
       if (k.has('KeyA') || k.has('ArrowLeft')) vx -= 1
@@ -886,7 +884,6 @@ function CampusScene({
       }
       moving = true
     } else {
-      // Waypoint movement
       const next = waypoints.current[0]
       if (next) {
         const dx = next[0] - a.position.x
@@ -947,13 +944,11 @@ function CampusScene({
 
     // ── Camera ──────────────────────────────────────────────────────
     if (isFP) {
-      // First-person: camera is at eye level, looking in mouse heading direction
       camera.position.set(a.position.x, a.position.y + FP_EYE_HEIGHT, a.position.z)
       camera.rotation.order = 'YXZ'
       camera.rotation.y = -mouseYaw.current
       camera.rotation.x = mousePitch.current
     } else {
-      // Third-person follow
       lookTarget(a.position.x, a.position.z, look)
       if (intro.current < 1) {
         intro.current = Math.min(1, intro.current + dt / INTRO_SECONDS)
@@ -980,8 +975,6 @@ function CampusScene({
     <>
       <Ground onWalk={walkGround} />
       <ContextBuildings />
-      <Hologram position={[PLAZA_CENTER[0], 6.2, PLAZA_CENTER[1]]} />
-      <LightTrails />
 
       {BUILDINGS.map((b) => (
         <Building
