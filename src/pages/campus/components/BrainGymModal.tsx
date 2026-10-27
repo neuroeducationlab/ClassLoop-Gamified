@@ -5,51 +5,82 @@ import { useApp } from '@/context/AppContext'
 interface DrillQuestion {
   id: number
   stem: string
+  stemEn: string
   sub: string
+  subEn: string
   options: string[]
+  optionsEn: string[]
   answer: number
   explanation: string
+  explanationEn: string
 }
 
 const DRILL_QUESTIONS: DrillQuestion[] = [
   {
     id: 1,
     stem: 'ในการเจรจาการค้ากับนักธุรกิจชาวญี่ปุ่น (High-Context Culture) ข้อใดถูกต้องที่สุด?',
+    stemEn: 'When negotiating business with Japanese partners (High-Context Culture), which strategy is most appropriate?',
     sub: 'หัวข้อการสื่อสารและการเจรจาข้ามวัฒนธรรม',
+    subEn: 'Cross-Cultural Communication & Negotiation',
     options: [
       'พูดตรงไปตรงมาและปิดดีลให้เร็วที่สุดในวันแรก',
       'ให้ความสำคัญกับการสร้างความสัมพันธ์ (Nemawashi) และความเคารพในลำดับขั้น',
       'ใช้อารมณ์ร่วมเพื่อแสดงความจริงใจ',
       'ไม่จำเป็นต้องแลกนามบัตรอย่างเป็นทางการ',
     ],
+    optionsEn: [
+      'Be overly direct and pressure for an immediate close on Day 1',
+      'Prioritize consensus-building (Nemawashi) and respect for organizational hierarchy',
+      'Rely heavily on emotional displays to express sincerity',
+      'Omit formal business card exchange protocols',
+    ],
     answer: 1,
     explanation: 'วัฒนธรรมญี่ปุ่นเป็น High-Context และให้ความสำคัญกับการสร้างความสัมพันธ์ล่วงหน้า (Nemawashi) และความเคารพในลำดับอาวุโส',
+    explanationEn: 'Japanese business culture is High-Context, emphasizing groundwork consensus (Nemawashi) and seniority protocols before closing deals.',
   },
   {
     id: 2,
     stem: 'มิติทางวัฒนธรรม "Power Distance Index (PDI)" สูง ใน Hofstede Model บ่งบอกถึงสิ่งใด?',
+    stemEn: 'In Hofstede\'s Model, what does a high Power Distance Index (PDI) signify?',
     sub: 'หัวข้อ Hofstede’s Cultural Dimensions',
+    subEn: 'Hofstede\'s Cultural Dimensions',
     options: [
       'พนักงานทุกคนมีอำนาจตัดสินใจเท่าเทียมกัน',
       'องค์กรยอมรับความเหลื่อมล้ำของอำนาจและมีการตัดสินใจแบบ Top-Down ชัดเจน',
       'ทุกคนในองค์กรหลีกเลี่ยงความเสี่ยง',
       'เน้นการทำงานแบบประชาธิปไตยในทุกขั้นตอน',
     ],
+    optionsEn: [
+      'Subordinates and managers hold strictly equal decision-making power',
+      'Hierarchical authority is accepted, with clear top-down directive decisions',
+      'The organization actively avoids all structural risks',
+      'Consensus voting is strictly required for every workflow',
+    ],
     answer: 1,
     explanation: 'ค่า PDI สูง แสดงว่าคนในสังคมหรือองค์กรยอมรับความแตกต่างของระดับชั้นอำนาจ การตัดสินใจส่วนใหญ่มาจากผู้บริหารระดับสูง',
+    explanationEn: 'High PDI indicates acceptance of hierarchical inequality, where strategic decisions predominantly originate from top leadership.',
   },
   {
     id: 3,
     stem: 'แนวคิด "Glocalization" ในการบริหารธุรกิจระหว่างประเทศหมายถึงอะไร?',
+    stemEn: 'What does the term "Glocalization" mean in international business management?',
     sub: 'หัวข้อ Global vs Local Strategy',
+    subEn: 'Global vs Local Strategy',
     options: [
       'การดำเนินธุรกิจโดยใช้กลยุทธ์เดียวกันเป๊ะทั่วโลก',
       'การปรับผลิตภัณฑ์ระดับสากลให้เข้ากับรสนิยมและวัฒนธรรมท้องถิ่น (Think Global, Act Local)',
       'การขายสินค้าเฉพาะในตลาดท้องถิ่นเท่านั้น',
       'การนำเข้าสินค้าจากต่างประเทศโดยไม่ดัดแปลง',
     ],
+    optionsEn: [
+      'Enforcing identical products and marketing worldwide without modification',
+      'Adapting global products to resonate with local cultural tastes (Think Global, Act Local)',
+      'Restricting brand operations exclusively to domestic markets',
+      'Importing foreign goods without localization or language adaptation',
+    ],
     answer: 1,
     explanation: 'Glocalization (Global + Local) คือการคิดเชิงระดับสากลแต่ปรับการปฏิบัติการ ผลิตภัณฑ์ หรือการตลาดให้เข้ากับบริบทท้องถิ่น',
+    explanationEn: 'Glocalization (Global + Local) represents thinking on a global scale while customizing product design and messaging to local cultural contexts.',
   },
 ]
 
@@ -62,6 +93,10 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
   const [finished, setFinished] = useState(false)
 
   const q = DRILL_QUESTIONS[currentIdx]
+  const currentStem = lang === 'en' ? q.stemEn : q.stem
+  const currentSub = lang === 'en' ? q.subEn : q.sub
+  const currentOptions = lang === 'en' ? q.optionsEn : q.options
+  const currentExplanation = lang === 'en' ? q.explanationEn : q.explanation
 
   const handleSelect = (idx: number) => {
     if (answered) return
@@ -131,14 +166,14 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
             {/* Question Stem */}
             <div className="rounded-2xl bg-white/5 p-4 border border-white/10 mb-4">
               <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 block mb-1">
-                {q.sub}
+                {currentSub}
               </span>
-              <p className="text-sm font-bold text-white leading-relaxed">{q.stem}</p>
+              <p className="text-sm font-bold text-white leading-relaxed">{currentStem}</p>
             </div>
 
             {/* Options */}
             <div className="space-y-2 mb-4">
-              {q.options.map((opt, idx) => {
+              {currentOptions.map((opt, idx) => {
                 const isSelected = selectedOpt === idx
                 const isCorrect = idx === q.answer
 
@@ -174,7 +209,7 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
                 <p className="font-bold text-cyan-300 mb-0.5">
                   {lang === 'th' ? '💡 คำอธิบายความรู้:' : '💡 Explanation:'}
                 </p>
-                <p className="text-white/80 leading-relaxed">{q.explanation}</p>
+                <p className="text-white/80 leading-relaxed">{currentExplanation}</p>
               </div>
             )}
 

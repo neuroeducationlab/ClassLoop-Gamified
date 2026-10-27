@@ -73,11 +73,11 @@ export default function MissionTrackerWidget({
                           {isExam ? '⚔️' : isQuiz ? '🎯' : mission.type === 'drill' ? '🧠' : '📝'}
                         </span>
                         <h4 className="font-bold text-xs leading-tight text-white group-hover:text-pink-300 transition-colors">
-                          {mission.title}
+                          {lang === 'en' && mission.titleEn ? mission.titleEn : mission.title}
                         </h4>
                       </div>
                       <p className="mt-1 text-[11px] text-white/70 line-clamp-2 leading-relaxed">
-                        {mission.description}
+                        {lang === 'en' && mission.descriptionEn ? mission.descriptionEn : mission.description}
                       </p>
                     </div>
                   </div>
@@ -96,7 +96,7 @@ export default function MissionTrackerWidget({
                       {mission.dueDate && (
                         <span className="flex items-center gap-0.5 text-white/50 text-[10px]">
                           <Clock className="h-2.5 w-2.5" />
-                          <span>{mission.dueDate}</span>
+                          <span>{lang === 'en' && mission.dueDateEn ? mission.dueDateEn : mission.dueDate}</span>
                         </span>
                       )}
                     </div>
@@ -126,7 +126,7 @@ export default function MissionTrackerWidget({
                       key={cm.id}
                       className="flex items-center justify-between rounded-xl bg-emerald-950/20 border border-emerald-500/20 px-2.5 py-1 text-[10px] text-white/60"
                     >
-                      <span className="line-through">{cm.title}</span>
+                      <span className="line-through">{lang === 'en' && cm.titleEn ? cm.titleEn : cm.title}</span>
                       <span className="text-emerald-400 font-bold">{lang === 'th' ? 'สำเร็จแล้ว ✓' : 'Completed ✓'}</span>
                     </div>
                   ))}

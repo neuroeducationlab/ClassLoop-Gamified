@@ -10,13 +10,16 @@ const XP_SUBMIT = 30
 
 /** Faculty hall: lessons, a pre-class video, the quiz and the graded assignment. */
 export default function FacultyHall() {
-  const { topics, course, remediation, generatedContent, assignments, submitAssignment, addXP } = useApp()
+  const { topics, course, remediation, generatedContent, assignments, submitAssignment, addXP, lang } = useApp()
   const video = remediation.resources.find((r) => r.type === 'video')
   const [watched, setWatched] = useState(false)
 
   return (
     <>
-      <Section title={`บทเรียน · ${course.code}`} sub={course.name}>
+      <Section
+        title={lang === 'th' ? `บทเรียน · ${course.code}` : `Lessons · ${course.code}`}
+        sub={course.name}
+      >
         <ol className="space-y-2">
           {topics.map((t) => (
             <li key={t.id} className="flex gap-3 rounded-2xl bg-canvas p-3">
@@ -33,13 +36,13 @@ export default function FacultyHall() {
       </Section>
 
       {video && (
-        <Section title="วิดีโอก่อนเรียน · Pre-class video">
+        <Section title={lang === 'th' ? 'วิดีโอก่อนเรียน · Pre-class video' : 'Pre-Class Video'}>
           <button
             onClick={() => {
               if (!watched) addXP(XP_VIDEO)
               setWatched(true)
             }}
-            className="relative flex aspect-video w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-br from-[#3A3D7A] to-[#7C9BE8] text-white"
+            className="relative flex aspect-video w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-br from-[#3A3D7A] to-[#7C9BE8] text-white cursor-pointer"
           >
             {watched ? <CheckCircle2 className="h-14 w-14" /> : <PlayCircle className="h-14 w-14" />}
             <span className="px-4 text-sm font-semibold">{video.title}</span>
@@ -48,30 +51,41 @@ export default function FacultyHall() {
         </Section>
       )}
 
-      <Section title="แบบทดสอบก่อนเรียน · Quiz" sub={`${generatedContent.pretest.length} ข้อ · +${XP_CORRECT} XP ต่อข้อที่ถูก`}>
-        <Quiz onCorrect={() => addXP(XP_CORRECT)} />
+      <Section
+        title={lang === 'th' ? 'แบบทดสอบก่อนเรียน · Quiz' : 'Pre-Class Quiz'}
+        sub={
+          lang === 'th'
+            ? `${generatedContent.pretest.length} ข้อ · +${XP_CORRECT} XP ต่อข้อที่ถูก`
+            : `${generatedContent.pretest.length} questions · +${XP_CORRECT} XP per correct answer`
+        }
+      >
+        <Quiz onCorrect={() => addXP(XP_CORRECT)} lang={lang} />
       </Section>
 
-      <Section title="งานที่ต้องส่ง · Graded work">
+      <Section title={lang === 'th' ? 'งานที่ต้องส่ง · Graded work' : 'Graded Assignments'}>
         <ul className="space-y-2">
           {assignments.map((a) => (
             <li key={a.id} className="flex items-center gap-3 rounded-2xl bg-canvas p-3">
               <FileText className="h-5 w-5 shrink-0 text-grey-500" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-ink">{a.title}</p>
-                <p className="text-xs text-grey-600">ส่งภายใน {a.dueDate}</p>
+                <p className="text-xs text-grey-600">
+                  {lang === 'th' ? `ส่งภายใน ${a.dueDate}` : `Due: ${a.dueDate}`}
+                </p>
               </div>
               {a.submitted ? (
-                <span className="text-xs font-bold text-green-600">ส่งแล้ว ✓</span>
+                <span className="text-xs font-bold text-green-600">
+                  {lang === 'th' ? 'ส่งแล้ว ✓' : 'Submitted ✓'}
+                </span>
               ) : (
                 <button
                   onClick={() => {
                     submitAssignment(a.id)
                     addXP(XP_SUBMIT)
                   }}
-                  className="rounded-lg bg-pink-600 px-3 py-1.5 text-xs font-bold text-paper hover:bg-pink-500"
+                  className="rounded-lg bg-pink-600 px-3 py-1.5 text-xs font-bold text-paper hover:bg-pink-500 cursor-pointer"
                 >
-                  ส่งงาน +{XP_SUBMIT}
+                  {lang === 'th' ? `ส่งงาน +${XP_SUBMIT}` : `Submit +${XP_SUBMIT}`}
                 </button>
               )}
             </li>
@@ -82,7 +96,7 @@ export default function FacultyHall() {
   )
 }
 
-function Quiz({ onCorrect }: { onCorrect: () => void }) {
+function Quiz({ onCorrect, lang }: { onCorrect: () => void; lang: 'th' | 'en' }) {
   const { generatedContent } = useApp()
   const questions = generatedContent.pretest
   const [index, setIndex] = useState(0)
@@ -94,7 +108,9 @@ function Quiz({ onCorrect }: { onCorrect: () => void }) {
       <div className="rounded-2xl bg-canvas p-6 text-center">
         <p className="text-3xl">🎉</p>
         <p className="mt-2 font-bold text-ink">
-          ได้ {score}/{questions.length} ข้อ
+          {lang === 'th'
+            ? `ได้ ${score}/${questions.length} ข้อ`
+            : `Score: ${score}/${questions.length} correct`}
         </p>
         <button
           onClick={() => {
@@ -102,9 +118,9 @@ function Quiz({ onCorrect }: { onCorrect: () => void }) {
             setPicked(null)
             setScore(0)
           }}
-          className="mt-3 text-sm font-semibold text-pink-600 underline underline-offset-4"
+          className="mt-3 text-sm font-semibold text-pink-600 underline underline-offset-4 cursor-pointer"
         >
-          ทำอีกครั้ง
+          {lang === 'th' ? 'ทำอีกครั้ง' : 'Retake Quiz'}
         </button>
       </div>
     )
@@ -116,7 +132,9 @@ function Quiz({ onCorrect }: { onCorrect: () => void }) {
   return (
     <div>
       <p className="text-xs font-semibold text-grey-600">
-        ข้อ {index + 1}/{questions.length}
+        {lang === 'th'
+          ? `ข้อ ${index + 1}/${questions.length}`
+          : `Question ${index + 1}/${questions.length}`}
       </p>
       <p className="mt-1 font-bold text-ink">{q.stem}</p>
       <div className="mt-3 space-y-2">
@@ -134,7 +152,7 @@ function Quiz({ onCorrect }: { onCorrect: () => void }) {
                 }
               }}
               className={cn(
-                'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+                'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors cursor-pointer',
                 !answered && 'border-grey-300/80 hover:border-blue-500 hover:bg-blue-50/40',
                 answered && correct && 'border-green-500 bg-green-50 font-semibold text-green-700',
                 answered && !correct && i === picked && 'border-red-400 bg-red-50 text-red-600',
@@ -160,9 +178,9 @@ function Quiz({ onCorrect }: { onCorrect: () => void }) {
               setIndex((i) => i + 1)
               setPicked(null)
             }}
-            className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500"
+            className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 cursor-pointer"
           >
-            ข้อต่อไป →
+            {lang === 'th' ? 'ข้อต่อไป →' : 'Next Question →'}
           </button>
         </div>
       )}
