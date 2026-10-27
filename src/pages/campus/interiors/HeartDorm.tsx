@@ -1,99 +1,267 @@
 import { useState } from 'react'
-import { EyeOff, Send } from 'lucide-react'
+import { Send, Sparkles, Flame, HelpCircle, Lightbulb, AlertTriangle, MessageSquare } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import Section from './Section'
+
+const MYSTERY_AVATARS = [
+  { id: 'fox', label: '🦊 Fox Sage #42', emoji: '🦊', faculty: 'สถาปัตย์' },
+  { id: 'owl', label: '🦉 Night Owl #17', emoji: '🦉', faculty: 'วิศวะคอมฯ' },
+  { id: 'dolphin', label: '🐬 Cyber Dolphin #88', emoji: '🐬', faculty: 'ดิจิทัลมีเดีย' },
+  { id: 'raccoon', label: '🦝 Shadow Raccoon #05', emoji: '🦝', faculty: 'บริหารธุรกิจ' },
+  { id: 'lion', label: '🦁 Brave Lion #99', emoji: '🦁', faculty: 'นิเทศศาสตร์' },
+]
+
+type QuestionCategory = 'sos' | 'quest' | 'spark'
 
 /**
- * Heart dorm: students talk to the teacher with their name hidden; the
- * teacher reads and replies without ever seeing who wrote it. Only
- * anonymous posts live here — named posts stay in the community board.
+ * Gamified Heart Dorm: Guild Master's Secret Oracle Sanctuary
+ * Students ask questions completely anonymously with cool mystery RPG personas,
+ * teachers answer as the Guild Master with XP bounties, and peers upvote!
  */
 export default function HeartDorm() {
-  const { role, posts, addPost, addReply } = useApp()
+  const { role, posts, addPost, addReply, addXP } = useApp()
   const anon = posts.filter((p) => p.isAnonymous)
   const [draft, setDraft] = useState('')
+  const [selectedPersona, setSelectedPersona] = useState(MYSTERY_AVATARS[0])
+  const [category, setCategory] = useState<QuestionCategory>('sos')
   const [sent, setSent] = useState(false)
+  const [upvotes, setUpvotes] = useState<Record<string, number>>({})
+
+  const handleUpvote = (postId: string) => {
+    setUpvotes((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] || 0) + 1,
+    }))
+    addXP(5) // Award tiny XP for curating / participating
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!draft.trim()) return
+    const prefix = category === 'sos' ? '[🔴 SOS เร่งด่วน] ' : category === 'quest' ? '[🟡 ข้อสงสัยลึกซึ้ง] ' : '[🟢 ไอเดียสร้างสรรค์] '
+    addPost(`${prefix}${draft} — ส่งโดย ${selectedPersona.label} (${selectedPersona.faculty})`, true, 'ฟีดแบค')
+    setDraft('')
+    setSent(true)
+    addXP(15) // Reward for asking a good question
+    setTimeout(() => setSent(false), 3000)
+  }
 
   return (
-    <>
-      <div className="mb-4 flex items-start gap-3 rounded-2xl bg-teal-50 p-4 text-teal-800">
-        <EyeOff className="mt-0.5 h-5 w-5 shrink-0" />
-        <p className="text-sm">
-          {role === 'teacher' ? (
-            <>
-              <b>ชื่อนักศึกษาถูกซ่อนทั้งหมด</b> อาจารย์เห็นแค่ชื่อแฝง — คำตอบของคุณจะส่งถึงเจ้าของข้อความ
-            </>
-          ) : (
-            <>
-              <b>ชื่อของคุณจะถูกซ่อน</b> อาจารย์จะเห็นแค่ชื่อแฝงสัตว์ เล่าได้เต็มที่ ไม่มีใครรู้ว่าเป็นคุณ
-            </>
-          )}
-        </p>
+    <div className="space-y-6">
+      {/* ── Sanctuary Header Banner ── */}
+      <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-r from-teal-950/80 via-[#16182E] to-purple-950/80 p-5 text-white shadow-xl">
+        <div className="absolute right-0 top-0 -mt-6 -mr-6 h-36 w-36 rounded-full bg-teal-500/10 blur-2xl pointer-events-none" />
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-500/20 text-2xl border border-teal-400/40 shadow-inner">
+            🎭
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-extrabold text-white tracking-wide">
+                ศาลานิรนามแห่งความลับ & ตู้คำถามกิลด์มาสเตอร์
+              </h2>
+              <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-[10px] font-bold text-teal-300 border border-teal-400/30">
+                100% Anonymous
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-white/75 leading-relaxed">
+              {role === 'teacher' ? (
+                <>อาจารย์กำลังเข้าสู่ <b>โหมดกิลด์มาสเตอร์</b> — ตอบคำถามและให้คำแนะนำแก่นักศึกษาโดยไม่เปิดเผยตัวตนของพวกเขา</>
+              ) : (
+                <>พื้นที่ปลอดภัยแบบเกม RPG สวมหน้ากากปริศนาถามข้อสงสัยได้เต็มที่ ไม่มีใครรู้ชื่อจริงของคุณ แม้แต่อาจารย์!</>
+              )}
+            </p>
+          </div>
+        </div>
       </div>
 
+      {/* ── Student Question Submission Box (Gamified Quest Ask) ── */}
       {role === 'student' && (
-        <Section title="คุยกับอาจารย์แบบไม่ระบุชื่อ" sub="Talk to your teacher — anonymously">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (!draft.trim()) return
-              addPost(draft, true, 'ฟีดแบค')
-              setDraft('')
-              setSent(true)
-            }}
-          >
+        <div className="rounded-3xl border border-white/15 bg-black/40 p-5 text-white backdrop-blur-xl shadow-xl">
+          <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📜</span>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-teal-300">
+                ส่งคำถามปริศนาถึงกิลด์มาสเตอร์ (อาจารย์)
+              </h3>
+            </div>
+            <span className="text-[11px] text-amber-300 font-semibold flex items-center gap-1">
+              <Sparkles className="h-3 w-3" /> +15 XP เมื่อตั้งคำถาม
+            </span>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Category selection tags */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] text-white/60">หมวดหมู่:</span>
+              <button
+                type="button"
+                onClick={() => setCategory('sos')}
+                className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all ${
+                  category === 'sos'
+                    ? 'bg-rose-500 text-white shadow-md'
+                    : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
+                }`}
+              >
+                <AlertTriangle className="h-3 w-3" /> เร่งด่วน / SOS
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategory('quest')}
+                className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all ${
+                  category === 'quest'
+                    ? 'bg-amber-500 text-black shadow-md'
+                    : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
+                }`}
+              >
+                <HelpCircle className="h-3 w-3" /> ข้อสงสัยลึกซึ้ง
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategory('spark')}
+                className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all ${
+                  category === 'spark'
+                    ? 'bg-emerald-500 text-white shadow-md'
+                    : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
+                }`}
+              >
+                <Lightbulb className="h-3 w-3" /> ไอเดียกิจกรรม
+              </button>
+            </div>
+
+            {/* Persona Selector */}
+            <div className="flex items-center gap-2 rounded-2xl bg-white/5 p-2 text-xs border border-white/10">
+              <span className="text-white/60 text-[11px] shrink-0">ตัวตนแฝงของคุณ:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {MYSTERY_AVATARS.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setSelectedPersona(m)}
+                    className={`rounded-xl px-2 py-1 text-[11px] font-bold transition-all ${
+                      selectedPersona.id === m.id
+                        ? 'bg-teal-500 text-white shadow'
+                        : 'bg-white/5 text-white/60 hover:text-white'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input field */}
             <textarea
               value={draft}
-              onChange={(e) => {
-                setDraft(e.target.value)
-                setSent(false)
-              }}
+              onChange={(e) => setDraft(e.target.value)}
               rows={3}
-              placeholder="เช่น ช่วงนี้ตามเนื้อหาไม่ทัน อยากให้อาจารย์อธิบาย Hofstede อีกรอบ…"
-              className="w-full resize-none rounded-xl border border-grey-300/80 bg-canvas p-3 text-sm text-ink outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              placeholder="พิมพ์คำถามหรือข้อสงสัยที่นี่อย่างสบายใจ เช่น 'ไม่เข้าใจโมเดล Hofstede ในส่วน Long-term Orientation อยากให้อาจารย์ยกตัวอย่างธุรกิจจริง…'"
+              className="w-full resize-none rounded-2xl border border-white/15 bg-black/50 p-3.5 text-xs text-white placeholder-white/40 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
             />
-            <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-teal-700">{sent ? '✓ ส่งแล้ว — ไม่มีชื่อของคุณติดไป' : ''}</span>
+
+            {/* Submit & Status Bar */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-teal-400 font-bold">
+                {sent ? '✓ ส่งคำถามลึกลับสำเร็จแล้ว! (รับ +15 XP)' : '🔒 ส่งผ่านม่านเวทมนตร์ ปลอดภัย 100%'}
+              </span>
               <button
                 type="submit"
-                className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-500"
+                disabled={!draft.trim()}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-lg hover:brightness-110 disabled:opacity-40 transition-all cursor-pointer"
               >
-                <Send className="h-4 w-4" /> ส่งแบบไม่ระบุชื่อ
+                <Send className="h-3.5 w-3.5" />
+                <span>ส่งคำถามแบบนิรนาม</span>
               </button>
             </div>
           </form>
-        </Section>
+        </div>
       )}
 
-      <Section
-        title={role === 'teacher' ? 'ข้อความจากนักศึกษา (ไม่ระบุชื่อ)' : 'ข้อความในหอใจ'}
-        sub={`${anon.length} ข้อความ`}
-      >
-        <ul className="space-y-3">
-          {anon.map((p) => (
-            <li key={p.id} className="rounded-2xl bg-canvas p-4">
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-sm">🐾</span>
-                <span className="text-sm font-bold text-ink">{p.alias ?? 'ไม่ระบุชื่อ'}</span>
-                <span className="ml-auto text-[11px] text-grey-500">{p.createdAt}</span>
-              </div>
-              <p className="mt-2 text-sm text-ink">{p.body}</p>
-              {p.replies?.map((r) => (
-                <p key={r.id} className="mt-2 rounded-xl border-l-4 border-teal-400 bg-paper px-3 py-2 text-sm text-ink">
-                  <b className="text-teal-700">{r.authorRole === 'teacher' ? r.authorName : r.isAnonymous ? r.authorName : 'นักศึกษา'}:</b>{' '}
-                  {r.body}
+      {/* ── Anonymous Questions & Oracle Wisdom Feed ── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 text-teal-400" />
+            กระดานคำถามจากเพื่อนร่วมคลาส ({anon.length})
+          </h3>
+          <span className="text-[11px] text-white/50">โหวตข้อสงสัยที่คุณเห็นด้วยได้</span>
+        </div>
+
+        <div className="space-y-3">
+          {anon.map((p) => {
+            const votes = (upvotes[p.id] || 0) + (p.reactions?.['💡'] || 2)
+
+            return (
+              <div
+                key={p.id}
+                className="rounded-3xl border border-white/15 bg-black/45 p-4 text-white backdrop-blur-md shadow-lg transition-all hover:border-white/25"
+              >
+                {/* Author Bar */}
+                <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-500/20 text-base border border-teal-400/30">
+                      🎭
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-teal-300">
+                        {p.alias ?? 'นักศึกษาปริศนา'}
+                      </span>
+                      <p className="text-[10px] text-white/50">{p.createdAt}</p>
+                    </div>
+                  </div>
+
+                  {/* Upvote bounty button */}
+                  <button
+                    onClick={() => handleUpvote(p.id)}
+                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-extrabold text-amber-300 hover:bg-amber-500/20 transition-all cursor-pointer shadow-xs active:scale-95"
+                    title="กดเห็นด้วย เพื่อเร่งให้อาจารย์เห็นไวขึ้น"
+                  >
+                    <Flame className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                    <span>{votes} สงสัยเหมือนกัน</span>
+                  </button>
+                </div>
+
+                {/* Question Body */}
+                <p className="mt-3 text-xs leading-relaxed text-white/90">
+                  {p.body}
                 </p>
-              ))}
-              {role === 'teacher' && <ReplyBox onSend={(body) => addReply(p.id, body)} />}
-            </li>
-          ))}
-        </ul>
-      </Section>
-    </>
+
+                {/* Oracle / Teacher Responses */}
+                {p.replies && p.replies.length > 0 && (
+                  <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+                    {p.replies.map((r) => (
+                      <div
+                        key={r.id}
+                        className="rounded-2xl border border-amber-400/30 bg-gradient-to-r from-amber-950/40 via-purple-950/30 to-black/60 p-3 shadow-inner"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                            <Sparkles className="h-3 w-3 text-amber-400" />
+                            {r.authorRole === 'teacher' ? '📜 คำแนะนำจากอาจารย์ (Guild Master):' : r.authorName}
+                          </span>
+                          <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[9px] font-bold text-amber-300 border border-amber-400/30">
+                            Insight Oracle
+                          </span>
+                        </div>
+                        <p className="text-xs text-white/90 leading-relaxed pl-4 border-l-2 border-amber-400/40">
+                          {r.body}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Teacher Reply Input Box */}
+                {role === 'teacher' && <TeacherReplyBox onSend={(body) => addReply(p.id, body)} />}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
   )
 }
 
-function ReplyBox({ onSend }: { onSend: (body: string) => void }) {
+function TeacherReplyBox({ onSend }: { onSend: (body: string) => void }) {
   const [text, setText] = useState('')
   return (
     <form
@@ -108,11 +276,14 @@ function ReplyBox({ onSend }: { onSend: (body: string) => void }) {
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="ตอบกลับ…"
-        className="min-w-0 flex-1 rounded-xl border border-grey-300/80 bg-paper px-3 py-2 text-sm outline-none focus:border-teal-500"
+        placeholder="ตอบคำถามของนักศึกษาในฐานะกิลด์มาสเตอร์…"
+        className="min-w-0 flex-1 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs text-white outline-none focus:border-amber-400 placeholder-white/40"
       />
-      <button type="submit" className="rounded-xl bg-teal-600 px-3 text-sm font-bold text-white hover:bg-teal-500">
-        ส่ง
+      <button
+        type="submit"
+        className="rounded-xl bg-amber-500 px-4 text-xs font-bold text-black hover:bg-amber-400 shadow cursor-pointer transition-all"
+      >
+        ตอบกลับ
       </button>
     </form>
   )

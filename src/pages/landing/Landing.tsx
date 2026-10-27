@@ -10,8 +10,7 @@ import { BUILDINGS, PLAZA_CENTER } from '@/data/buildings'
 import Building from '@/pages/campus/components/Building'
 import ContextBuildings from '@/pages/campus/components/ContextBuildings'
 import Ground from '@/pages/campus/components/Ground'
-import Hologram from '@/pages/campus/components/Hologram'
-import LightTrails from '@/pages/campus/components/LightTrails'
+import { HolographicSPULogo, MovingTraffic } from '@/pages/campus/components/SPUUniverse'
 import { landingSpot } from '@/pages/campus/geometry'
 import { isLowPower } from '@/pages/campus/lowPower'
 import CloudLayer, { CLOUD_BOTTOM, CLOUD_TOP } from './CloudLayer'
@@ -299,7 +298,7 @@ export default function Landing() {
         </Environment>
 
         <Ground onWalk={noop} />
-        <LightTrails />
+        <MovingTraffic />
         <Rise delay={RISE_START - 0.3}>
           <ContextBuildings />
         </Rise>
@@ -313,7 +312,7 @@ export default function Landing() {
         ))}
         {/* the ClassLoop hologram lands last — the brand is the climax of the build-up */}
         <Rise delay={RISE_START + RISE_STEP * BUILDINGS.length + 0.2}>
-          <Hologram position={[PLAZA_CENTER[0], 13, PLAZA_CENTER[1]]} scale={2.2} />
+          <HolographicSPULogo position={[PLAZA_CENTER[0], 2.8, PLAZA_CENTER[1]]} />
         </Rise>
 
         <CloudLayer shown={phase !== 'orbit'} />

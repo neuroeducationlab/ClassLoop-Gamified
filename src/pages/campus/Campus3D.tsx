@@ -11,8 +11,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
-import { Shirt, LayoutGrid, Eye, EyeOff, Globe } from 'lucide-react'
-import { useApp, type Avatar } from '@/context/AppContext'
+import { Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll } from 'lucide-react'
+import { useApp, type Avatar, type Mission } from '@/context/AppContext'
 import {
   BUILDINGS,
   CAMPUS_PALETTE,
@@ -29,6 +29,10 @@ import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
 import TouchJoystick from './components/TouchJoystick'
 import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './components/SPUUniverse'
+import LeaderboardWidget from './components/LeaderboardWidget'
+import MissionTrackerWidget from './components/MissionTrackerWidget'
+import BrainGymModal from './components/BrainGymModal'
+import AvatarShopModal from './components/AvatarShopModal'
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
@@ -41,7 +45,7 @@ const GATE_SPAWN = doorPoint(GATE)
 /** Opening shot: start high over the whole campus, swoop down to avatar. */
 const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
 const INTRO_SECONDS = 2.4
-const ENTER_DELAY_MS = 550
+const ENTER_DELAY_MS = 650
 
 // ── Phase 6 Step 3 — Arrival animation ─────────────────────────────────────
 const ARRIVAL_FROM = new Vector3(-24, 26, -10)
@@ -61,7 +65,7 @@ function lookTarget(x: number, z: number, out: Vector3) {
 }
 
 let lastSpot: [number, number] | null = null
-let introPlayed = false
+let introPlayed = true
 
 type LabelMap = Map<string, HTMLDivElement>
 const AVATAR_LABEL_HEIGHT = 2.1
@@ -108,7 +112,7 @@ const UI = {
 
 /** Student 3D campus: walk around, enter buildings, first-person immersive viewpoint. */
 export default function Campus3D() {
-  const { avatar, currentStudent, setRole, studentXP, role, teacherName } = useApp()
+  const { avatar, currentStudent, setRole, studentXP, role, teacherName, studentCoins } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const isTeacher = role === 'teacher'
@@ -118,9 +122,14 @@ export default function Campus3D() {
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
   const [teacherMenuOpen, setTeacherMenuOpen] = useState<boolean>(true)
 
-  // ── Language & view mode toggles (default English, default First-Person) ───
+  // ── Student Gamification Modals & Widgets State ───────────────────────────
+  const [showBrainGym, setShowBrainGym] = useState<boolean>(false)
+  const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
+  const [showMissions, setShowMissions] = useState<boolean>(true)
+
+  // ── Language & view mode toggles (default English, default Third-Person 3D RPG) ───
   const [lang, setLang] = useState<Lang>('en')
-  const [fpMode, setFpMode] = useState<boolean>(true)
+  const [fpMode, setFpMode] = useState<boolean>(false)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
 
   const cycleTimeOfDay = () => {
@@ -132,14 +141,14 @@ export default function Campus3D() {
     })
   }
 
-  const fpModeRef = useRef<boolean>(true)
+  const fpModeRef = useRef<boolean>(false)
   useEffect(() => {
     fpModeRef.current = fpMode
   }, [fpMode])
 
   const t = UI[lang]
 
-  // ── Phase 6 Step 3: Arrival ───────────────────────────────────────────────
+  // ── Phase 6 Step 3: Arrival (defaults to false for zero extra spin/flight) ──
   const [isArriving, setIsArriving] = useState(() => {
     const state = location.state as { arrival?: boolean } | null
     return Boolean(state?.arrival)
@@ -201,7 +210,31 @@ export default function Campus3D() {
     return () => cancelAnimationFrame(rafId)
   }, [])
 
-  const me: Avatar = avatar ?? { color: '#E89BC4', hat: 'grad', nickname: currentStudent.nickname }
+  const me: Avatar = avatar ?? {
+    color: '#E89BC4',
+    hat: 'grad',
+    outfit: 'default',
+    aura: 'none',
+    nickname: currentStudent.nickname,
+  }
+
+  const handleSelectMission = useCallback(
+    (mission: Mission) => {
+      if (mission.type === 'drill') {
+        setShowBrainGym(true)
+        return
+      }
+      if (mission.buildingId) {
+        const b = BUILDINGS.find((bld) => bld.id === mission.buildingId)
+        if (b) {
+          const dp = doorPoint(b)
+          walkGroundRef.current(dp[0], dp[1])
+          setToast(`📍 กำลังนำทางไปเควสต์ที่ ${b.emoji} ${b.name[lang]}`)
+        }
+      }
+    },
+    [lang],
+  )
 
   const arrive = useCallback(
     (b: BuildingConfig) => {
@@ -233,7 +266,8 @@ export default function Campus3D() {
     >
       <Canvas
         shadows="percentage"
-        dpr={isMobile ? [1, 1.25] : [1, 1.75]}
+        dpr={isMobile ? [1, 1.25] : [1, 2]}
+        gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: fpMode ? 75 : 45, position: [0, 20, 22] }}
       >
         <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isArriving} />
@@ -258,6 +292,7 @@ export default function Campus3D() {
           walkGroundRef={walkGroundRef}
           onNearDoor={setNearDoor}
           fpModeRef={fpModeRef}
+          entering={entering}
         />
 
         {!isMobile && (
@@ -399,6 +434,41 @@ export default function Campus3D() {
             </>
           ) : (
             <>
+              {/* SPU Boutique Shop with Student Coins */}
+              <button
+                onClick={() => setShowAvatarShop(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
+                title="SPU Boutique · ร้านค้าแต่งตัวด้วยเหรียญ"
+              >
+                <span className="text-sm">🪙</span>
+                <span>{studentCoins}</span>
+                <span className="hidden sm:inline font-semibold text-amber-200/90">Coins</span>
+              </button>
+
+              {/* Brain Gym Pre-learning drills */}
+              <button
+                onClick={() => setShowBrainGym(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-500/30 to-indigo-500/20 px-3 py-2 text-xs font-bold text-purple-200 backdrop-blur-md border border-purple-400/40 hover:bg-purple-500/40 transition-all shadow cursor-pointer"
+                title="ลานฝึกสมอง · Pre-learning Brain Gym"
+              >
+                <Brain className="h-3.5 w-3.5 text-purple-300" />
+                <span className="hidden sm:inline">ลานฝึกสมอง</span>
+              </button>
+
+              {/* Challenge Missions / Quests Tracker Toggle */}
+              <button
+                onClick={() => setShowMissions(!showMissions)}
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold backdrop-blur-md border transition-all shadow cursor-pointer ${
+                  showMissions
+                    ? 'bg-pink-600/80 text-white border-pink-400/50 shadow-pink-500/20'
+                    : 'bg-black/40 text-white/90 border-white/10 hover:bg-black/55'
+                }`}
+                title="เควสต์ & การบ้าน"
+              >
+                <Scroll className="h-3.5 w-3.5 text-pink-300" />
+                <span className="hidden sm:inline">เควสต์</span>
+              </button>
+
               <Link
                 to="/create"
                 aria-label="แต่งตัว · Edit character"
@@ -575,6 +645,20 @@ export default function Campus3D() {
         />
       )}
 
+      {/* ── Gamified Student Features: Leaderboard (Left) & Missions (Right) ── */}
+      {!isTeacher && !isArriving && (
+        <>
+          <LeaderboardWidget />
+          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} />}
+        </>
+      )}
+
+      {/* ── SPU Boutique Avatar Shop Modal ── */}
+      {showAvatarShop && <AvatarShopModal onClose={() => setShowAvatarShop(false)} />}
+
+      {/* ── Brain Gym Pre-Learning Arena Modal ── */}
+      {showBrainGym && <BrainGymModal onClose={() => setShowBrainGym(false)} />}
+
       {/* ── Building enter transition with description ── */}
       {entering && (
         <div
@@ -608,6 +692,7 @@ type SceneProps = {
   walkGroundRef: RefObject<(x: number, z: number) => void>
   onNearDoor: (b: BuildingConfig | null) => void
   fpModeRef: RefObject<boolean>
+  entering: BuildingConfig | null
 }
 
 function passesNear(a: [number, number], b: [number, number], p: [number, number], r: number) {
@@ -631,6 +716,7 @@ function CampusScene({
   walkGroundRef,
   onNearDoor,
   fpModeRef,
+  entering,
 }: SceneProps) {
   const { camera, size, scene } = useThree()
   const avatarRef = useRef<Group>(null)
@@ -677,6 +763,7 @@ function CampusScene({
   useEffect(() => {
     const canvas = document.querySelector('canvas')
     if (!canvas) return
+
     let isMouseDown = false
     let lastX = 0
     let lastY = 0
@@ -686,6 +773,7 @@ function CampusScene({
       isMouseDown = true
       lastX = e.clientX
       lastY = e.clientY
+      // Request pointer lock on canvas click if supported
       if (!isPointerLocked.current && canvas.requestPointerLock) {
         canvas.requestPointerLock()
       }
@@ -712,11 +800,13 @@ function CampusScene({
         return
       }
 
+      // Moving mouse right (dx > 0) turns heading right (East)
       mouseYaw.current += dx * 0.0025
+      // Moving mouse down (dy > 0) tilts camera down (pitch > 0)
       mousePitch.current = MathUtils.clamp(
         mousePitch.current + dy * 0.002,
-        -Math.PI / 3,
-        Math.PI / 3,
+        -Math.PI / 3, // look up limit (~60 deg)
+        Math.PI / 3,  // look down limit (~60 deg)
       )
     }
 
@@ -839,6 +929,7 @@ function CampusScene({
     const isFP = fpModeRef.current
 
     if (isFP) {
+      // First-person: movement is relative to look heading
       const fwdX = Math.sin(mouseYaw.current)
       const fwdZ = -Math.cos(mouseYaw.current)
       const rightX = Math.cos(mouseYaw.current)
@@ -863,10 +954,12 @@ function CampusScene({
 
       const joy = joystickRef.current
       if (joy) {
+        // In touch joystick, joy[1] < 0 is pushing UP (forward)
         vx += joy[0] * rightX - joy[1] * fwdX
         vz += joy[0] * rightZ - joy[1] * fwdZ
       }
     } else {
+      // Third-person: movement is world-axis aligned
       if (k.has('KeyW') || k.has('ArrowUp')) vz -= 1
       if (k.has('KeyS') || k.has('ArrowDown')) vz += 1
       if (k.has('KeyA') || k.has('ArrowLeft')) vx -= 1
@@ -904,6 +997,7 @@ function CampusScene({
       }
       moving = true
     } else {
+      // Waypoint movement
       const next = waypoints.current[0]
       if (next) {
         const dx = next[0] - a.position.x
@@ -963,12 +1057,25 @@ function CampusScene({
     }
 
     // ── Camera ──────────────────────────────────────────────────────
+    if (entering) {
+      // 3D Door Swoop Dive: Camera glides gracefully toward building entrance
+      const door = doorPoint(entering)
+      const targetCamPos = new Vector3(door[0] + 0.6, 2.0, door[1] + 2.8)
+      const targetLook = new Vector3(door[0], 1.8, door[1])
+      camera.position.lerp(targetCamPos, Math.min(1, dt * 5))
+      camera.lookAt(targetLook)
+      for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+      return
+    }
+
     if (isFP) {
+      // First-person: camera is at eye level, looking in mouse heading direction
       camera.position.set(a.position.x, a.position.y + FP_EYE_HEIGHT, a.position.z)
       camera.rotation.order = 'YXZ'
       camera.rotation.y = -mouseYaw.current
       camera.rotation.x = mousePitch.current
     } else {
+      // Third-person follow
       lookTarget(a.position.x, a.position.z, look)
       if (intro.current < 1) {
         intro.current = Math.min(1, intro.current + dt / INTRO_SECONDS)
@@ -979,8 +1086,11 @@ function CampusScene({
         camera.lookAt(lookAt)
       } else {
         const kk = 1 - Math.exp(-3 * dt)
-        camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * kk
-        camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * kk
+        const t = state.clock.elapsedTime
+        const floatY = Math.sin(t * 1.5) * 0.14
+        const floatX = Math.cos(t * 0.8) * 0.1
+        camera.position.x += (look.x + CAMERA_OFFSET.x + floatX - camera.position.x) * kk
+        camera.position.y += (look.y + CAMERA_OFFSET.y + floatY - camera.position.y) * kk
         camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * kk
         camera.lookAt(look)
       }
@@ -1018,7 +1128,7 @@ function CampusScene({
         rotation={[0, facingPlaza(spawn), 0]}
         visible={!fpModeRef.current}
       >
-        <Avatar3D color={me.color} hat={me.hat} />
+        <Avatar3D color={me.color} hat={me.hat} outfit={me.outfit} aura={me.aura} />
       </group>
     </>
   )

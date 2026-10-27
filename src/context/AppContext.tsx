@@ -36,13 +36,29 @@ import {
 
 export type Role = 'teacher' | 'student'
 
-export type AvatarHat = 'none' | 'cap' | 'grad' | 'beanie'
+export type AvatarHat = 'none' | 'cap' | 'grad' | 'beanie' | 'cyber_cat' | 'dj_headset' | 'crown'
+export type AvatarOutfit = 'default' | 'suit' | 'hoodie' | 'labcoat'
+export type AvatarAura = 'none' | 'gold' | 'neon' | 'stars'
 
-/** The student's campus character, chosen on /create. */
+export type Mission = {
+  id: string
+  title: string
+  type: 'homework' | 'quiz' | 'drill' | 'exam'
+  buildingId: string
+  xpReward: number
+  coinReward: number
+  completed: boolean
+  description: string
+  dueDate?: string
+}
+
+/** The student's campus character, chosen on /create or SPU Boutique. */
 export type Avatar = {
   color: string
   hat: AvatarHat
   nickname: string
+  outfit?: AvatarOutfit
+  aura?: AvatarAura
 }
 
 export type LiveSession = {
@@ -311,9 +327,20 @@ type AppState = {
   activeActivity: Activity | null
   setActiveActivity: (activity: Activity) => void
 
-  // student xp state
+  // student xp & coins state
   studentXP: number
   addXP: (amount: number) => void
+  studentCoins: number
+  addCoins: (amount: number) => void
+
+  // challenge missions (homework, quizzes, exams)
+  missions: Mission[]
+  completeMission: (id: string) => void
+
+  // store items and avatar customization
+  ownedStoreItems: string[]
+  buyStoreItem: (itemId: string, price: number) => boolean
+  equipStoreItem: (category: 'hat' | 'outfit' | 'aura', itemId: string) => void
 
   // campus character (null until the student creates one)
   avatar: Avatar | null
@@ -400,11 +427,101 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [expectations, setExpectations] = useState<ExpectationSticky[]>(INITIAL_EXPECTATIONS)
   const [activeActivity, setActiveActivity] = useState<Activity | null>(GENERATED_CONTENT.activities[0])
   const [studentXP, setStudentXP] = useState(120)
+  const [studentCoins, setStudentCoins] = useState(180)
+  const [missions, setMissions] = useState<Mission[]>([
+    {
+      id: 'm-hw1',
+      title: 'การบ้านสัปดาห์ที่ 3: สรุป Case Study วัฒนธรรมญี่ปุ่น',
+      type: 'homework',
+      buildingId: 'data',
+      xpReward: 50,
+      coinReward: 35,
+      completed: false,
+      description: 'วิเคราะห์การเจรจาธุรกิจแบบ High-Context vs Low-Context',
+      dueDate: 'พรุ่งนี้ 23:59',
+    },
+    {
+      id: 'm-quiz1',
+      title: 'ควิซท้าทาย: Speed Cross-Cultural Quiz',
+      type: 'quiz',
+      buildingId: 'arena',
+      xpReward: 80,
+      coinReward: 50,
+      completed: false,
+      description: 'ทดสอบความเร็วและความแม่นยำ 5 ข้อ หัวข้อ Hofstede Dimensions',
+      dueDate: 'เปิดให้ทำตลอด',
+    },
+    {
+      id: 'm-drill1',
+      title: 'ลานฝึกสมอง: คำศัพท์สำคัญล่วงหน้าคาบถัดไป',
+      type: 'drill',
+      buildingId: 'arena',
+      xpReward: 40,
+      coinReward: 25,
+      completed: false,
+      description: 'ฝึกฝน 10 Flashcards สำคัญก่อนเริ่มคลาสสัปดาห์หน้า',
+      dueDate: 'ฝึกฝนล่วงหน้า',
+    },
+    {
+      id: 'm-exam1',
+      title: 'บอสเควสต์ปลายภาค: พิชิตคะแนน A+ ในอารีน่า',
+      type: 'exam',
+      buildingId: 'arena',
+      xpReward: 200,
+      coinReward: 150,
+      completed: false,
+      description: 'ข้อสอบจำลองเสมือนจริง 20 ข้อ ประเมินความพร้อมก่อนสอบจริง',
+      dueDate: 'อีก 14 วัน',
+    },
+  ])
+  const [ownedStoreItems, setOwnedStoreItems] = useState<string[]>(['hat-grad', 'outfit-default'])
   const [avatar, setAvatar] = useState<Avatar | null>(null)
   const [lang, setLang] = useState<Language>('th')
 
   const addXP = useCallback((amount: number) => {
     setStudentXP((prev) => prev + amount)
+  }, [])
+
+  const addCoins = useCallback((amount: number) => {
+    setStudentCoins((prev) => prev + amount)
+  }, [])
+
+  const completeMission = useCallback((id: string) => {
+    setMissions((prev) =>
+      prev.map((m) => {
+        if (m.id === id && !m.completed) {
+          addXP(m.xpReward)
+          addCoins(m.coinReward)
+          return { ...m, completed: true }
+        }
+        return m
+      }),
+    )
+  }, [addXP, addCoins])
+
+  const buyStoreItem = useCallback((itemId: string, price: number) => {
+    let success = false
+    setStudentCoins((curr) => {
+      if (curr >= price) {
+        success = true
+        return curr - price
+      }
+      return curr
+    })
+    if (success) {
+      setOwnedStoreItems((prev) => (prev.includes(itemId) ? prev : [...prev, itemId]))
+    }
+    return success
+  }, [])
+
+  const equipStoreItem = useCallback((category: 'hat' | 'outfit' | 'aura', itemId: string) => {
+    setAvatar((prev) => {
+      const base = prev ?? { color: '#E89BC4', hat: 'grad', nickname: demoStudent.nickname }
+      if (category === 'hat') return { ...base, hat: itemId as AvatarHat }
+      if (category === 'outfit') return { ...base, outfit: itemId as AvatarOutfit }
+      if (category === 'aura') return { ...base, aura: itemId as AvatarAura }
+      return base
+    })
   }, [])
 
   const t = useCallback(
@@ -704,6 +821,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     studentXP,
     addXP,
+
+    studentCoins,
+    addCoins,
+    missions,
+    completeMission,
+    ownedStoreItems,
+    buyStoreItem,
+    equipStoreItem,
 
     avatar,
     setAvatar,
