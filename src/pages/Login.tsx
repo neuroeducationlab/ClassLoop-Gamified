@@ -25,15 +25,14 @@ const noop = () => {}
  */
 function BirdEyeCameraRig({ isDiving, onLanded }: { isDiving: boolean; onLanded: () => void }) {
   const { camera } = useThree()
-  const target = useMemo(() => new Vector3(PLAZA_CENTER[0], 2, PLAZA_CENTER[1]), [])
-  const angle = useRef(0.9)
+  const target = useMemo(() => new Vector3(0, 1.8, -0.5), [])
   const dive = useRef<{ t: number; fromPos: Vector3; fromTarget: Vector3 } | null>(null)
   const landed = useRef(false)
   const gatePos = useMemo(() => new Vector3(GATE.position[0] + 4, 2.5, GATE.position[1] + 5), [])
   const gateLook = useMemo(() => new Vector3(GATE.position[0], 1.6, GATE.position[1]), [])
   const currentLook = useMemo(() => new Vector3(), [])
 
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
     if (isDiving) {
       if (!dive.current) {
         dive.current = {
@@ -72,16 +71,13 @@ function BirdEyeCameraRig({ isDiving, onLanded }: { isDiving: boolean; onLanded:
       return
     }
 
-    // High Bird's-Eye View: High elevation overlooking sky, towers, plaza & train
-    angle.current += dt * 0.035
-    const radius = 42
-    const height = 35
-    camera.position.set(
-      PLAZA_CENTER[0] + Math.sin(angle.current) * radius,
-      height,
-      PLAZA_CENTER[1] + Math.cos(angle.current) * radius,
-    )
-    camera.lookAt(target)
+    // Iconic SPU Blueprint Isometric Angle (matches official SPU map & 4 Times-of-Day Carousel)
+    const time = state.clock.elapsedTime
+    const heroX = -15.5 + Math.sin(time * 0.22) * 1.6
+    const heroY = 22.0 + Math.cos(time * 0.18) * 0.9
+    const heroZ = 26.5 + Math.cos(time * 0.22) * 1.4
+    camera.position.set(heroX, heroY, heroZ)
+    camera.lookAt(0, 1.8, -0.5)
   })
 
   return null

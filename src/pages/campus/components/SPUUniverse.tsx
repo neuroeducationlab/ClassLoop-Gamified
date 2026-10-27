@@ -33,9 +33,9 @@ export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
     fogColor: '#FDD5A6',
     fogNear: 55,
     fogFar: 140,
-    sunPos: [24, 12, 10],
+    sunPos: [20, 24, 14],
     sunColor: '#FFE5B4',
-    sunIntensity: 2.0,
+    sunIntensity: 2.2,
     hemiSky: '#FFF5E0',
     hemiGround: '#526173',
     hemiIntensity: 1.2,
@@ -50,9 +50,9 @@ export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
     fogColor: '#BAE6FD',
     fogNear: 65,
     fogFar: 160,
-    sunPos: [10, 34, 12],
+    sunPos: [12, 38, 14],
     sunColor: '#FFFFFF',
-    sunIntensity: 2.5,
+    sunIntensity: 2.6,
     hemiSky: '#FFFFFF',
     hemiGround: '#64748B',
     hemiIntensity: 1.4,
@@ -67,9 +67,9 @@ export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
     fogColor: '#E68A65',
     fogNear: 50,
     fogFar: 130,
-    sunPos: [-22, 9, -15],
+    sunPos: [-14, 22, 14],
     sunColor: '#FDBA74',
-    sunIntensity: 2.2,
+    sunIntensity: 2.3,
     hemiSky: '#FED7AA',
     hemiGround: '#3730A3',
     hemiIntensity: 1.1,
@@ -360,11 +360,15 @@ export function SPUUniverseEnvironment({
         intensity={preset.sunIntensity}
         color={preset.sunColor}
         castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-32}
-        shadow-camera-right={32}
-        shadow-camera-top={32}
-        shadow-camera-bottom={-32}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-near={1}
+        shadow-camera-far={120}
+        shadow-camera-left={-36}
+        shadow-camera-right={36}
+        shadow-camera-top={36}
+        shadow-camera-bottom={-36}
+        shadow-bias={-0.0003}
+        shadow-normalBias={0.02}
       />
 
       {/* Whimsical Thin Clouds */}
