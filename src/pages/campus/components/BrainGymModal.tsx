@@ -54,7 +54,7 @@ const DRILL_QUESTIONS: DrillQuestion[] = [
 ]
 
 export default function BrainGymModal({ onClose }: { onClose: () => void }) {
-  const { addXP, addCoins } = useApp()
+  const { addXP, addCoins, lang } = useApp()
   const [currentIdx, setCurrentIdx] = useState(0)
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null)
   const [answered, setAnswered] = useState(false)
@@ -114,14 +114,16 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-extrabold text-white">
-                    ลานฝึกสมอง & สกิลอารีน่า
+                    {lang === 'th' ? 'ลานฝึกสมอง & สกิลอารีน่า' : 'Brain Gym & Skill Arena'}
                   </h3>
                   <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
-                    เรียนล่วงหน้า
+                    {lang === 'th' ? 'เรียนล่วงหน้า' : 'Pre-learning'}
                   </span>
                 </div>
                 <p className="text-xs text-white/60">
-                  ข้อ {currentIdx + 1} จาก {DRILL_QUESTIONS.length} · สะสมคะแนนและฝีมือก่อนเข้าคลาส
+                  {lang === 'th'
+                    ? `ข้อ ${currentIdx + 1} จาก ${DRILL_QUESTIONS.length} · สะสมคะแนนและฝีมือก่อนเข้าคลาส`
+                    : `Question ${currentIdx + 1} of ${DRILL_QUESTIONS.length} · Earn XP & Coins before class`}
                 </p>
               </div>
             </div>
@@ -169,7 +171,9 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
             {/* Explanation card after answered */}
             {answered && (
               <div className="rounded-xl bg-cyan-950/30 border border-cyan-500/30 p-3 mb-4 text-xs animate-in fade-in">
-                <p className="font-bold text-cyan-300 mb-0.5">💡 คำอธิบายความรู้:</p>
+                <p className="font-bold text-cyan-300 mb-0.5">
+                  {lang === 'th' ? '💡 คำอธิบายความรู้:' : '💡 Explanation:'}
+                </p>
                 <p className="text-white/80 leading-relaxed">{q.explanation}</p>
               </div>
             )}
@@ -181,7 +185,15 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
                   onClick={handleNext}
                   className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover:brightness-110 transition-all cursor-pointer"
                 >
-                  <span>{currentIdx + 1 < DRILL_QUESTIONS.length ? 'ข้อถัดไป' : 'สรุปผลคะแนน'}</span>
+                  <span>
+                    {currentIdx + 1 < DRILL_QUESTIONS.length
+                      ? lang === 'th'
+                        ? 'ข้อถัดไป'
+                        : 'Next Question'
+                      : lang === 'th'
+                      ? 'สรุปผลคะแนน'
+                      : 'View Results'}
+                  </span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -193,9 +205,13 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
             <span className="flex h-16 w-16 mx-auto items-center justify-center rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-4xl shadow-xl animate-bounce mb-3">
               🏆
             </span>
-            <h3 className="text-xl font-black text-white">ฝึกฝนล่วงหน้าสำเร็จ!</h3>
+            <h3 className="text-xl font-black text-white">
+              {lang === 'th' ? 'ฝึกฝนล่วงหน้าสำเร็จ!' : 'Pre-Learning Completed!'}
+            </h3>
             <p className="text-xs text-white/70 mt-1">
-              คุณตอบถูก {score} จาก {DRILL_QUESTIONS.length} ข้อ
+              {lang === 'th'
+                ? `คุณตอบถูก ${score} จาก ${DRILL_QUESTIONS.length} ข้อ`
+                : `You scored ${score} of ${DRILL_QUESTIONS.length} correct`}
             </p>
 
             {/* Rewards Received */}
@@ -217,13 +233,13 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
                 className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                <span>ฝึกฝนอีกครั้ง</span>
+                <span>{lang === 'th' ? 'ฝึกฝนอีกครั้ง' : 'Try Again'}</span>
               </button>
               <button
                 onClick={onClose}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 px-5 py-2 text-xs font-bold text-white shadow-lg hover:brightness-110 transition-all cursor-pointer"
               >
-                <span>กลับสู่แคมปัส</span>
+                <span>{lang === 'th' ? 'กลับสู่แคมปัส' : 'Return to Campus'}</span>
               </button>
             </div>
           </div>

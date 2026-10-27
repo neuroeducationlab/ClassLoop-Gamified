@@ -18,7 +18,7 @@ function classmateXP(seed: number) {
 
 /** Arena: a flashcard match game for points, plus the class leaderboard. */
 export default function Arena() {
-  const { generatedContent, students, currentStudent, avatar, studentXP, addXP } = useApp()
+  const { generatedContent, students, currentStudent, avatar, studentXP, addXP, lang } = useApp()
   const cards = generatedContent.flashcards
 
   const board = useMemo(() => {
@@ -36,24 +36,30 @@ export default function Arena() {
   return (
     <>
       <div className="mb-4 grid grid-cols-3 gap-3">
-        <Stat icon={<Zap className="h-5 w-5" />} label="XP ของฉัน" value={studentXP} />
-        <Stat icon={<Trophy className="h-5 w-5" />} label="อันดับ" value={`#${myRank}`} />
-        <Stat icon={<Flame className="h-5 w-5" />} label="เลเวล" value={Math.max(1, Math.floor(studentXP / 100))} /* same formula as the campus HUD */ />
+        <Stat icon={<Zap className="h-5 w-5" />} label={lang === 'th' ? 'XP ของฉัน' : 'My XP'} value={studentXP} />
+        <Stat icon={<Trophy className="h-5 w-5" />} label={lang === 'th' ? 'อันดับ' : 'Rank'} value={`#${myRank}`} />
+        <Stat icon={<Flame className="h-5 w-5" />} label={lang === 'th' ? 'เลเวล' : 'Level'} value={Math.max(1, Math.floor(studentXP / 100))} /* same formula as the campus HUD */ />
       </div>
 
-      <Section title="เกมจับคู่คำศัพท์ · Word match" sub={`เลือกความหมายที่ถูก · +${XP_CORRECT} XP ต่อข้อ`}>
-        <WordMatch cards={cards} onCorrect={() => addXP(XP_CORRECT)} />
+      <Section
+        title={lang === 'th' ? 'เกมจับคู่คำศัพท์ · Word match' : 'Flashcard Word Match'}
+        sub={lang === 'th' ? `เลือกความหมายที่ถูก · +${XP_CORRECT} XP ต่อข้อ` : `Choose the correct definition · +${XP_CORRECT} XP`}
+      >
+        <WordMatch cards={cards} onCorrect={() => addXP(XP_CORRECT)} lang={lang} />
       </Section>
 
-      <Section title="ลีดเดอร์บอร์ด · Leaderboard" sub="อันดับประจำสัปดาห์ของห้อง">
+      <Section
+        title={lang === 'th' ? 'ลีดเดอร์บอร์ด · Leaderboard' : 'Classroom Leaderboard'}
+        sub={lang === 'th' ? 'อันดับประจำสัปดาห์ของห้อง' : 'Weekly room standings'}
+      >
         <ol className="space-y-1.5">
           {top.map((r, i) => (
-            <Row key={r.id} rank={i + 1} {...r} />
+            <Row key={r.id} rank={i + 1} {...r} lang={lang} />
           ))}
           {!top.includes(meRow) && (
             <>
               <li className="text-center text-xs text-grey-400">⋯</li>
-              <Row rank={myRank} {...meRow} />
+              <Row rank={myRank} {...meRow} lang={lang} />
             </>
           )}
         </ol>
@@ -75,7 +81,21 @@ function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: s
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
-function Row({ rank, name, faculty, xp, me }: { rank: number; name: string; faculty: string; xp: number; me: boolean }) {
+function Row({
+  rank,
+  name,
+  faculty,
+  xp,
+  me,
+  lang,
+}: {
+  rank: number
+  name: string
+  faculty: string
+  xp: number
+  me: boolean
+  lang: 'th' | 'en'
+}) {
   return (
     <li
       className={cn(
@@ -87,7 +107,7 @@ function Row({ rank, name, faculty, xp, me }: { rank: number; name: string; facu
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-bold text-ink">
           {name}
-          {me && <span className="ml-1 text-xs text-pink-600">(ฉัน)</span>}
+          {me && <span className="ml-1 text-xs text-pink-600">({lang === 'th' ? 'ฉัน' : 'You'})</span>}
         </span>
         <span className="block truncate text-[11px] text-grey-600">{faculty}</span>
       </span>
@@ -98,7 +118,7 @@ function Row({ rank, name, faculty, xp, me }: { rank: number; name: string; facu
 
 type Card = { front: string; back: string }
 
-function WordMatch({ cards, onCorrect }: { cards: Card[]; onCorrect: () => void }) {
+function WordMatch({ cards, onCorrect, lang }: { cards: Card[]; onCorrect: () => void; lang: 'th' | 'en' }) {
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
   const [streak, setStreak] = useState(0)
@@ -120,9 +140,13 @@ function WordMatch({ cards, onCorrect }: { cards: Card[]; onCorrect: () => void 
     <div>
       <div className="flex items-center justify-between text-xs font-semibold text-grey-600">
         <span>
-          การ์ด {(index % cards.length) + 1}/{cards.length}
+          {lang === 'th'
+            ? `การ์ด ${(index % cards.length) + 1}/${cards.length}`
+            : `Card ${(index % cards.length) + 1}/${cards.length}`}
         </span>
-        <span className="text-orange-500">🔥 ต่อเนื่อง {streak}</span>
+        <span className="text-orange-500">
+          {lang === 'th' ? `🔥 ต่อเนื่อง ${streak}` : `🔥 Streak ${streak}`}
+        </span>
       </div>
       <p className="mt-2 rounded-2xl bg-gradient-to-br from-pink-500 to-orange-400 p-5 text-center text-lg font-extrabold text-white">
         {card.front}
@@ -155,15 +179,21 @@ function WordMatch({ cards, onCorrect }: { cards: Card[]; onCorrect: () => void 
       </div>
       {answered && (
         <div className="mt-3 flex items-center justify-between">
-          {picked === correctIdx ? <XPChip amount={XP_CORRECT} /> : <span className="text-xs text-grey-600">ลองใหม่ข้อหน้า!</span>}
+          {picked === correctIdx ? (
+            <XPChip amount={XP_CORRECT} />
+          ) : (
+            <span className="text-xs text-grey-600">
+              {lang === 'th' ? 'ลองใหม่ข้อหน้า!' : 'Try again next card!'}
+            </span>
+          )}
           <button
             onClick={() => {
               setIndex((i) => i + 1)
               setPicked(null)
             }}
-            className="rounded-lg bg-pink-600 px-4 py-2 text-xs font-bold text-paper hover:bg-pink-500"
+            className="rounded-lg bg-pink-600 px-4 py-2 text-xs font-bold text-paper hover:bg-pink-500 cursor-pointer"
           >
-            การ์ดถัดไป →
+            {lang === 'th' ? 'การ์ดถัดไป →' : 'Next Card →'}
           </button>
         </div>
       )}

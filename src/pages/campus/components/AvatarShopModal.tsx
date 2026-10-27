@@ -168,6 +168,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
     buyStoreItem,
     equipStoreItem,
     avatar,
+    lang,
   } = useApp()
 
   const [activeTab, setActiveTab] = useState<'hat' | 'outfit' | 'aura'>('hat')
@@ -180,18 +181,30 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
 
     if (isOwned) {
       equipStoreItem(item.category, item.itemKey)
-      setPurchaseMsg(`สวมใส่ ${item.name} เรียบร้อย! ✨`)
+      setPurchaseMsg(
+        lang === 'th'
+          ? `สวมใส่ ${item.name} เรียบร้อย! ✨`
+          : `Equipped ${item.name} successfully! ✨`
+      )
       setTimeout(() => setPurchaseMsg(null), 2500)
     } else {
       if (studentCoins >= item.price) {
         const ok = buyStoreItem(item.id, item.price)
         if (ok) {
           equipStoreItem(item.category, item.itemKey)
-          setPurchaseMsg(`ซื้อและสวมใส่ ${item.name} สำเร็จ! 🎉`)
+          setPurchaseMsg(
+            lang === 'th'
+              ? `ซื้อและสวมใส่ ${item.name} สำเร็จ! 🎉`
+              : `Purchased & equipped ${item.name}! 🎉`
+          )
           setTimeout(() => setPurchaseMsg(null), 2500)
         }
       } else {
-        setPurchaseMsg('เหรียญของคุณไม่เพียงพอ! ทำการบ้านหรือควิซเพื่อสะสมเหรียญเพิ่มนะ')
+        setPurchaseMsg(
+          lang === 'th'
+            ? 'เหรียญของคุณไม่เพียงพอ! ทำการบ้านหรือควิซเพื่อสะสมเหรียญเพิ่มนะ'
+            : 'Not enough coins! Complete quizzes or quests to earn more coins.'
+        )
         setTimeout(() => setPurchaseMsg(null), 3000)
       }
     }
@@ -223,9 +236,13 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
             </span>
             <div>
               <h3 className="text-base font-extrabold text-white">
-                ร้านค้าแฟชั่น SPU Boutique
+                {lang === 'th' ? 'ร้านค้าแฟชั่น SPU Boutique' : 'SPU Boutique Fashion Shop'}
               </h3>
-              <p className="text-xs text-white/60">แต่งตัวคาแรคเตอร์ด้วยเหรียญจากการเรียน</p>
+              <p className="text-xs text-white/60">
+                {lang === 'th'
+                  ? 'แต่งตัวคาแรคเตอร์ด้วยเหรียญจากการเรียน'
+                  : 'Style your character with earned study coins'}
+              </p>
             </div>
           </div>
 
@@ -233,7 +250,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-1.5 rounded-2xl bg-amber-500/20 border border-amber-400/40 px-3.5 py-1.5 text-amber-300 shadow-md">
             <span className="text-base">🪙</span>
             <span className="text-sm font-extrabold">{studentCoins}</span>
-            <span className="text-[10px] text-amber-400/80">Coins</span>
+            <span className="text-[10px] text-amber-400/80">{lang === 'th' ? 'Coins' : 'Coins'}</span>
           </div>
         </div>
 
@@ -252,7 +269,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'hat' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>👑 หมวก & เครื่องประดับ</span>
+            <span>{lang === 'th' ? '👑 หมวก & เครื่องประดับ' : '👑 Hats & Accessories'}</span>
           </button>
           <button
             onClick={() => setActiveTab('outfit')}
@@ -260,7 +277,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'outfit' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>👔 ชุดแฟชั่น</span>
+            <span>{lang === 'th' ? '👔 ชุดแฟชั่น' : '👔 Outfits'}</span>
           </button>
           <button
             onClick={() => setActiveTab('aura')}
@@ -268,7 +285,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'aura' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>✨ ออร่าเรืองแสง</span>
+            <span>{lang === 'th' ? '✨ ออร่าเรืองแสง' : '✨ Glowing Auras'}</span>
           </button>
         </div>
 
@@ -293,7 +310,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
                 {/* Equipped Badge */}
                 {equipped && (
                   <span className="absolute right-2 top-2 rounded-full bg-pink-500 px-1.5 py-0.5 text-[9px] font-black text-white shadow">
-                    ใส่แล้ว ✓
+                    {lang === 'th' ? 'ใส่แล้ว ✓' : 'Equipped ✓'}
                   </span>
                 )}
 
@@ -324,13 +341,13 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
                     }`}
                   >
                     {equipped ? (
-                      'ใช้งานอยู่'
+                      lang === 'th' ? 'ใช้งานอยู่' : 'Equipped'
                     ) : isOwned ? (
-                      'สวมใส่'
+                      lang === 'th' ? 'สวมใส่' : 'Equip'
                     ) : (
                       <>
                         <span>🪙 {item.price}</span>
-                        <span>ซื้อเลย</span>
+                        <span>{lang === 'th' ? 'ซื้อเลย' : 'Buy Now'}</span>
                       </>
                     )}
                   </button>

@@ -17,8 +17,8 @@ export type BuildingShape = 'gate' | 'hall' | 'arena' | 'house' | 'hub' | 'offic
 export type Building = {
   id: BuildingId
   name: { th: string; en: string }
-  /** One-line English description shown on hover / in the door prompt. */
-  description: string
+  /** One-line description shown on hover / in the door prompt. */
+  description: { th: string; en: string }
   emoji: string
   /** Where it sits on the real SPU campus. */
   spuRef: string
@@ -57,7 +57,10 @@ export const BUILDINGS: Building[] = [
   {
     id: 'entry',
     name: { th: 'ประตูทางเข้า', en: 'MRT Gateway Pavilion' },
-    description: 'Main pedestrian entrance connecting MRT Sai Ma Exit 2 directly to the campus plaza.',
+    description: {
+      th: 'ประตูทางเข้าหลัก เชื่อมต่อจากสถานีรถไฟฟ้าสายสีเขียวสู่ลานกลางแคมปัส SPU',
+      en: 'Main pedestrian entrance connecting MRT Sai Ma Exit 2 directly to the campus plaza.',
+    },
     emoji: '🚪',
     spuRef: 'MRT Exit 2',
     color: '#F25F5C',
@@ -69,7 +72,10 @@ export const BUILDINGS: Building[] = [
   {
     id: 'faculty',
     name: { th: 'อาคารคณะ', en: 'Rangsit-Nives Academic Hall' },
-    description: 'Primary lecture building — pre-class videos, interactive quizzes, and graded assessments.',
+    description: {
+      th: 'อาคารเรียนหลักสำหรับบรรยาย วิดีโอก่อนเรียน ควิซ และแบบทดสอบเก็บคะแนน',
+      en: 'Primary lecture building — pre-class videos, interactive quizzes, and graded assessments.',
+    },
     emoji: '🏫',
     spuRef: 'bldg 1/11',
     color: '#7C9BE8',
@@ -81,9 +87,11 @@ export const BUILDINGS: Building[] = [
   {
     id: 'arena',
     name: { th: 'อารีน่า', en: 'Outdoor Activity Arena' },
-    description: 'Open-air competition plaza — word games, team challenges, and a live class leaderboard.',
+    description: {
+      th: 'ลานประลองและกิจกรรมกลางแจ้ง แข่งขันตอบคำถาม ชิงอันดับลีดเดอร์บอร์ด',
+      en: 'Open-air competition plaza — word games, team challenges, and a live class leaderboard.',
+    },
     emoji: '🏆',
-    // TODO(team): confirm where the activity plaza is — placed on the lawn by the pond
     spuRef: 'lawn by the pond',
     color: '#E89BC4',
     shape: 'arena',
@@ -94,9 +102,11 @@ export const BUILDINGS: Building[] = [
   {
     id: 'dorm',
     name: { th: 'หอใจ', en: 'Student Wellness Lounge' },
-    description: 'Anonymous feedback channel — share thoughts with your instructor confidentially.',
+    description: {
+      th: 'หอพักใจ ส่งความคิดเห็นและแชทกับอาจารย์แบบไม่เปิดเผยตัวตน สไตล์ RPG',
+      en: 'Anonymous feedback channel — share thoughts with your instructor confidentially.',
+    },
     emoji: '💬',
-    // TODO(team): confirm which building is the dorm — bldg 6 is a guess
     spuRef: 'bldg 6',
     color: '#4FB0A5',
     shape: 'house',
@@ -107,9 +117,11 @@ export const BUILDINGS: Building[] = [
   {
     id: 'data',
     name: { th: 'ศูนย์ข้อมูลและวิจัย', en: 'Academic Data & Research Center' },
-    description: 'Faculty-only analytics hub — student performance charts, gap analysis, and research data.',
+    description: {
+      th: 'ศูนย์วิเคราะห์ข้อมูลสถิติผู้เรียน วิเคราะห์ Gap ความรู้ และคลังข้อสอบสำหรับอาจารย์',
+      en: 'Faculty-only analytics hub — student performance charts, gap analysis, and research data.',
+    },
     emoji: '📊',
-    // TODO(team): confirm real building number — bldg 9 is a guess from the map arrow
     spuRef: 'bldg 9',
     color: '#F2994A',
     shape: 'hub',
@@ -120,9 +132,11 @@ export const BUILDINGS: Building[] = [
   {
     id: 'plan',
     name: { th: 'ห้องวางแผนการสอน', en: 'Lesson Planning Studio' },
-    description: 'AI-assisted curriculum design room — upload a syllabus and get instant activity suggestions.',
+    description: {
+      th: 'สตูดิโอออกแบบแผนการสอนด้วย AI สรุปกิจกรรมและสื่อการสอน 1-คลิก',
+      en: 'AI-assisted curriculum design room — upload a syllabus and get instant activity suggestions.',
+    },
     emoji: '🗺️',
-    // TODO(team): confirm — guessed bldg 5, in front of bldg 9 on the map
     spuRef: 'bldg 5',
     color: '#7C9BE8',
     shape: 'office',

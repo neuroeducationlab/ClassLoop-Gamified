@@ -97,7 +97,7 @@ function BirdEyeCameraRig({ isDiving, onLanded }: { isDiving: boolean; onLanded:
 }
 
 export default function Login() {
-  const { signIn } = useApp()
+  const { signIn, lang } = useApp()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -139,7 +139,7 @@ export default function Login() {
     if (loading || isDiving) return
 
     if (!email.trim() || !password) {
-      setError('กรุณากรอกอีเมลและรหัสผ่าน')
+      setError(lang === 'th' ? 'กรุณากรอกอีเมลและรหัสผ่าน' : 'Please enter email and password')
       return
     }
 
@@ -233,10 +233,14 @@ export default function Login() {
             <span className="text-sm font-bold tracking-wide">4DX CAMPUS LANDING</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
-            กำลังนำท่านลงสู่แคมปัส มหาวิทยาลัยศรีปทุม (SPU)…
+            {lang === 'th'
+              ? 'กำลังนำท่านลงสู่แคมปัส มหาวิทยาลัยศรีปทุม (SPU)…'
+              : 'Landing at Sripatum University (SPU) Campus…'}
           </h2>
           <p className="text-sm text-white/80 drop-shadow">
-            Swooping into MRT Exit 2 & Campus Plaza · เดินทางถึงในไม่กี่วินาที
+            {lang === 'th'
+              ? 'Swooping into MRT Exit 2 & Campus Plaza · เดินทางถึงในไม่กี่วินาที'
+              : 'Swooping into MRT Exit 2 & Campus Plaza · Arriving in seconds'}
           </p>
           <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden mt-1">
             <div className="h-full bg-gradient-to-r from-pink-500 to-amber-300 animate-pulse w-full" />
@@ -278,7 +282,7 @@ export default function Login() {
                 title={`Time of day: ${SKY_PRESETS[timeOfDay].label.en} (${SKY_PRESETS[timeOfDay].label.th})`}
               >
                 <span>{SKY_PRESETS[timeOfDay].icon}</span>
-                <span className="text-[11px] font-bold">{SKY_PRESETS[timeOfDay].label.th}</span>
+                <span className="text-[11px] font-bold">{SKY_PRESETS[timeOfDay].label[lang]}</span>
               </button>
               <LanguageSwitcher />
             </div>
@@ -290,14 +294,16 @@ export default function Login() {
               ClassLoop <span className="text-[#F2C879]">Campus</span>
             </h1>
             <p className="mt-1 text-xs text-white/75">
-              ระบบการเรียนรู้แบบ 3D แคมปัสเสมือนจริง มหาวิทยาลัยศรีปทุม
+              {lang === 'th'
+                ? 'ระบบการเรียนรู้แบบ 3D แคมปัสเสมือนจริง มหาวิทยาลัยศรีปทุม'
+                : '3D Immersive Gamified Campus · Sripatum University'}
             </p>
           </div>
 
           {selectedRole === 'none' ? (
             <div className="space-y-3.5 animate-fadeIn">
               <h2 className="text-center text-sm font-bold text-white/90 mb-4">
-                เลือกสถานะเพื่อเข้าสู่แคมปัส
+                {lang === 'th' ? 'เลือกสถานะเพื่อเข้าสู่แคมปัส' : 'Select Your Role to Enter Campus'}
               </h2>
 
               {/* Teacher option */}
@@ -310,10 +316,12 @@ export default function Login() {
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-white group-hover:text-pink-300 transition-colors">
-                    อาจารย์ผู้สอน (Faculty)
+                    {lang === 'th' ? 'อาจารย์ผู้สอน (Faculty)' : 'Faculty & Instructor'}
                   </h3>
                   <p className="text-xs text-white/70 mt-0.5">
-                    เข้าห้องสตูดิโอ วิเคราะห์ Gap นิสิต และเมนูลัด 1-คลิก
+                    {lang === 'th'
+                      ? 'เข้าห้องสตูดิโอ วิเคราะห์ Gap นิสิต และเมนูลัด 1-คลิก'
+                      : 'Course studio, student gap analytics & 1-click quick jump'}
                   </p>
                 </div>
               </button>
@@ -328,10 +336,12 @@ export default function Login() {
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-white group-hover:text-blue-300 transition-colors">
-                    นักศึกษา (Student)
+                    {lang === 'th' ? 'นักศึกษา (Student)' : 'Student'}
                   </h3>
                   <p className="text-xs text-white/70 mt-0.5">
-                    เดินเข้าห้องเรียน ทำเควสต์ และเก็บ XP ทบทวนบทเรียน
+                    {lang === 'th'
+                      ? 'เดินเข้าห้องเรียน ทำเควสต์ และเก็บ XP ทบทวนบทเรียน'
+                      : 'Walk into classrooms, conquer quests, and level up with XP'}
                   </p>
                 </div>
               </button>
@@ -342,13 +352,15 @@ export default function Login() {
                 onClick={() => setSelectedRole('none')}
                 className="mb-3 text-xs font-semibold text-white/70 hover:text-pink-300 flex items-center gap-1 transition-colors cursor-pointer"
               >
-                ← เปลี่ยนสถานะ ({selectedRole === 'teacher' ? 'อาจารย์' : 'นักศึกษา'})
+                {lang === 'th'
+                  ? `← เปลี่ยนสถานะ (${selectedRole === 'teacher' ? 'อาจารย์' : 'นักศึกษา'})`
+                  : `← Change Role (${selectedRole === 'teacher' ? 'Faculty' : 'Student'})`}
               </button>
 
               <form onSubmit={submit} className="space-y-3.5">
                 <div>
                   <label htmlFor="email" className="mb-1 block text-xs font-medium text-white/90">
-                    อีเมลมหาวิทยาลัย
+                    {lang === 'th' ? 'อีเมลมหาวิทยาลัย' : 'University Email'}
                   </label>
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
@@ -369,7 +381,7 @@ export default function Login() {
 
                 <div>
                   <label htmlFor="password" className="mb-1 block text-xs font-medium text-white/90">
-                    รหัสผ่าน
+                    {lang === 'th' ? 'รหัสผ่าน' : 'Password'}
                   </label>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
@@ -404,7 +416,13 @@ export default function Login() {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 py-3 text-sm font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-75 cursor-pointer"
                 >
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {loading ? 'กำลังเชื่อมต่อ…' : 'เข้าสู่ระบบ (4DX Landing)'}
+                  {loading
+                    ? lang === 'th'
+                      ? 'กำลังเชื่อมต่อ…'
+                      : 'Connecting…'
+                    : lang === 'th'
+                    ? 'เข้าสู่ระบบ (4DX Landing)'
+                    : 'Sign In (4DX Landing)'}
                 </button>
               </form>
 
@@ -412,7 +430,7 @@ export default function Login() {
               <div className="mt-4 rounded-2xl border border-white/15 bg-white/5 p-3.5">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[11px] font-semibold text-white/70">
-                    คลิกเพื่อกรอกบัญชีเดโมทันที
+                    {lang === 'th' ? 'คลิกเพื่อกรอกบัญชีเดโมทันที' : 'Click to autofill demo account'}
                   </p>
                   <Sparkles className="h-3 w-3 text-amber-300" />
                 </div>
@@ -429,13 +447,15 @@ export default function Login() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <span className="block text-xs font-bold text-white leading-tight">
-                          {acc.name} ({acc.role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'})
+                          {acc.name} ({acc.role === 'teacher' ? (lang === 'th' ? 'อาจารย์' : 'Faculty') : (lang === 'th' ? 'นักศึกษา' : 'Student')})
                         </span>
                         <span className="block truncate font-mono text-[10px] text-white/60">
                           {acc.email} · {acc.password}
                         </span>
                       </div>
-                      <span className="text-[10px] font-semibold text-pink-300">ใช้บัญชีนี้ →</span>
+                      <span className="text-[10px] font-semibold text-pink-300">
+                        {lang === 'th' ? 'ใช้บัญชีนี้ →' : 'Use this →'}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -446,7 +466,9 @@ export default function Login() {
 
         {/* Small footer credit */}
         <p className="mt-4 text-center text-xs text-white/60 drop-shadow">
-          มหาวิทยาลัยศรีปทุม (SPU) · พัฒนาเพื่อการเรียนรู้ไร้รอยต่อ
+          {lang === 'th'
+            ? 'มหาวิทยาลัยศรีปทุม (SPU) · พัฒนาเพื่อการเรียนรู้ไร้รอยต่อ'
+            : 'Sripatum University (SPU) · Seamless Gamified Learning'}
         </p>
       </div>
     </div>

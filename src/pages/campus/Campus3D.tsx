@@ -71,8 +71,6 @@ type LabelMap = Map<string, HTMLDivElement>
 const AVATAR_LABEL_HEIGHT = 2.1
 
 // ── Language helpers ────────────────────────────────────────────────────────
-type Lang = 'th' | 'en'
-
 const UI = {
   th: {
     dress: 'แต่งตัว',
@@ -90,6 +88,22 @@ const UI = {
     tpModeLabel: 'มุมมองบุคคลที่ 3',
     clickToEnter: 'กด E หรือคลิกเพื่อเข้า',
     facultyOnly: 'เฉพาะอาจารย์',
+    coins: 'เหรียญ',
+    shop: 'ร้านค้า',
+    brainGym: 'ลานฝึกสมอง',
+    missions: 'เควสต์',
+    studio: 'สตูดิโอ',
+    map2d: 'แผนที่ 2D',
+    facultyRole: 'อาจารย์ผู้สอน · Faculty',
+    quickNav: 'เมนูลัดอาจารย์ (ไม่ต้องเดิน)',
+    collapse: 'ย่อ',
+    expand: 'ขยาย',
+    dataNav: 'สถิติ & Gap Analysis',
+    dataSub: 'อาคาร 11 · วิเคราะห์ผู้เรียน',
+    planNav: 'สตูดิโอแผนการสอน',
+    planSub: 'อาคาร 5 · สื่อและกิจกรรม',
+    dormNav: 'กระทู้ & คำถามนิสิต',
+    dormSub: 'อาคาร 9 · คอมมูนิตี้',
   },
   en: {
     dress: 'Change Outfit',
@@ -107,12 +121,28 @@ const UI = {
     tpModeLabel: '3rd Person',
     clickToEnter: 'Press E or click to enter',
     facultyOnly: 'Faculty only',
+    coins: 'Coins',
+    shop: 'Shop',
+    brainGym: 'Brain Gym',
+    missions: 'Quests',
+    studio: 'Studio',
+    map2d: '2D Map',
+    facultyRole: 'Instructor · Faculty',
+    quickNav: 'Quick Faculty Links',
+    collapse: 'Collapse',
+    expand: 'Expand',
+    dataNav: 'Analytics & Gap Analysis',
+    dataSub: 'Bldg 11 · Student Insights',
+    planNav: 'Lesson Planning Studio',
+    planSub: 'Bldg 5 · Activities & Media',
+    dormNav: 'Student Feedback & Forum',
+    dormSub: 'Bldg 9 · Community',
   },
 } as const
 
 /** Student 3D campus: walk around, enter buildings, first-person immersive viewpoint. */
 export default function Campus3D() {
-  const { avatar, currentStudent, setRole, studentXP, role, teacherName, studentCoins } = useApp()
+  const { avatar, currentStudent, setRole, studentXP, role, teacherName, studentCoins, lang, setLang } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const isTeacher = role === 'teacher'
@@ -127,8 +157,7 @@ export default function Campus3D() {
   const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
   const [showMissions, setShowMissions] = useState<boolean>(true)
 
-  // ── Language & view mode toggles (default English, default Third-Person 3D RPG) ───
-  const [lang, setLang] = useState<Lang>('en')
+  // ── View mode and time of day toggles ───
   const [fpMode, setFpMode] = useState<boolean>(false)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
 
@@ -326,7 +355,7 @@ export default function Campus3D() {
                   {locked && <span className="text-[10px] opacity-75">🔒</span>}
                 </div>
                 <p className="mt-1 text-[10px] font-normal leading-snug text-white/90 whitespace-normal text-center">
-                  {b.description}
+                  {b.description[lang]}
                 </p>
                 {!locked && (isHovered || isNear) && (
                   <p className="mt-1 text-[10px] font-semibold text-white/95 border-t border-white/20 pt-1">
@@ -417,19 +446,19 @@ export default function Campus3D() {
             <>
               <Link
                 to="/map"
-                aria-label="แผนที่ 2D · 2D Map"
+                aria-label={t.map2d}
                 className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
               >
                 <span>🗺️</span>
-                <span className="hidden sm:inline">แผนที่ 2D</span>
+                <span className="hidden sm:inline">{t.map2d}</span>
               </Link>
               <Link
                 to="/teacher"
-                aria-label="ห้องสตูดิโออาจารย์ · Teacher Studio"
+                aria-label={t.studio}
                 className="flex items-center gap-1.5 rounded-xl bg-pink-600/80 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-pink-400/30 hover:bg-pink-600 transition-colors shadow"
               >
                 <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">สตูดิโอ</span>
+                <span className="hidden sm:inline">{t.studio}</span>
               </Link>
             </>
           ) : (
@@ -438,21 +467,21 @@ export default function Campus3D() {
               <button
                 onClick={() => setShowAvatarShop(true)}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
-                title="SPU Boutique · ร้านค้าแต่งตัวด้วยเหรียญ"
+                title={`SPU Boutique · ${t.shop}`}
               >
                 <span className="text-sm">🪙</span>
                 <span>{studentCoins}</span>
-                <span className="hidden sm:inline font-semibold text-amber-200/90">Coins</span>
+                <span className="hidden sm:inline font-semibold text-amber-200/90">{t.coins}</span>
               </button>
 
               {/* Brain Gym Pre-learning drills */}
               <button
                 onClick={() => setShowBrainGym(true)}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-500/30 to-indigo-500/20 px-3 py-2 text-xs font-bold text-purple-200 backdrop-blur-md border border-purple-400/40 hover:bg-purple-500/40 transition-all shadow cursor-pointer"
-                title="ลานฝึกสมอง · Pre-learning Brain Gym"
+                title={t.brainGym}
               >
                 <Brain className="h-3.5 w-3.5 text-purple-300" />
-                <span className="hidden sm:inline">ลานฝึกสมอง</span>
+                <span className="hidden sm:inline">{t.brainGym}</span>
               </button>
 
               {/* Challenge Missions / Quests Tracker Toggle */}
@@ -463,15 +492,15 @@ export default function Campus3D() {
                     ? 'bg-pink-600/80 text-white border-pink-400/50 shadow-pink-500/20'
                     : 'bg-black/40 text-white/90 border-white/10 hover:bg-black/55'
                 }`}
-                title="เควสต์ & การบ้าน"
+                title={t.missions}
               >
                 <Scroll className="h-3.5 w-3.5 text-pink-300" />
-                <span className="hidden sm:inline">เควสต์</span>
+                <span className="hidden sm:inline">{t.missions}</span>
               </button>
 
               <Link
                 to="/create"
-                aria-label="แต่งตัว · Edit character"
+                aria-label={t.dress}
                 className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
               >
                 <Shirt className="h-4 w-4" />
@@ -479,7 +508,7 @@ export default function Campus3D() {
               </Link>
               <Link
                 to="/student"
-                aria-label="หน้าเดิม · Classic view"
+                aria-label={t.back}
                 className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
               >
                 <LayoutGrid className="h-4 w-4" />
@@ -496,13 +525,13 @@ export default function Campus3D() {
           <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2.5">
             <div className="flex items-center gap-1.5">
               <span className="text-sm">⚡</span>
-              <p className="text-xs font-bold">เมนูลัดอาจารย์ (ไม่ต้องเดิน)</p>
+              <p className="text-xs font-bold">{t.quickNav}</p>
             </div>
             <button
               onClick={() => setTeacherMenuOpen(!teacherMenuOpen)}
               className="text-[11px] text-white/60 hover:text-white transition-colors"
             >
-              {teacherMenuOpen ? 'ย่อ' : 'ขยาย'}
+              {teacherMenuOpen ? t.collapse : t.expand}
             </button>
           </div>
 
@@ -515,8 +544,8 @@ export default function Campus3D() {
                 <span className="flex items-center gap-2">
                   <span className="text-base">📊</span>
                   <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">สถิติ & Gap Analysis</p>
-                    <p className="text-[10px] text-white/60">อาคาร 11 · วิเคราะห์ผู้เรียน</p>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.dataNav}</p>
+                    <p className="text-[10px] text-white/60">{t.dataSub}</p>
                   </div>
                 </span>
                 <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
@@ -529,8 +558,8 @@ export default function Campus3D() {
                 <span className="flex items-center gap-2">
                   <span className="text-base">📝</span>
                   <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">สตูดิโอแผนการสอน</p>
-                    <p className="text-[10px] text-white/60">อาคาร 5 · สื่อและกิจกรรม</p>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.planNav}</p>
+                    <p className="text-[10px] text-white/60">{t.planSub}</p>
                   </div>
                 </span>
                 <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
@@ -543,8 +572,8 @@ export default function Campus3D() {
                 <span className="flex items-center gap-2">
                   <span className="text-base">💬</span>
                   <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">กระทู้ & คำถามนิสิต</p>
-                    <p className="text-[10px] text-white/60">อาคาร 9 · คอมมูนิตี้</p>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.dormNav}</p>
+                    <p className="text-[10px] text-white/60">{t.dormSub}</p>
                   </div>
                 </span>
                 <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
@@ -570,7 +599,7 @@ export default function Campus3D() {
             <span className="text-xl">{nearDoor.emoji}</span>
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold">{nearDoor.name[lang]}</span>
-              <span className="text-[11px] text-white/75 hidden sm:block max-w-sm">{nearDoor.description}</span>
+              <span className="text-[11px] text-white/75 hidden sm:block max-w-sm">{nearDoor.description[lang]}</span>
             </div>
             <span className="hidden sm:flex items-center gap-1 text-xs text-white/70 mx-1 border-l border-white/20 pl-2">
               {t.pressE} <kbd className="rounded bg-white/20 px-1.5 py-0.5 text-white font-mono text-[10px] mx-0.5">E</kbd> {t.pressEAfter}
@@ -668,7 +697,7 @@ export default function Campus3D() {
           <span className="text-7xl animate-in zoom-in-50 duration-500">{entering.emoji}</span>
           <p className="text-2xl font-bold animate-in slide-in-from-bottom-4 duration-500">{entering.name[lang]}</p>
           <p className="text-sm text-white/85 max-w-sm text-center animate-in slide-in-from-bottom-4 duration-700 px-4">
-            {entering.description}
+            {entering.description[lang]}
           </p>
         </div>
       )}

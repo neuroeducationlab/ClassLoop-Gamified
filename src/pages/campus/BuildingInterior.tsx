@@ -14,7 +14,7 @@ import Studio from '@/pages/teacher/Studio'
 /** 2D inside of a campus building, at /campus/:buildingId. Role-aware: same room, different view. */
 export default function BuildingInterior() {
   const { buildingId } = useParams()
-  const { role } = useApp()
+  const { role, lang } = useApp()
   const navigate = useNavigate()
   const building = BUILDINGS.find((b) => b.id === buildingId)
   if (!building) return <Navigate to="/campus" replace />
@@ -24,6 +24,10 @@ export default function BuildingInterior() {
   const wide = building.id === 'data' || building.id === 'plan'
   const blurb = role === 'teacher' ? building.teacherSees : building.studentSees
   const back = () => navigate(role === 'teacher' ? '/map' : '/campus')
+
+  const backText = role === 'teacher'
+    ? (lang === 'th' ? 'กลับแผนที่ 2D' : 'Back to 2D Map')
+    : (lang === 'th' ? 'กลับแคมปัส 3D' : 'Back to 3D Campus')
 
   return (
     <div
@@ -43,10 +47,10 @@ export default function BuildingInterior() {
         <div className={`relative mx-auto px-4 pb-6 pt-4 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
           <button
             onClick={back}
-            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/25"
-            aria-label="กลับแคมปัส · Back to campus"
+            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/25 cursor-pointer"
+            aria-label={backText}
           >
-            <ArrowLeft className="h-4 w-4" /> {role === 'teacher' ? 'กลับแผนที่' : 'กลับแคมปัส'}
+            <ArrowLeft className="h-4 w-4" /> {backText}
           </button>
           <div className="mt-5 flex items-center gap-4">
             <span
@@ -59,8 +63,8 @@ export default function BuildingInterior() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
                 SPU · {building.spuRef}
               </p>
-              <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{building.name.th}</h1>
-              <p className="text-sm text-white/80">{building.name.en}</p>
+              <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{building.name[lang]}</h1>
+              <p className="text-sm text-white/80">{lang === 'th' ? building.name.en : building.name.th}</p>
             </div>
           </div>
           {blurb && !wide && <p className="mt-3 text-sm text-white/75">{blurb}</p>}

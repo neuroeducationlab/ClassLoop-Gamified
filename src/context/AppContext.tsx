@@ -347,8 +347,8 @@ type AppState = {
   setAvatar: (avatar: Avatar) => void
 
   // language internationalization state
-  lang: 'th' | 'en'
-  setLang: (lang: 'th' | 'en') => void
+  lang: Language
+  setLang: (lang: Language | ((prev: Language) => Language)) => void
   t: (key: keyof typeof TRANSLATIONS['th']) => string
 
   // actions
@@ -476,7 +476,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   ])
   const [ownedStoreItems, setOwnedStoreItems] = useState<string[]>(['hat-grad', 'outfit-default'])
   const [avatar, setAvatar] = useState<Avatar | null>(null)
-  const [lang, setLang] = useState<Language>('th')
+  const [lang, setLangState] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('classloop_lang')
+      if (saved === 'th' || saved === 'en') return saved
+    } catch {}
+    return 'th'
+  })
+
+  const setLang = useCallback((newLang: Language | ((prev: Language) => Language)) => {
+    setLangState((prev) => {
+      const next = typeof newLang === 'function' ? (newLang as (prev: Language) => Language)(prev) : newLang
+      try {
+        localStorage.setItem('classloop_lang', next)
+      } catch {}
+      return next
+    })
+  }, [])
 
   const addXP = useCallback((amount: number) => {
     setStudentXP((prev) => prev + amount)
