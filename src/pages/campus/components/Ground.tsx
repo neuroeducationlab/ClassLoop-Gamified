@@ -1,9 +1,10 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import type { Group } from 'three'
+import { DoubleSide, type Group } from 'three'
 import { BUILDINGS, CAMPUS_PALETTE, CAR_PARKS, MRT_LINE, PLAZA_CENTER, POND } from '@/data/buildings'
 import { doorPoint } from '../geometry'
 import { getAsphaltTexture, getPavingTexture } from '../textures'
+import CampusScenery from './CampusScenery'
 
 export const CAMPUS_RADIUS = 22
 
@@ -364,6 +365,9 @@ function Viaduct() {
           <boxGeometry args={[1.2, 0.2, 3.8]} />
           <meshStandardMaterial color="#8E96A6" />
         </mesh>
+
+        {/* Station Platform Warm Downlight */}
+        <pointLight position={[0, 0.8, 0]} color="#FFF0D0" intensity={3.5} distance={10} decay={2} />
       </group>
 
       {/* MODERN LIT COMMUTER TRAIN (Bangkok Green Line / Sukhumvit Line) */}
@@ -384,16 +388,31 @@ function Viaduct() {
               <boxGeometry args={[1.2, 0.08, 2.72]} />
               <meshStandardMaterial color="#1B4D9B" />
             </mesh>
-            {/* Cabin Windows with WARM GLOWING INTERIOR LIGHT */}
+
+            {/* Neon Under-chassis Track Glow (Bangkok Green Line emerald-cyan glow) */}
+            <mesh position={[0, -0.44, 0]}>
+              <boxGeometry args={[1.05, 0.04, 2.6]} />
+              <meshBasicMaterial color="#00FF99" />
+            </mesh>
+
+            {/* Cabin Windows with VIBRANT WARM GLOWING INTERIOR TRANSIT LIGHT */}
             <mesh position={[0, 0.12, 0]}>
               <boxGeometry args={[1.21, 0.28, 2.45]} />
               <meshStandardMaterial
                 color="#FFE5A8"
                 emissive="#FFE5A8"
-                emissiveIntensity={1.5}
+                emissiveIntensity={2.5}
                 roughness={0.1}
               />
             </mesh>
+            {/* Window divider mullions & passenger silhouettes */}
+            {[-0.8, -0.4, 0, 0.4, 0.8].map((mx) => (
+              <mesh key={mx} position={[0, 0.12, mx]}>
+                <boxGeometry args={[1.22, 0.29, 0.08]} />
+                <meshStandardMaterial color="#1E293B" />
+              </mesh>
+            ))}
+
             {/* Air conditioning roof pods */}
             <mesh position={[0, 0.48, 0]}>
               <boxGeometry args={[0.7, 0.12, 1.8]} />
@@ -408,15 +427,35 @@ function Viaduct() {
                   <boxGeometry args={[0.95, 0.4, 0.06]} />
                   <meshPhysicalMaterial color="#1A2433" roughness={0.1} metalness={0.6} clearcoat={1} />
                 </mesh>
-                {/* Twin High-Intensity LED Headlights */}
+
+                {/* Glowing LED Destination Display: "N15 SPU BANG BUA" */}
+                <mesh position={[0, 0.38, 1.35]} rotation={[0.2, 0, 0]}>
+                  <boxGeometry args={[0.75, 0.1, 0.03]} />
+                  <meshStandardMaterial color="#00FF88" emissive="#00FF88" emissiveIntensity={3.0} />
+                </mesh>
+
+                {/* Twin High-Intensity Projector LED Headlights */}
                 <mesh position={[0.35, -0.12, 1.38]}>
-                  <sphereGeometry args={[0.07, 12, 12]} />
-                  <meshStandardMaterial color="#FFFFFF" emissive="#FFF2CC" emissiveIntensity={2.5} />
+                  <sphereGeometry args={[0.09, 12, 12]} />
+                  <meshStandardMaterial color="#FFFFFF" emissive="#FFF2CC" emissiveIntensity={4.0} />
                 </mesh>
                 <mesh position={[-0.35, -0.12, 1.38]}>
-                  <sphereGeometry args={[0.07, 12, 12]} />
-                  <meshStandardMaterial color="#FFFFFF" emissive="#FFF2CC" emissiveIntensity={2.5} />
+                  <sphereGeometry args={[0.09, 12, 12]} />
+                  <meshStandardMaterial color="#FFFFFF" emissive="#FFF2CC" emissiveIntensity={4.0} />
                 </mesh>
+
+                {/* Forward Projecting Headlight Cones (Volumetric Track Illumination) */}
+                <mesh position={[0.35, -0.16, 2.8]} rotation={[Math.PI / 2, 0, 0]}>
+                  <coneGeometry args={[0.55, 2.9, 16, 1, true]} />
+                  <meshBasicMaterial color="#FFFDE7" transparent opacity={0.35} side={DoubleSide} />
+                </mesh>
+                <mesh position={[-0.35, -0.16, 2.8]} rotation={[Math.PI / 2, 0, 0]}>
+                  <coneGeometry args={[0.55, 2.9, 16, 1, true]} />
+                  <meshBasicMaterial color="#FFFDE7" transparent opacity={0.35} side={DoubleSide} />
+                </mesh>
+
+                {/* Real Three.js Headlight illuminating tracks and station */}
+                <pointLight position={[0, 0, 2.2]} color="#FFF8D6" intensity={4.5} distance={16} decay={1.8} />
               </>
             )}
 
@@ -424,12 +463,21 @@ function Viaduct() {
             {i === 3 && (
               <>
                 <mesh position={[0.35, -0.12, -1.38]}>
-                  <sphereGeometry args={[0.07, 12, 12]} />
-                  <meshStandardMaterial color="#E60000" emissive="#E60000" emissiveIntensity={2.0} />
+                  <sphereGeometry args={[0.08, 12, 12]} />
+                  <meshStandardMaterial color="#E60000" emissive="#FF1744" emissiveIntensity={3.5} />
                 </mesh>
                 <mesh position={[-0.35, -0.12, -1.38]}>
-                  <sphereGeometry args={[0.07, 12, 12]} />
-                  <meshStandardMaterial color="#E60000" emissive="#E60000" emissiveIntensity={2.0} />
+                  <sphereGeometry args={[0.08, 12, 12]} />
+                  <meshStandardMaterial color="#E60000" emissive="#FF1744" emissiveIntensity={3.5} />
+                </mesh>
+                {/* Red Taillight Streak Trails */}
+                <mesh position={[0.35, -0.12, -2.2]} rotation={[Math.PI / 2, 0, 0]}>
+                  <planeGeometry args={[0.15, 1.6]} />
+                  <meshBasicMaterial color="#FF1744" transparent opacity={0.5} />
+                </mesh>
+                <mesh position={[-0.35, -0.12, -2.2]} rotation={[Math.PI / 2, 0, 0]}>
+                  <planeGeometry args={[0.15, 1.6]} />
+                  <meshBasicMaterial color="#FF1744" transparent opacity={0.5} />
                 </mesh>
               </>
             )}
@@ -672,6 +720,9 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
       {PLANTER_POSITIONS.map((pos, idx) => (
         <ModernPlanter key={idx} position={pos} />
       ))}
+
+      {/* ── Rich SPU Game Universe Scenery: Sports Court, Botanical Pavilion, Coffee Terrace, Mobility Hub, Sculpture & Lush Trees ── */}
+      <CampusScenery />
     </group>
   )
 }

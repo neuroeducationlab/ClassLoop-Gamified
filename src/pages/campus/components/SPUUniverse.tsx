@@ -239,92 +239,243 @@ const ROAD_DIRECTION = new Vector3(
 const ROAD_LENGTH = Math.hypot(
   MRT_LINE.to[0] - MRT_LINE.from[0],
   MRT_LINE.to[1] - MRT_LINE.from[1],
-) + 12
+) + 24
 const ROAD_YAW = Math.atan2(
   MRT_LINE.to[0] - MRT_LINE.from[0],
   MRT_LINE.to[1] - MRT_LINE.from[1],
 )
 
-function TrafficVehicle({
-  laneOffset,
-  speed,
-  startProgress,
-  color,
-}: {
-  laneOffset: number
+type VehicleType = 'sedan' | 'taxi_pink' | 'taxi_green' | 'van' | 'bike'
+
+interface VehicleConfig {
+  type: VehicleType
+  color: string
   speed: number
   startProgress: number
-  color: string
-}) {
+  lane: 'forward' | 'reverse' // forward = from -> to (left lane: -1.1); reverse = to -> from (left lane: +1.1)
+  laneOffset?: number
+}
+
+function TrafficVehicle({
+  type,
+  color,
+  speed,
+  startProgress,
+  lane,
+  laneOffset = 0,
+}: VehicleConfig) {
   const ref = useRef<Group>(null)
   const progress = useRef(startProgress)
+  const isReverse = lane === 'reverse'
+  // In Thailand (left-side drive):
+  // Forward lane sits at negative X relative to road center (-1.1)
+  // Reverse lane sits at positive X relative to road center (+1.1)
+  const baseOffset = isReverse ? 1.1 + laneOffset : -1.1 + laneOffset
+  const vehicleYaw = isReverse ? ROAD_YAW + Math.PI : ROAD_YAW
 
   useFrame((_, dt) => {
     const g = ref.current
     if (!g) return
+    // Advance progress smoothly along the highway
     progress.current = (progress.current + (speed * dt) / ROAD_LENGTH) % 1
     const p = progress.current
-    const dist = (p - 0.5) * ROAD_LENGTH
+    // For forward: travels from -0.5 to +0.5 of ROAD_LENGTH
+    // For reverse: travels from +0.5 down to -0.5 of ROAD_LENGTH
+    const dist = isReverse ? (0.5 - p) * ROAD_LENGTH : (p - 0.5) * ROAD_LENGTH
     const midX = (MRT_LINE.from[0] + MRT_LINE.to[0]) / 2 + 1.2
     const midZ = (MRT_LINE.from[1] + MRT_LINE.to[1]) / 2 - 1.2
 
-    g.position.x = midX + ROAD_DIRECTION.x * dist + Math.cos(ROAD_YAW) * laneOffset
-    g.position.z = midZ + ROAD_DIRECTION.z * dist - Math.sin(ROAD_YAW) * laneOffset
+    g.position.x = midX + ROAD_DIRECTION.x * dist + Math.cos(ROAD_YAW) * baseOffset
+    g.position.z = midZ + ROAD_DIRECTION.z * dist - Math.sin(ROAD_YAW) * baseOffset
   })
 
   return (
-    <group ref={ref} position={[0, 0.08, 0]} rotation={[0, ROAD_YAW, 0]} scale={0.75}>
-      {/* Car chassis */}
-      <mesh position={[0, 0.22, 0]}>
-        <boxGeometry args={[1.5, 0.35, 0.8]} />
-        <meshStandardMaterial color={color} metalness={0.6} roughness={0.3} />
-      </mesh>
-      {/* Glowing Headlights */}
-      <mesh position={[0.76, 0.22, 0.25]}>
-        <sphereGeometry args={[0.08, 8, 8]} />
-        <meshBasicMaterial color="#FFFFFF" />
-      </mesh>
-      <mesh position={[0.76, 0.22, -0.25]}>
-        <sphereGeometry args={[0.08, 8, 8]} />
-        <meshBasicMaterial color="#FFFFFF" />
-      </mesh>
-      {/* Light trail streak (Headlight beam) */}
-      <mesh position={[1.4, 0.12, 0]}>
-        <boxGeometry args={[1.2, 0.02, 0.6]} />
-        <meshBasicMaterial color="#FFF9DB" transparent opacity={0.35} />
-      </mesh>
-      {/* Glowing Taillights + Trail */}
-      <mesh position={[-0.76, 0.22, 0.25]}>
-        <sphereGeometry args={[0.08, 8, 8]} />
-        <meshBasicMaterial color="#EF4444" />
-      </mesh>
-      <mesh position={[-0.76, 0.22, -0.25]}>
-        <sphereGeometry args={[0.08, 8, 8]} />
-        <meshBasicMaterial color="#EF4444" />
-      </mesh>
-      <mesh position={[-1.4, 0.12, 0]}>
-        <boxGeometry args={[1.2, 0.02, 0.5]} />
-        <meshBasicMaterial color="#EF4444" transparent opacity={0.4} />
-      </mesh>
+    <group ref={ref} position={[0, 0.08, 0]} rotation={[0, vehicleYaw, 0]} scale={0.72}>
+      {/* ── Vehicle specific geometry: length is along Z, width along X ── */}
+      {type === 'bike' ? (
+        <group>
+          {/* Motorbike Body */}
+          <mesh position={[0, 0.25, 0]}>
+            <boxGeometry args={[0.3, 0.35, 1.1]} />
+            <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+          </mesh>
+          {/* Handlebar & Windscreen */}
+          <mesh position={[0, 0.48, 0.28]}>
+            <boxGeometry args={[0.45, 0.12, 0.08]} />
+            <meshStandardMaterial color="#1E293B" />
+          </mesh>
+          {/* Driver Helmet */}
+          <mesh position={[0, 0.65, -0.05]} castShadow>
+            <sphereGeometry args={[0.16, 12, 12]} />
+            <meshStandardMaterial color="#F97316" roughness={0.3} />
+          </mesh>
+          {/* Delivery Box / Carrier */}
+          <mesh position={[0, 0.48, -0.38]} castShadow>
+            <boxGeometry args={[0.38, 0.32, 0.36]} />
+            <meshStandardMaterial color="#EA580C" />
+          </mesh>
+          {/* Single Bright Front Headlamp */}
+          <mesh position={[0, 0.28, 0.56]}>
+            <sphereGeometry args={[0.07, 10, 10]} />
+            <meshBasicMaterial color="#FFFDE7" />
+          </mesh>
+          {/* Forward Light Beam */}
+          <mesh position={[0, 0.12, 1.2]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.45, 1.3]} />
+            <meshBasicMaterial color="#FFF9C4" transparent opacity={0.35} />
+          </mesh>
+          {/* Red Tail Light */}
+          <mesh position={[0, 0.28, -0.56]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshBasicMaterial color="#EF4444" />
+          </mesh>
+        </group>
+      ) : type === 'van' ? (
+        <group>
+          {/* High-roof Van Body */}
+          <mesh position={[0, 0.38, 0]} castShadow>
+            <boxGeometry args={[0.9, 0.58, 2.1]} />
+            <meshStandardMaterial color={color} metalness={0.4} roughness={0.25} />
+          </mesh>
+          {/* Side Windows Strip */}
+          <mesh position={[0, 0.45, 0]}>
+            <boxGeometry args={[0.92, 0.22, 1.8]} />
+            <meshStandardMaterial color="#0F172A" roughness={0.1} />
+          </mesh>
+          {/* Windshield */}
+          <mesh position={[0, 0.46, 0.95]} rotation={[0.2, 0, 0]}>
+            <boxGeometry args={[0.82, 0.26, 0.08]} />
+            <meshStandardMaterial color="#0F172A" roughness={0.1} />
+          </mesh>
+          {/* Headlights */}
+          <mesh position={[0.32, 0.25, 1.06]}>
+            <sphereGeometry args={[0.08, 10, 10]} />
+            <meshBasicMaterial color="#FFFFFF" />
+          </mesh>
+          <mesh position={[-0.32, 0.25, 1.06]}>
+            <sphereGeometry args={[0.08, 10, 10]} />
+            <meshBasicMaterial color="#FFFFFF" />
+          </mesh>
+          {/* Forward Light Beams */}
+          <mesh position={[0, 0.12, 1.8]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.8, 1.5]} />
+            <meshBasicMaterial color="#FFF9C4" transparent opacity={0.3} />
+          </mesh>
+          {/* Taillights */}
+          <mesh position={[0.32, 0.3, -1.06]}>
+            <boxGeometry args={[0.08, 0.22, 0.04]} />
+            <meshBasicMaterial color="#EF4444" />
+          </mesh>
+          <mesh position={[-0.32, 0.3, -1.06]}>
+            <boxGeometry args={[0.08, 0.22, 0.04]} />
+            <meshBasicMaterial color="#EF4444" />
+          </mesh>
+        </group>
+      ) : (
+        /* Sedan & Taxis */
+        <group>
+          {/* Lower Chassis */}
+          <mesh position={[0, 0.18, 0]} castShadow>
+            <boxGeometry args={[0.84, 0.28, 1.72]} />
+            <meshStandardMaterial
+              color={type === 'taxi_green' ? '#10B981' : color}
+              metalness={0.4}
+              roughness={0.25}
+            />
+          </mesh>
+
+          {/* Cabin & Roof */}
+          <mesh position={[0, 0.38, -0.06]} castShadow>
+            <boxGeometry args={[0.74, 0.24, 0.96]} />
+            <meshStandardMaterial
+              color={type === 'taxi_green' ? '#FBBF24' : color}
+              metalness={0.3}
+              roughness={0.3}
+            />
+          </mesh>
+
+          {/* Windshield (Front at +Z) */}
+          <mesh position={[0, 0.37, 0.44]} rotation={[-0.45, 0, 0]}>
+            <planeGeometry args={[0.68, 0.28]} />
+            <meshStandardMaterial color="#0F172A" roughness={0.1} />
+          </mesh>
+          {/* Rear Window (Back at -Z) */}
+          <mesh position={[0, 0.37, -0.56]} rotation={[0.45, Math.PI, 0]}>
+            <planeGeometry args={[0.68, 0.28]} />
+            <meshStandardMaterial color="#0F172A" roughness={0.1} />
+          </mesh>
+
+          {/* Bangkok Taxi Roof Sign Light */}
+          {(type === 'taxi_pink' || type === 'taxi_green') && (
+            <mesh position={[0, 0.54, -0.06]}>
+              <boxGeometry args={[0.32, 0.08, 0.14]} />
+              <meshStandardMaterial
+                color="#FDE047"
+                emissive="#FDE047"
+                emissiveIntensity={1.8}
+              />
+            </mesh>
+          )}
+
+          {/* Glowing Front Headlights (at +Z) */}
+          <mesh position={[0.3, 0.18, 0.86]}>
+            <sphereGeometry args={[0.07, 10, 10]} />
+            <meshBasicMaterial color="#FFFFFF" />
+          </mesh>
+          <mesh position={[-0.3, 0.18, 0.86]}>
+            <sphereGeometry args={[0.07, 10, 10]} />
+            <meshBasicMaterial color="#FFFFFF" />
+          </mesh>
+
+          {/* Forward Headlight Ground Beam (Projects along +Z) */}
+          <mesh position={[0, 0.08, 1.65]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.85, 1.5]} />
+            <meshBasicMaterial color="#FFFDE7" transparent opacity={0.35} />
+          </mesh>
+
+          {/* Glowing Rear Taillights (at -Z) */}
+          <mesh position={[0.3, 0.2, -0.86]}>
+            <sphereGeometry args={[0.06, 8, 8]} />
+            <meshBasicMaterial color="#EF4444" />
+          </mesh>
+          <mesh position={[-0.3, 0.2, -0.86]}>
+            <sphereGeometry args={[0.06, 8, 8]} />
+            <meshBasicMaterial color="#EF4444" />
+          </mesh>
+
+          {/* Red Taillight Streak Trail (Extends backward along -Z) */}
+          <mesh position={[0, 0.08, -1.55]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.7, 1.3]} />
+            <meshBasicMaterial color="#EF4444" transparent opacity={0.4} />
+          </mesh>
+        </group>
+      )}
     </group>
   )
 }
 
 export function MovingTraffic() {
-  const cars = useMemo(
+  const vehicles = useMemo<VehicleConfig[]>(
     () => [
-      { laneOffset: 0.8, speed: 7.5, startProgress: 0.1, color: '#FFFFFF' },
-      { laneOffset: 0.8, speed: 8.2, startProgress: 0.55, color: '#3B82F6' },
-      { laneOffset: -0.8, speed: -6.8, startProgress: 0.3, color: '#E11D48' },
-      { laneOffset: -0.8, speed: -7.4, startProgress: 0.8, color: '#F59E0B' },
+      // ── Forward Lane (Heading towards 'to', Thai left lane) ──
+      { type: 'taxi_pink', color: '#EC4899', speed: 8.5, startProgress: 0.08, lane: 'forward' },
+      { type: 'sedan', color: '#FFFFFF', speed: 9.2, startProgress: 0.42, lane: 'forward' },
+      { type: 'bike', color: '#3B82F6', speed: 7.2, startProgress: 0.72, lane: 'forward', laneOffset: -0.3 },
+      { type: 'van', color: '#CBD5E1', speed: 7.8, startProgress: 0.88, lane: 'forward' },
+
+      // ── Reverse Lane (Heading towards 'from', Oncoming Thai left lane) ──
+      { type: 'taxi_green', color: '#10B981', speed: 8.8, startProgress: 0.18, lane: 'reverse' },
+      { type: 'sedan', color: '#2563EB', speed: 9.5, startProgress: 0.52, lane: 'reverse' },
+      { type: 'bike', color: '#E11D48', speed: 7.0, startProgress: 0.68, lane: 'reverse', laneOffset: 0.3 },
+      { type: 'sedan', color: '#E11D48', speed: 8.4, startProgress: 0.94, lane: 'reverse' },
     ],
     [],
   )
 
   return (
     <group>
-      {cars.map((c, i) => (
-        <TrafficVehicle key={i} {...c} />
+      {vehicles.map((v, i) => (
+        <TrafficVehicle key={i} {...v} />
       ))}
     </group>
   )
