@@ -2,31 +2,10 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronRight, LayoutGrid } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import {
-  BUILDINGS,
-  CAMPUS_PALETTE,
-  CAR_PARKS,
-  MRT_LINE,
-  PLAZA_CENTER,
-  POND,
-  type Building,
-  type BuildingShape,
-} from '@/data/buildings'
-import { doorPoint } from './geometry'
-
-/** Footprint (width, depth) of each shape on the top-down map, in world units. */
-const FOOTPRINT: Record<Exclude<BuildingShape, 'arena'>, [number, number]> = {
-  gate: [4.4, 1],
-  hall: [4.6, 3.6],
-  house: [3.6, 3],
-  hub: [4, 3.4],
-  office: [3.8, 3.2],
-}
+import { BUILDINGS, CAMPUS_PALETTE, type Building } from '@/data/buildings'
+import CampusMapSVG from './components/CampusMapSVG'
 
 const isTeacherRoom = (b: Building) => b.teacherSees !== null
-
-const MRT_ANGLE = (Math.atan2(MRT_LINE.to[1] - MRT_LINE.from[1], MRT_LINE.to[0] - MRT_LINE.from[0]) * 180) / Math.PI
-const MRT_LABEL: [number, number] = [MRT_LINE.from[0] + 2.5, MRT_LINE.from[1] + 4.2]
 
 /**
  * Teacher view of the campus: the same layout as the student 3D campus, as a
@@ -69,46 +48,10 @@ export default function CampusMap2D() {
 
       <main className="mx-auto grid max-w-6xl gap-4 p-4 lg:grid-cols-[1fr_320px]">
         <div className="overflow-hidden rounded-3xl border border-grey-300/60 shadow-sm" style={{ backgroundColor: CAMPUS_PALETTE.sky }}>
-          <svg viewBox="-21 -16 39 32" className="block h-auto w-full" role="img" aria-label="แผนที่แคมปัส SPU">
-            <rect x={-19} y={-15} width={35} height={30} rx={3} fill={CAMPUS_PALETTE.grass} />
-            {/* MRT viaduct */}
-            <line
-              x1={MRT_LINE.from[0]}
-              y1={MRT_LINE.from[1]}
-              x2={MRT_LINE.to[0]}
-              y2={MRT_LINE.to[1]}
-              stroke="#D9DCE3"
-              strokeWidth={1.6}
-              strokeLinecap="round"
-            />
-            <text
-              x={MRT_LABEL[0]}
-              y={MRT_LABEL[1]}
-              fontSize={0.9}
-              fill="#FFFFFF"
-              fontWeight={600}
-              transform={`rotate(${MRT_ANGLE} ${MRT_LABEL[0]} ${MRT_LABEL[1]})`}
-            >
-              MRT · Exit 2
-            </text>
-            {/* car parks + pond */}
-            {CAR_PARKS.map(({ at, size }) => (
-              <rect key={at.join()} x={at[0] - size[0] / 2} y={at[1] - size[1] / 2} width={size[0]} height={size[1]} rx={0.3} fill="#4A4C55" />
-            ))}
-            <circle cx={POND.at[0]} cy={POND.at[1]} r={POND.r} fill="#7CC6F2" stroke="#E8E2CF" strokeWidth={0.25} />
-            {/* paths */}
-            {BUILDINGS.map((b) => {
-              const [dx, dz] = doorPoint(b)
-              return (
-                <line key={b.id} x1={PLAZA_CENTER[0]} y1={PLAZA_CENTER[1]} x2={dx} y2={dz} stroke={CAMPUS_PALETTE.path} strokeWidth={1.2} />
-              )
-            })}
-            <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={2.2} fill={CAMPUS_PALETTE.path} />
-
-            {BUILDINGS.map((b) => (
-              <MapBuilding key={b.id} b={b} onOpen={isTeacherRoom(b) ? () => open(b) : undefined} />
-            ))}
-          </svg>
+          <CampusMapSVG
+            activeFilter={isTeacherRoom}
+            onBuildingClick={(b) => isTeacherRoom(b) && open(b)}
+          />
         </div>
 
         <aside className="space-y-3">
@@ -134,56 +77,5 @@ export default function CampusMap2D() {
         </aside>
       </main>
     </div>
-  )
-}
-
-function MapBuilding({ b, onOpen }: { b: Building; onOpen?: () => void }) {
-  const [x, z] = b.position
-  const active = Boolean(onOpen)
-  const body =
-    b.shape === 'arena' ? (
-      <circle cx={x} cy={z} r={2.8} fill={b.color} />
-    ) : (
-      <rect
-        x={x - FOOTPRINT[b.shape][0] / 2}
-        y={z - FOOTPRINT[b.shape][1] / 2}
-        width={FOOTPRINT[b.shape][0]}
-        height={FOOTPRINT[b.shape][1]}
-        rx={0.4}
-        fill={b.color}
-      />
-    )
-
-  return (
-    <g
-      opacity={active ? 1 : 0.45}
-      onClick={onOpen}
-      className={active ? 'cursor-pointer' : undefined}
-      role={active ? 'button' : undefined}
-      aria-label={active ? b.name.th : undefined}
-    >
-      {active && (
-        <circle cx={x} cy={z} r={2.9} fill="none" stroke="#FFFFFF" strokeWidth={0.18} className="animate-pulse" />
-      )}
-      {body}
-      <text x={x} y={z + 0.35} fontSize={1.4} textAnchor="middle">
-        {b.emoji}
-      </text>
-      {/* dark outline drawn under the fill keeps labels legible over paths and grass */}
-      <text
-        x={x}
-        y={z + (b.shape === 'gate' ? 1.9 : b.shape === 'arena' ? 3.9 : FOOTPRINT[b.shape][1] / 2 + 1.2)}
-        fontSize={0.95}
-        fontWeight={700}
-        textAnchor="middle"
-        fill="#FFFFFF"
-        stroke="#2B2D55"
-        strokeWidth={0.28}
-        strokeLinejoin="round"
-        paintOrder="stroke"
-      >
-        {b.name.th}
-      </text>
-    </g>
   )
 }

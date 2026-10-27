@@ -74,13 +74,13 @@ The user picked a realistic, textured look in a **modern-university urban style,
       (Bloom, AO, Vignette) disabled on mobile.
 - [x] 2. Grand opening page at `/`: cinematic orbit, title "ClassLoop Campus", Start → `/login`;
       buildings rise in sequence, windows light up, train passes.
-- [ ] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
+- [x] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
       caption "กำลังลงสู่แคมปัส…", **Skip arrival** pill.
-- [ ] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).
-- [ ] 5. WASD/arrows + touch joystick; "เข้าอาคาร" prompt (E / tap) near doors.
+- [x] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).
+- [x] 5. WASD/arrows + touch joystick; "เข้าอาคาร" prompt (E / tap) near doors.
 - [x] 6. Modern-uni interiors (back pill, accent hero band, dark glass lesson cards) + 390px mobile audit.
 - [x] Lite mode: `src/pages/campus/lowPower.ts` (phones, small screens, GPU-less → no postprocessing; `?hq` / `?lite`).
-- Parallel split (27 Oct): **Antigravity** owns steps 3–5 in `Campus3D.tsx`; **Claude** owned lite mode, step 2
+- Parallel split (27 Oct): **Antigravity** did steps 3–5 in `Campus3D.tsx`; **Claude** did lite mode, step 2
   (`src/pages/landing/Landing.tsx`, `/` route) and step 6 (`BuildingInterior.tsx`, `interiors/*`). On phones the
   campus HUD buttons are icon-only (labels from `sm:` up).
 - [ ] 7. Extra wow if time: holographic SPU logo, light-trail cars, confetti on level-up.
