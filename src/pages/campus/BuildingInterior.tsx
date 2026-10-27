@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ArrowLeft, Lock, Map as MapIcon } from 'lucide-react'
+import { ArrowLeft, Lock, Map as MapIcon, Volume2, VolumeX } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { BUILDINGS, type BuildingId } from '@/data/buildings'
+import { playPortalSound, isSoundMuted, toggleSoundMute } from './soundEngine'
 import GateRoom from './interiors/GateRoom'
 import FacultyHall from './interiors/FacultyHall'
 import Arena from './interiors/Arena'
@@ -17,6 +19,7 @@ export default function BuildingInterior() {
   const { role, lang } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
+  const [muted, setMuted] = useState(isSoundMuted())
   const building = BUILDINGS.find((b) => b.id === buildingId)
   if (!building) return <Navigate to="/campus" replace />
 
@@ -28,7 +31,15 @@ export default function BuildingInterior() {
   // Check if teacher specifically came from the 2D map
   const fromMap = (location.state as { from?: string } | null)?.from === '/map'
   const backTarget = fromMap ? '/map' : '/campus'
-  const back = () => navigate(backTarget)
+  const back = () => {
+    playPortalSound()
+    navigate(backTarget)
+  }
+
+  const handleToggleSound = () => {
+    const next = toggleSoundMute()
+    setMuted(next)
+  }
 
   const backText = backTarget === '/map'
     ? (lang === 'th' ? 'กลับแผนที่ 2D' : 'Back to 2D Map')
@@ -71,6 +82,15 @@ export default function BuildingInterior() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleToggleSound}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/80 hover:bg-white/20 transition-all cursor-pointer shadow-sm"
+                title={muted ? (lang === 'th' ? 'เปิดเสียงเอฟเฟกต์' : 'Unmute SFX') : (lang === 'th' ? 'ปิดเสียงเอฟเฟกต์' : 'Mute SFX')}
+                aria-label="Toggle SFX"
+              >
+                {muted ? <VolumeX className="h-4 w-4 text-rose-300" /> : <Volume2 className="h-4 w-4 text-emerald-300" />}
+              </button>
               <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
                 {role === 'teacher'
                   ? (lang === 'th' ? '🧑‍🏫 โหมดอาจารย์' : '🧑‍🏫 Faculty Mode')
