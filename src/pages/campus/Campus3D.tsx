@@ -127,9 +127,9 @@ export default function Campus3D() {
   const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
   const [showMissions, setShowMissions] = useState<boolean>(true)
 
-  // ── Language & view mode toggles (default English, default Third-Person 3D RPG) ───
+  // ── Language & view mode toggles (default English, default First-Person RPG eye view; the HUD button switches) ───
   const [lang, setLang] = useState<Lang>('en')
-  const [fpMode, setFpMode] = useState<boolean>(false)
+  const [fpMode, setFpMode] = useState<boolean>(true)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
 
   const cycleTimeOfDay = () => {
@@ -141,7 +141,7 @@ export default function Campus3D() {
     })
   }
 
-  const fpModeRef = useRef<boolean>(false)
+  const fpModeRef = useRef<boolean>(true)
   useEffect(() => {
     fpModeRef.current = fpMode
   }, [fpMode])
