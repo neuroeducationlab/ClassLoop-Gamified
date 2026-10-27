@@ -448,7 +448,7 @@ function FrontRoad() {
   const [tx, tz] = MRT_LINE.to
   const dx = tx - fx
   const dz = tz - fz
-  const length = Math.hypot(dx, dz) + 8
+  const length = Math.hypot(dx, dz) + 22
   const yaw = Math.atan2(dx, dz)
   const roadWidth = 3.8
 
@@ -491,11 +491,57 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
 
   return (
     <group>
+      {/* Expansive Outer Landscape (Full scale map with ample surrounding empty space) */}
+      <mesh position={[0, -0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
+        <circleGeometry args={[110, 64]} />
+        <meshStandardMaterial color="#5E8C4A" roughness={0.95} />
+      </mesh>
+
       {/* Campus Base Terrain / Modern Lawn */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
-        <circleGeometry args={[CAMPUS_RADIUS + 8, 64]} />
-        <meshStandardMaterial color={CAMPUS_PALETTE.grass} roughness={0.9} />
+        <circleGeometry args={[38, 64]} />
+        <meshStandardMaterial color={CAMPUS_PALETTE.grass} roughness={0.88} />
       </mesh>
+
+      {/* Stylized Perimeter Border Ring */}
+      <mesh position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[37.5, 38.2, 64]} />
+        <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
+      </mesh>
+
+      {/* Surrounding Perimeter Trees (Based on reference maps for clean, positive university vibe) */}
+      {[
+        [-22, 0, -18],
+        [-16, 0, -22],
+        [-8, 0, -24],
+        [4, 0, -25],
+        [15, 0, -22],
+        [24, 0, -15],
+        [26, 0, -5],
+        [27, 0, 8],
+        [22, 0, 18],
+        [14, 0, 24],
+        [2, 0, 26],
+        [-10, 0, 23],
+        [-20, 0, 16],
+        [-25, 0, 4],
+        [-26, 0, -8],
+      ].map(([tx, ty, tz], i) => (
+        <group key={i} position={[tx, ty, tz]} scale={0.9 + (i % 3) * 0.2}>
+          <mesh position={[0, 0.7, 0]} castShadow>
+            <cylinderGeometry args={[0.15, 0.22, 1.4, 6]} />
+            <meshStandardMaterial color="#4A3525" roughness={0.8} />
+          </mesh>
+          <mesh position={[0, 2.0, 0]} castShadow>
+            <dodecahedronGeometry args={[1.1, 0]} />
+            <meshStandardMaterial color={i % 2 === 0 ? '#548C38' : '#65A344'} roughness={0.7} />
+          </mesh>
+          <mesh position={[0, 2.8, 0]} castShadow>
+            <dodecahedronGeometry args={[0.75, 0]} />
+            <meshStandardMaterial color="#74B850" roughness={0.7} />
+          </mesh>
+        </group>
+      ))}
 
       {/* Front Highway (Phahonyothin Road alongside the MRT) */}
       <FrontRoad />
