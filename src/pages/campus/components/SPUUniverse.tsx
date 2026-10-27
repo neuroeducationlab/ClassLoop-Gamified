@@ -1,0 +1,385 @@
+import { useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { Stars } from '@react-three/drei'
+import { Vector3, type Group, type Mesh } from 'three'
+import { MRT_LINE, PLAZA_CENTER } from '@/data/buildings'
+
+export type TimeOfDay = 'morning' | 'midday' | 'evening' | 'night'
+
+export interface SkyPreset {
+  id: TimeOfDay
+  label: { th: string; en: string }
+  icon: string
+  skyGradient: [string, string, string] // top, mid, horizon
+  fogColor: string
+  fogNear: number
+  fogFar: number
+  sunPos: [number, number, number]
+  sunColor: string
+  sunIntensity: number
+  hemiSky: string
+  hemiGround: string
+  hemiIntensity: number
+  showStars: boolean
+  windowEmissiveBoost: number
+}
+
+export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
+  morning: {
+    id: 'morning',
+    label: { th: 'เช้า', en: 'Morning' },
+    icon: '🌅',
+    skyGradient: ['#3A4E7A', '#F68B6E', '#FDE0A9'],
+    fogColor: '#FDD5A6',
+    fogNear: 55,
+    fogFar: 140,
+    sunPos: [24, 12, 10],
+    sunColor: '#FFE5B4',
+    sunIntensity: 2.0,
+    hemiSky: '#FFF5E0',
+    hemiGround: '#526173',
+    hemiIntensity: 1.2,
+    showStars: false,
+    windowEmissiveBoost: 0.3,
+  },
+  midday: {
+    id: 'midday',
+    label: { th: 'กลางวัน', en: 'Midday' },
+    icon: '☀️',
+    skyGradient: ['#2563EB', '#60A5FA', '#BAE6FD'],
+    fogColor: '#BAE6FD',
+    fogNear: 65,
+    fogFar: 160,
+    sunPos: [10, 34, 12],
+    sunColor: '#FFFFFF',
+    sunIntensity: 2.5,
+    hemiSky: '#FFFFFF',
+    hemiGround: '#64748B',
+    hemiIntensity: 1.4,
+    showStars: false,
+    windowEmissiveBoost: 0.1,
+  },
+  evening: {
+    id: 'evening',
+    label: { th: 'เย็น', en: 'Sunset' },
+    icon: '🌇',
+    skyGradient: ['#2A2858', '#99355D', '#F59E0B'],
+    fogColor: '#E68A65',
+    fogNear: 50,
+    fogFar: 130,
+    sunPos: [-22, 9, -15],
+    sunColor: '#FDBA74',
+    sunIntensity: 2.2,
+    hemiSky: '#FED7AA',
+    hemiGround: '#3730A3',
+    hemiIntensity: 1.1,
+    showStars: false,
+    windowEmissiveBoost: 1.0,
+  },
+  night: {
+    id: 'night',
+    label: { th: 'ค่ำ/ดวงดาว', en: 'Night' },
+    icon: '🌌',
+    skyGradient: ['#070A14', '#0F172A', '#1E1B4B'],
+    fogColor: '#0F172A',
+    fogNear: 45,
+    fogFar: 120,
+    sunPos: [8, 25, -12], // Moon
+    sunColor: '#A5B4FC',
+    sunIntensity: 0.8,
+    hemiSky: '#1E1B4B',
+    hemiGround: '#020617',
+    hemiIntensity: 0.6,
+    showStars: true,
+    windowEmissiveBoost: 2.2,
+  },
+}
+
+/* ---------------------------------------------------------------- drifting thin clouds -- */
+
+function ThinCloud({
+  startPos,
+  speed,
+  scale = 1,
+}: {
+  startPos: [number, number, number]
+  speed: number
+  scale?: number
+}) {
+  const ref = useRef<Group>(null)
+
+  useFrame((state, dt) => {
+    const g = ref.current
+    if (!g) return
+    // Drift gently along X axis
+    g.position.x += dt * speed
+    // Wrap around
+    if (g.position.x > 70) g.position.x = -70
+    // Subtle whimsical bobbing
+    g.position.y = startPos[1] + Math.sin(state.clock.elapsedTime * 0.4 + startPos[0]) * 0.6
+  })
+
+  return (
+    <group ref={ref} position={startPos} scale={scale}>
+      {/* Soft rounded cloud puffs */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[2.4, 16, 12]} />
+        <meshStandardMaterial color="#FFFFFF" transparent opacity={0.65} roughness={1} />
+      </mesh>
+      <mesh position={[2.2, -0.3, 0.4]}>
+        <sphereGeometry args={[1.8, 14, 10]} />
+        <meshStandardMaterial color="#FFFFFF" transparent opacity={0.6} roughness={1} />
+      </mesh>
+      <mesh position={[-2.0, -0.2, -0.3]}>
+        <sphereGeometry args={[1.9, 14, 10]} />
+        <meshStandardMaterial color="#FFFFFF" transparent opacity={0.6} roughness={1} />
+      </mesh>
+      <mesh position={[0.8, 0.6, -0.2]}>
+        <sphereGeometry args={[1.4, 12, 10]} />
+        <meshStandardMaterial color="#FFFFFF" transparent opacity={0.7} roughness={1} />
+      </mesh>
+    </group>
+  )
+}
+
+export function WhimsicalClouds() {
+  const clouds = useMemo(
+    () => [
+      { startPos: [-45, 32, -25] as [number, number, number], speed: 1.1, scale: 1.3 },
+      { startPos: [-10, 36, -38] as [number, number, number], speed: 0.9, scale: 1.6 },
+      { startPos: [25, 30, -18] as [number, number, number], speed: 1.2, scale: 1.1 },
+      { startPos: [-30, 34, 15] as [number, number, number], speed: 0.8, scale: 1.4 },
+      { startPos: [15, 38, 28] as [number, number, number], speed: 1.0, scale: 1.5 },
+      { startPos: [-55, 28, 5] as [number, number, number], speed: 1.3, scale: 1.0 },
+    ],
+    [],
+  )
+
+  return (
+    <group>
+      {clouds.map((c, i) => (
+        <ThinCloud key={i} {...c} />
+      ))}
+    </group>
+  )
+}
+
+/* ---------------------------------------------------------------- holographic SPU logo (Step 7) -- */
+
+export function HolographicSPULogo({ position = [PLAZA_CENTER[0], 2.8, PLAZA_CENTER[1]] }: { position?: [number, number, number] }) {
+  const groupRef = useRef<Group>(null)
+  const ringRef1 = useRef<Mesh>(null)
+  const ringRef2 = useRef<Mesh>(null)
+  const diamondRef = useRef<Mesh>(null)
+
+  useFrame((state, dt) => {
+    const g = groupRef.current
+    if (!g) return
+    const t = state.clock.elapsedTime
+
+    // Gentle float
+    g.position.y = position[1] + Math.sin(t * 1.5) * 0.18
+
+    // Counter-rotating tech rings
+    if (ringRef1.current) ringRef1.current.rotation.z += dt * 0.8
+    if (ringRef2.current) ringRef2.current.rotation.x += dt * 0.6
+    if (diamondRef.current) diamondRef.current.rotation.y += dt * 1.0
+  })
+
+  return (
+    <group ref={groupRef} position={position}>
+      {/* Upward vertical holographic light beacon */}
+      <mesh position={[0, 4, 0]}>
+        <cylinderGeometry args={[0.08, 0.45, 9, 16]} />
+        <meshBasicMaterial color="#E89BC4" transparent opacity={0.25} />
+      </mesh>
+
+      {/* Central Holographic SPU Gem / Prism */}
+      <mesh ref={diamondRef} position={[0, 0, 0]}>
+        <octahedronGeometry args={[0.7, 0]} />
+        <meshPhysicalMaterial
+          color="#FF3388"
+          emissive="#FF2A85"
+          emissiveIntensity={2.5}
+          roughness={0.1}
+          metalness={0.2}
+          clearcoat={1}
+          transparent
+          opacity={0.88}
+        />
+      </mesh>
+
+      {/* Outer Holographic Rings */}
+      <mesh ref={ringRef1} rotation={[Math.PI / 4, 0, 0]}>
+        <torusGeometry args={[1.2, 0.03, 16, 48]} />
+        <meshBasicMaterial color="#60A5FA" transparent opacity={0.8} />
+      </mesh>
+
+      <mesh ref={ringRef2} rotation={[-Math.PI / 4, 0, 0]}>
+        <torusGeometry args={[1.5, 0.03, 16, 48]} />
+        <meshBasicMaterial color="#F472B6" transparent opacity={0.7} />
+      </mesh>
+
+      {/* Ground light aura */}
+      <mesh position={[0, -2.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.8, 2.8, 32]} />
+        <meshBasicMaterial color="#EC4899" transparent opacity={0.25} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ---------------------------------------------------------------- moving light-trail traffic (Step 7) -- */
+
+const ROAD_DIRECTION = new Vector3(
+  MRT_LINE.to[0] - MRT_LINE.from[0],
+  0,
+  MRT_LINE.to[1] - MRT_LINE.from[1],
+).normalize()
+const ROAD_LENGTH = Math.hypot(
+  MRT_LINE.to[0] - MRT_LINE.from[0],
+  MRT_LINE.to[1] - MRT_LINE.from[1],
+) + 12
+const ROAD_YAW = Math.atan2(
+  MRT_LINE.to[0] - MRT_LINE.from[0],
+  MRT_LINE.to[1] - MRT_LINE.from[1],
+)
+
+function TrafficVehicle({
+  laneOffset,
+  speed,
+  startProgress,
+  color,
+}: {
+  laneOffset: number
+  speed: number
+  startProgress: number
+  color: string
+}) {
+  const ref = useRef<Group>(null)
+  const progress = useRef(startProgress)
+
+  useFrame((_, dt) => {
+    const g = ref.current
+    if (!g) return
+    progress.current = (progress.current + (speed * dt) / ROAD_LENGTH) % 1
+    const p = progress.current
+    const dist = (p - 0.5) * ROAD_LENGTH
+    const midX = (MRT_LINE.from[0] + MRT_LINE.to[0]) / 2 + 1.2
+    const midZ = (MRT_LINE.from[1] + MRT_LINE.to[1]) / 2 - 1.2
+
+    g.position.x = midX + ROAD_DIRECTION.x * dist + Math.cos(ROAD_YAW) * laneOffset
+    g.position.z = midZ + ROAD_DIRECTION.z * dist - Math.sin(ROAD_YAW) * laneOffset
+  })
+
+  return (
+    <group ref={ref} position={[0, 0.08, 0]} rotation={[0, ROAD_YAW, 0]} scale={0.75}>
+      {/* Car chassis */}
+      <mesh position={[0, 0.22, 0]}>
+        <boxGeometry args={[1.5, 0.35, 0.8]} />
+        <meshStandardMaterial color={color} metalness={0.6} roughness={0.3} />
+      </mesh>
+      {/* Glowing Headlights */}
+      <mesh position={[0.76, 0.22, 0.25]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshBasicMaterial color="#FFFFFF" />
+      </mesh>
+      <mesh position={[0.76, 0.22, -0.25]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshBasicMaterial color="#FFFFFF" />
+      </mesh>
+      {/* Light trail streak (Headlight beam) */}
+      <mesh position={[1.4, 0.12, 0]}>
+        <boxGeometry args={[1.2, 0.02, 0.6]} />
+        <meshBasicMaterial color="#FFF9DB" transparent opacity={0.35} />
+      </mesh>
+      {/* Glowing Taillights + Trail */}
+      <mesh position={[-0.76, 0.22, 0.25]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshBasicMaterial color="#EF4444" />
+      </mesh>
+      <mesh position={[-0.76, 0.22, -0.25]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshBasicMaterial color="#EF4444" />
+      </mesh>
+      <mesh position={[-1.4, 0.12, 0]}>
+        <boxGeometry args={[1.2, 0.02, 0.5]} />
+        <meshBasicMaterial color="#EF4444" transparent opacity={0.4} />
+      </mesh>
+    </group>
+  )
+}
+
+export function MovingTraffic() {
+  const cars = useMemo(
+    () => [
+      { laneOffset: 0.8, speed: 7.5, startProgress: 0.1, color: '#FFFFFF' },
+      { laneOffset: 0.8, speed: 8.2, startProgress: 0.55, color: '#3B82F6' },
+      { laneOffset: -0.8, speed: -6.8, startProgress: 0.3, color: '#E11D48' },
+      { laneOffset: -0.8, speed: -7.4, startProgress: 0.8, color: '#F59E0B' },
+    ],
+    [],
+  )
+
+  return (
+    <group>
+      {cars.map((c, i) => (
+        <TrafficVehicle key={i} {...c} />
+      ))}
+    </group>
+  )
+}
+
+/* ---------------------------------------------------------------- SPU Universe Sky & Lighting ---------------------------------------------------------------- */
+
+export function SPUUniverseEnvironment({
+  timeOfDay = 'evening',
+  isArriving = false,
+}: {
+  timeOfDay?: TimeOfDay
+  isArriving?: boolean
+}) {
+  const preset = SKY_PRESETS[timeOfDay]
+
+  return (
+    <>
+      {/* Atmospheric Fog */}
+      <fog
+        attach="fog"
+        args={[
+          preset.fogColor,
+          isArriving ? 18 : preset.fogNear,
+          isArriving ? 60 : preset.fogFar,
+        ]}
+      />
+
+      {/* Dynamic Hemisphere and Sunlight */}
+      <hemisphereLight args={[preset.hemiSky, preset.hemiGround, preset.hemiIntensity]} />
+      <directionalLight
+        position={preset.sunPos}
+        intensity={preset.sunIntensity}
+        color={preset.sunColor}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-left={-32}
+        shadow-camera-right={32}
+        shadow-camera-top={32}
+        shadow-camera-bottom={-32}
+      />
+
+      {/* Whimsical Thin Clouds */}
+      <WhimsicalClouds />
+
+      {/* Starry Nightfield when Night */}
+      {preset.showStars && (
+        <Stars radius={95} depth={45} count={2200} factor={4} saturation={0} fade speed={1.2} />
+      )}
+
+      {/* Extra Wow: Holographic SPU Monument at Plaza (Step 7) */}
+      <HolographicSPULogo />
+
+      {/* Extra Wow: Moving Traffic with Light Trails on Phahonyothin Road (Step 7) */}
+      <MovingTraffic />
+    </>
+  )
+}

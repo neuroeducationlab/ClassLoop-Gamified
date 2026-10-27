@@ -11,6 +11,7 @@ import Building from '@/pages/campus/components/Building'
 import ContextBuildings from '@/pages/campus/components/ContextBuildings'
 import Ground from '@/pages/campus/components/Ground'
 import { isLowPower } from '@/pages/campus/lowPower'
+import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from '@/pages/campus/components/SPUUniverse'
 import { cn } from '@/lib/utils'
 
 const GATE = BUILDINGS.find((b) => b.id === 'entry') ?? BUILDINGS[0]
@@ -97,7 +98,17 @@ export default function Login() {
   const [selectedRole, setSelectedRole] = useState<'none' | 'teacher' | 'student'>('none')
   const [isDiving, setIsDiving] = useState(false)
   const [lowPower] = useState(isLowPower)
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
   const targetDestination = useRef<string>('/campus')
+
+  const cycleTimeOfDay = () => {
+    setTimeOfDay((prev) => {
+      if (prev === 'morning') return 'midday'
+      if (prev === 'midday') return 'evening'
+      if (prev === 'evening') return 'night'
+      return 'morning'
+    })
+  }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -136,7 +147,12 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen w-full select-none overflow-hidden bg-gradient-to-b from-[#2B2D55] via-[#7B4D78] via-45% to-[#F5B98A] font-campus">
+    <div
+      className="relative min-h-screen w-full select-none overflow-hidden font-campus transition-all duration-1000"
+      style={{
+        background: `linear-gradient(to bottom, ${SKY_PRESETS[timeOfDay].skyGradient.join(', ')})`,
+      }}
+    >
       {/* ── 3D Campus Bird's-Eye Background ── */}
       <div className="absolute inset-0">
         <Canvas
@@ -144,15 +160,8 @@ export default function Login() {
           dpr={lowPower ? [1, 1.25] : [1, 1.6]}
           camera={{ fov: 42, position: [PLAZA_CENTER[0], 35, PLAZA_CENTER[1] + 42] }}
         >
-          <fog attach="fog" args={['#F5B98A', 50, 115]} />
-          <hemisphereLight args={['#FFF2DF', '#4C586B', 1.3]} />
-          <directionalLight
-            position={[18, 26, 14]}
-            intensity={2.2}
-            color="#FFD6A4"
-            castShadow
-            shadow-mapSize={lowPower ? [512, 512] : [1024, 1024]}
-          />
+          <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isDiving} />
+
           <Environment resolution={lowPower ? 64 : 128}>
             <Lightformer form="rect" intensity={3.0} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
             <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
@@ -208,7 +217,18 @@ export default function Login() {
                 CLASSLOOP
               </span>
             </div>
-            <LanguageSwitcher />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={cycleTimeOfDay}
+                className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/90 backdrop-blur hover:bg-white/20 transition-colors shadow-xs cursor-pointer"
+                title={`Time of day: ${SKY_PRESETS[timeOfDay].label.en} (${SKY_PRESETS[timeOfDay].label.th})`}
+              >
+                <span>{SKY_PRESETS[timeOfDay].icon}</span>
+                <span className="text-[11px] font-bold">{SKY_PRESETS[timeOfDay].label.th}</span>
+              </button>
+              <LanguageSwitcher />
+            </div>
           </div>
 
           {/* Logo & Headline */}

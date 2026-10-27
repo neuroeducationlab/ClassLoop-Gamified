@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Sky, Environment, Lightformer } from '@react-three/drei'
+import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
 import { Shirt, LayoutGrid, Eye, EyeOff, Globe } from 'lucide-react'
@@ -28,6 +28,7 @@ import Ground, { CAMPUS_RADIUS } from './components/Ground'
 import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
 import TouchJoystick from './components/TouchJoystick'
+import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './components/SPUUniverse'
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
@@ -120,6 +121,17 @@ export default function Campus3D() {
   // ── Language & view mode toggles (default English, default First-Person) ───
   const [lang, setLang] = useState<Lang>('en')
   const [fpMode, setFpMode] = useState<boolean>(true)
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
+
+  const cycleTimeOfDay = () => {
+    setTimeOfDay((prev) => {
+      if (prev === 'morning') return 'midday'
+      if (prev === 'midday') return 'evening'
+      if (prev === 'evening') return 'night'
+      return 'morning'
+    })
+  }
+
   const fpModeRef = useRef<boolean>(true)
   useEffect(() => {
     fpModeRef.current = fpMode
@@ -199,46 +211,21 @@ export default function Campus3D() {
   const walkGroundRef = useRef<(x: number, z: number) => void>(() => {})
 
   return (
-    <div className="fixed inset-0 select-none font-campus" style={{ backgroundColor: '#D4B896' }}>
+    <div
+      className="fixed inset-0 select-none font-campus transition-all duration-1000"
+      style={{
+        background: `linear-gradient(to bottom, ${SKY_PRESETS[timeOfDay].skyGradient.join(', ')})`,
+      }}
+    >
       <Canvas
         shadows="percentage"
         dpr={isMobile ? [1, 1.25] : [1, 1.75]}
         camera={{ fov: fpMode ? 75 : 45, position: [0, 20, 22] }}
       >
-        <Sky
-          distance={450000}
-          sunPosition={[18, 8, 22]}
-          inclination={0.2}
-          azimuth={0.25}
-          turbidity={8}
-          rayleigh={2.4}
-          mieCoefficient={0.005}
-          mieDirectionalG={0.8}
-        />
-        <fog
-          attach="fog"
-          args={[
-            '#ECCDA5',
-            isArriving ? FOG_NEAR_ARRIVAL : FOG_NEAR_CLEAR,
-            isArriving ? FOG_FAR_ARRIVAL : FOG_FAR_CLEAR,
-          ]}
-        />
+        <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isArriving} />
 
-        <hemisphereLight args={['#FFF2DF', '#4C586B', 1.2]} />
-        <directionalLight
-          position={[18, 22, 14]}
-          intensity={2.2}
-          color="#FFD6A4"
-          castShadow
-          shadow-mapSize={isMobile ? [512, 512] : [1024, 1024]}
-          shadow-camera-left={-28}
-          shadow-camera-right={28}
-          shadow-camera-top={28}
-          shadow-camera-bottom={-28}
-        />
-
-        <Environment resolution={256}>
-          <Lightformer form="rect" intensity={3.5} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
+        <Environment resolution={isMobile ? 64 : 256}>
+          <Lightformer form="rect" intensity={2.5} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
           <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
           <Lightformer form="ring" intensity={0.9} color="#FFF4D6" position={[0, 26, 0]} scale={[30, 30, 1]} />
         </Environment>
@@ -345,6 +332,16 @@ export default function Campus3D() {
 
         {/* Action buttons */}
         <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
+          {/* Time of Day toggle: Morning / Midday / Sunset / Night */}
+          <button
+            onClick={cycleTimeOfDay}
+            className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/55 transition-colors shadow cursor-pointer"
+            title={`Time of Day: ${SKY_PRESETS[timeOfDay].label.en} (${SKY_PRESETS[timeOfDay].label.th})`}
+          >
+            <span className="text-sm">{SKY_PRESETS[timeOfDay].icon}</span>
+            <span className="hidden sm:inline font-bold">{SKY_PRESETS[timeOfDay].label[lang]}</span>
+          </button>
+
           {/* Language toggle: EN / TH */}
           <button
             onClick={() => setLang((l) => (l === 'en' ? 'th' : 'en'))}

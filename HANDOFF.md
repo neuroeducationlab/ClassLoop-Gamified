@@ -83,7 +83,7 @@ The user picked a realistic, textured look in a **modern-university urban style,
 - Parallel split (27 Oct): **Antigravity** did steps 3–5 in `Campus3D.tsx`; **Claude** did lite mode, step 2
   (`src/pages/landing/Landing.tsx`, `/` route) and step 6 (`BuildingInterior.tsx`, `interiors/*`). On phones the
   campus HUD buttons are icon-only (labels from `sm:` up).
-- [ ] 7. Extra wow if time: holographic SPU logo, light-trail cars, confetti on level-up.
+- [x] 7. Extra wow: holographic SPU logo, light-trail cars, 4-time-of-day sky (morning, midday, sunset, night stars) + thin drifting clouds.
 
 ## Verify before each push
 
