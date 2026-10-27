@@ -84,6 +84,7 @@ The user picked a realistic, textured look in a **modern-university urban style,
   (`src/pages/landing/Landing.tsx`, `/` route) and step 6 (`BuildingInterior.tsx`, `interiors/*`). On phones the
   campus HUD buttons are icon-only (labels from `sm:` up).
 - [x] 7. Extra wow: holographic SPU logo, light-trail cars, 4-time-of-day sky (morning, midday, sunset, night stars) + thin drifting clouds.
+- [x] 8. SPU Universe Login & Art: 3D bird's-eye login screen with 4DX swoop landing, academic crosshair-free camera, and high-res SPU Universe diorama backgrounds (`public/spu/{morning,midday,sunset,night}.jpg`).
 
 ## Verify before each push
 
