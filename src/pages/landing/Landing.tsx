@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { Bloom, EffectComposer, N8AO, Vignette } from '@react-three/postprocessing'
-import { MathUtils, Vector3, type Group, type Mesh, type MeshBasicMaterial } from 'three'
+import { MathUtils, Vector3, type Group, type Mesh, type MeshBasicMaterial, type PerspectiveCamera } from 'three'
 import { ArrowLeft, ArrowUpRight, BookOpen, GraduationCap } from 'lucide-react'
 import { DEMO_ACCOUNTS, useApp, type Role } from '@/context/AppContext'
 import { BUILDINGS, PLAZA_CENTER } from '@/data/buildings'
@@ -12,7 +12,9 @@ import ContextBuildings from '@/pages/campus/components/ContextBuildings'
 import Ground from '@/pages/campus/components/Ground'
 import Hologram from '@/pages/campus/components/Hologram'
 import LightTrails from '@/pages/campus/components/LightTrails'
+import { landingSpot } from '@/pages/campus/geometry'
 import { isLowPower } from '@/pages/campus/lowPower'
+import CloudLayer, { CLOUD_BOTTOM, CLOUD_TOP } from './CloudLayer'
 
 /** Seconds before the first tower rises, and between towers. */
 const RISE_START = 0.5
@@ -20,13 +22,26 @@ const RISE_STEP = 0.32
 const RISE_SECONDS = 1.1
 /** Title fades in once the skyline has finished rising. */
 const TITLE_DELAY_MS = (RISE_START + RISE_STEP * BUILDINGS.length + 0.4) * 1000
-const DIVE_SECONDS = 1.6
-const APPROACH_SECONDS = 1.4
+/** Start → glide up to the cloud tops (role cards appear) → dive through the clouds. */
+const APPROACH_SECONDS = 3
+const RETURN_SECONDS = 1.8
+const DIVE_SECONDS = 3.4
+/** The dive's last moment fades to cloud-white; Campus3D fades back out of the same colour. */
+const FADE_OUT_SECONDS = 0.45
+const VEIL_COLOR = '#F3EEE6'
 
 const ORBIT_RADIUS = 36
 const ORBIT_HEIGHT = 21
 const ORBIT_SPEED = 0.045 // radians / second — slow, cinematic
+const ORBIT_FOV = 42
+/** Hover spot for the role cards: just above the cloud tops, half-way in. */
+const CLOUD_RADIUS = 22
+const CLOUD_HEIGHT = 18
+/** Campus3D's first-person camera, which the dive ends exactly on. */
+const FP_EYE_HEIGHT = 1.65
+const FP_FOV = 75
 const GATE = BUILDINGS.find((b) => b.id === 'entry')!
+const GATE_ANGLE = Math.atan2(GATE.position[0] - PLAZA_CENTER[0], GATE.position[1] - PLAZA_CENTER[1])
 
 const noop = () => {}
 
@@ -34,6 +49,8 @@ const noop = () => {}
 type Phase = 'orbit' | 'approach' | 'choose' | 'dive'
 
 const smoothstep = (t: number) => t * t * (3 - 2 * t)
+/** Zero velocity *and* acceleration at both ends: no jolt when a move starts or stops. */
+const smootherstep = (t: number) => t * t * t * (t * (t * 6 - 15) + 10)
 
 /** easeOutBack: overshoots a little, so towers "land" with a bounce. */
 function easeOutBack(t: number) {
@@ -81,74 +98,122 @@ function LightSweep({ delay }: { delay: number }) {
   )
 }
 
+/** Cylindrical camera position around the plaza: angle, radius, height. */
+type Cyl = { a: number; r: number; y: number }
+
+const wrapAngle = (a: number) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2))
+
+function cylOf(v: Vector3): Cyl {
+  const dx = v.x - PLAZA_CENTER[0]
+  const dz = v.z - PLAZA_CENTER[1]
+  return { a: Math.atan2(dx, dz), r: Math.hypot(dx, dz), y: v.y }
+}
+
+/** Opacity of the white veil while the camera is inside the cloud band (a soft bump, never a flash). */
+function cloudVeil(y: number) {
+  const mid = (CLOUD_BOTTOM + CLOUD_TOP) / 2
+  const k = MathUtils.clamp((y - mid) / 2.6, -1, 1)
+  return 0.7 * Math.cos((k * Math.PI) / 2) ** 2
+}
+
 /**
- * Slow orbit around the campus. On `approach` it glides half-way in toward the
- * plaza and holds there while the role cards are up; on `dive` it swoops from
- * wherever it is down to MRT Exit 2.
+ * Every move is one continuous, eased glide around the plaza, so the campus stays
+ * centred and nothing whips past:
+ * - orbit: slow circle (and Back glides into it from wherever the camera is);
+ * - approach: glide half-way in, up to the cloud tops above MRT Exit 2, and hover;
+ * - dive: down through the clouds to the first-person eye pose Campus3D starts at,
+ *   widening the FOV to Campus3D's, then fade to cloud-white for the hand-off.
  */
-function CameraRig({ phase, onApproached, onDived }: { phase: Phase; onApproached: () => void; onDived: () => void }) {
-  const { camera } = useThree()
-  const target = useMemo(() => new Vector3(PLAZA_CENTER[0], 2, PLAZA_CENTER[1]), [])
-  const angle = useRef(0.6)
-  const move = useRef<{ phase: Phase; t: number; from: Vector3; to: Vector3 } | null>(null)
-  const notified = useRef<Phase | null>(null)
-  const gate = useMemo(() => new Vector3(GATE.position[0] + 5, 3, GATE.position[1] + 5), [])
-  const gateLook = useMemo(() => new Vector3(GATE.position[0], 1.5, GATE.position[1]), [])
+function CameraRig({
+  phase,
+  veil,
+  onApproached,
+  onDived,
+}: {
+  phase: Phase
+  veil: RefObject<HTMLDivElement | null>
+  onApproached: () => void
+  onDived: () => void
+}) {
+  const camera = useThree((s) => s.camera) as PerspectiveCamera
+  const plaza = useMemo(() => new Vector3(PLAZA_CENTER[0], 2, PLAZA_CENTER[1]), [])
+  const end = useMemo(() => {
+    const [x, z] = landingSpot()
+    const dx = PLAZA_CENTER[0] - x
+    const dz = PLAZA_CENTER[1] - z
+    const len = Math.hypot(dx, dz)
+    // first-person gaze: level, toward the plaza (Campus3D's initial heading)
+    return { cyl: cylOf(new Vector3(x, FP_EYE_HEIGHT, z)), ahead: new Vector3(x + (dx / len) * 10, FP_EYE_HEIGHT, z + (dz / len) * 10) }
+  }, [])
+  const move = useRef<{ phase: 'orbit' | 'approach' | 'dive'; t: number; from: Cyl; da: number; fov: number } | null>(null)
+  const orbitAngle = useRef(0.6)
+  const notified = useRef(false)
   const look = useMemo(() => new Vector3(), [])
-  const close = useMemo(() => new Vector3(), [])
+  const c = useMemo<Cyl>(() => ({ a: 0, r: 0, y: 0 }), [])
 
   useFrame((state, dt) => {
-    if (phase === 'orbit') {
-      move.current = null
-      notified.current = null
-      angle.current += dt * ORBIT_SPEED
-      camera.position.set(
-        PLAZA_CENTER[0] + Math.sin(angle.current) * ORBIT_RADIUS,
-        ORBIT_HEIGHT,
-        PLAZA_CENTER[1] + Math.cos(angle.current) * ORBIT_RADIUS,
-      )
-      camera.lookAt(target)
-      return
+    const kind = phase === 'choose' ? 'approach' : phase
+    if (move.current?.phase !== kind) {
+      // a new phase glides on from wherever the camera is now (the very first orbit starts in place)
+      const from = move.current ? cylOf(camera.position) : { a: orbitAngle.current, r: ORBIT_RADIUS, y: ORBIT_HEIGHT }
+      let da = 0
+      if (kind === 'orbit') orbitAngle.current = from.a
+      // hover a little to the camera's side of the gate: a 3/4 view over Exit 2 toward the plaza
+      if (kind === 'approach') da = wrapAngle(GATE_ANGLE + (Math.sign(wrapAngle(from.a - GATE_ANGLE)) || 1) * 0.6 - from.a)
+      if (kind === 'dive') da = wrapAngle(end.cyl.a - from.a)
+      move.current = { phase: kind, t: move.current ? 0 : 1, from, da, fov: camera.fov }
+      notified.current = false
     }
+    const m = move.current
+    let fov = m.fov
+    let fade = 0
 
-    if (phase === 'approach' || phase === 'choose') {
-      if (!move.current || move.current.phase !== 'approach') {
-        // half-way between where we are and a spot just above/in front of the plaza
-        close.set(
-          PLAZA_CENTER[0] + Math.sin(angle.current) * 12,
-          9,
-          PLAZA_CENTER[1] + Math.cos(angle.current) * 12,
-        )
-        const from = camera.position.clone()
-        move.current = { phase: 'approach', t: 0, from, to: from.clone().lerp(close, 0.5) }
-      }
-      const m = move.current
+    if (kind === 'orbit') {
+      m.t = Math.min(1, m.t + dt / RETURN_SECONDS)
+      orbitAngle.current += dt * ORBIT_SPEED
+      const e = smootherstep(m.t)
+      c.a = MathUtils.lerp(m.from.a, orbitAngle.current, e)
+      c.r = MathUtils.lerp(m.from.r, ORBIT_RADIUS, e)
+      c.y = MathUtils.lerp(m.from.y, ORBIT_HEIGHT, e)
+      fov = MathUtils.lerp(m.fov, ORBIT_FOV, e)
+      look.copy(plaza)
+    } else if (kind === 'approach') {
       m.t = Math.min(1, m.t + dt / APPROACH_SECONDS)
-      camera.position.lerpVectors(m.from, m.to, smoothstep(m.t))
-      // a gentle drift while the cards are up, so the scene never freezes
-      camera.position.y += Math.sin(state.clock.elapsedTime * 0.6) * 0.15 * m.t
-      camera.lookAt(target)
-      if (m.t >= 1 && notified.current !== 'approach') {
-        notified.current = 'approach'
+      const e = smootherstep(m.t)
+      c.a = m.from.a + m.da * e
+      c.r = MathUtils.lerp(m.from.r, CLOUD_RADIUS, e)
+      // a gentle hover while the role cards are up, so the scene never freezes
+      c.y = MathUtils.lerp(m.from.y, CLOUD_HEIGHT, e) + Math.sin(state.clock.elapsedTime * 0.6) * 0.15 * e
+      look.copy(plaza)
+      // cards start fading in as the glide settles
+      if (m.t >= 0.85 && !notified.current) {
+        notified.current = true
         onApproached()
       }
-      return
+    } else {
+      m.t = Math.min(1, m.t + dt / DIVE_SECONDS)
+      const u = smootherstep(m.t)
+      // the swing round the plaza finishes early, while the camera is still high above the gate
+      c.a = m.from.a + m.da * (1 - (1 - u) ** 2)
+      c.r = MathUtils.lerp(m.from.r, end.cyl.r, u)
+      c.y = MathUtils.lerp(m.from.y, FP_EYE_HEIGHT, u)
+      // gaze leads down at the plaza, then levels out to eye height for touchdown
+      look.copy(plaza).lerp(end.ahead, smoothstep(MathUtils.clamp((u - 0.5) / 0.5, 0, 1)))
+      fov = MathUtils.lerp(m.fov, FP_FOV, u)
+      fade = smoothstep(MathUtils.clamp((m.t - 1) * (DIVE_SECONDS / FADE_OUT_SECONDS) + 1, 0, 1))
+      if (m.t >= 1 && !notified.current) {
+        notified.current = true
+        onDived()
+      }
     }
 
-    // dive
-    if (!move.current || move.current.phase !== 'dive') {
-      move.current = { phase: 'dive', t: 0, from: camera.position.clone(), to: gate }
-    }
-    const d = move.current
-    d.t = Math.min(1, d.t + dt / DIVE_SECONDS)
-    const e = smoothstep(d.t)
-    camera.position.lerpVectors(d.from, d.to, e)
-    look.copy(target).lerp(gateLook, e)
+    camera.position.set(PLAZA_CENTER[0] + Math.sin(c.a) * c.r, c.y, PLAZA_CENTER[1] + Math.cos(c.a) * c.r)
     camera.lookAt(look)
-    if (d.t >= 1 && notified.current !== 'dive') {
-      notified.current = 'dive'
-      onDived()
+    if (Math.abs(camera.fov - fov) > 1e-3) {
+      camera.fov = fov
+      camera.updateProjectionMatrix()
     }
+    if (veil.current) veil.current.style.opacity = String(Math.max(cloudVeil(c.y), fade))
   })
   return null
 }
@@ -179,16 +244,20 @@ export default function Landing() {
   const [lowPower] = useState(isLowPower)
   const [showTitle, setShowTitle] = useState(false)
   const [phase, setPhase] = useState<Phase>('orbit')
-  const destination = useRef<{ to: string; state?: unknown }>({ to: '/campus' })
+  const veil = useRef<HTMLDivElement>(null)
   const diving = phase === 'dive'
+
+  const start = () => {
+    // fetch the campus while the camera glides, so the hand-off after the dive is instant
+    void import('@/pages/campus/Campus3D')
+    setPhase('approach')
+  }
 
   /** Sign in with the chosen role's demo account, then dive straight into the campus. */
   const chooseRole = (role: Role) => {
     const account = DEMO_ACCOUNTS.find((a) => a.role === role)
     if (!account || !signIn(account.email, account.password).ok) return
-    // both roles land on the campus (teachers get their quick-access panel there);
-    // students also get the campus arrival sequence
-    destination.current = role === 'student' ? { to: '/campus', state: { arrival: true } } : { to: '/campus' }
+    // both roles land on the campus (teachers get their quick-access panel there)
     setPhase('dive')
   }
 
@@ -247,10 +316,14 @@ export default function Landing() {
           <Hologram position={[PLAZA_CENTER[0], 13, PLAZA_CENTER[1]]} scale={2.2} />
         </Rise>
 
+        <CloudLayer shown={phase !== 'orbit'} />
+
         <CameraRig
           phase={phase}
+          veil={veil}
           onApproached={() => setPhase('choose')}
-          onDived={() => navigate(destination.current.to, { state: destination.current.state })}
+          // the dive already ends on Campus3D's first-person pose: no arrival sequence there
+          onDived={() => navigate('/campus', { state: { fromLanding: true } })}
         />
 
         {!lowPower && (
@@ -264,6 +337,8 @@ export default function Landing() {
 
       {/* soft top/bottom shading so the title reads over any part of the scene */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/45" />
+      {/* white mist while flying through the cloud band, and the final fade (opacity set per frame by CameraRig) */}
+      <div ref={veil} className="pointer-events-none absolute inset-0" style={{ background: VEIL_COLOR, opacity: 0 }} />
 
       <div
         className={`absolute inset-0 isolate flex flex-col items-center justify-center gap-5 px-6 text-center text-white transition-opacity duration-700 ${
@@ -282,7 +357,7 @@ export default function Landing() {
           เดินเข้าห้องเรียนแห่งอนาคต · Step into a campus that learns with you
         </p>
         <button
-          onClick={() => setPhase('approach')}
+          onClick={start}
           className="group mt-3 flex w-full max-w-xs items-center justify-between gap-6 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-8 py-4 text-lg font-bold text-[#2B2D55] shadow-[0_0_40px_rgba(242,200,121,0.65)] transition-transform hover:scale-[1.03] active:scale-95 sm:w-auto"
         >
           เริ่มต้น · Start
@@ -342,8 +417,8 @@ export default function Landing() {
       )}
 
       {diving && (
-        <p className="pointer-events-none absolute inset-x-0 bottom-10 text-center text-sm text-white drop-shadow animate-in fade-in duration-500">
-          กำลังลงสู่ MRT Exit 2…
+        <p className="pointer-events-none absolute inset-x-0 bottom-10 flex justify-center animate-in fade-in duration-500">
+          <span className="rounded-full bg-[#16182E]/45 px-4 py-1.5 text-sm text-white backdrop-blur">กำลังลงสู่ MRT Exit 2…</span>
         </p>
       )}
     </div>

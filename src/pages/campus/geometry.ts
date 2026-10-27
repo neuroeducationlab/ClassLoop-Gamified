@@ -1,4 +1,4 @@
-import { PLAZA_CENTER, type Building, type BuildingShape } from '@/data/buildings'
+import { BUILDINGS, PLAZA_CENTER, type Building, type BuildingShape } from '@/data/buildings'
 
 /** How far in front of a building's centre its door sits, toward the plaza. */
 const DOOR_DISTANCE: Record<BuildingShape, number> = {
@@ -20,6 +20,17 @@ export function doorPoint(b: Building): [number, number] {
   const angle = facingPlaza(b.position)
   const d = DOOR_DISTANCE[b.shape]
   return [b.position[0] + Math.sin(angle) * d, b.position[1] + Math.cos(angle) * d]
+}
+
+/**
+ * Where the landing page's dive touches down (first person, facing the plaza):
+ * just out from under MRT Exit 2's canopy, so the descent never clips through it.
+ */
+export function landingSpot(): [number, number] {
+  const gate = BUILDINGS.find((b) => b.id === 'entry')!
+  const [x, z] = doorPoint(gate)
+  const angle = facingPlaza(gate.position)
+  return [x + Math.sin(angle) * 3, z + Math.cos(angle) * 3]
 }
 
 /** Height (world units) at which a building's floating name label sits above its roof. */

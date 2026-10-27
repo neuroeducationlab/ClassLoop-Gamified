@@ -23,7 +23,7 @@ import {
 import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
 import ContextBuildings from './components/ContextBuildings'
-import { doorPoint, facingPlaza, labelHeight } from './geometry'
+import { doorPoint, facingPlaza, labelHeight, landingSpot } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
 import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
@@ -144,6 +144,20 @@ export default function Campus3D() {
     const state = location.state as { arrival?: boolean } | null
     return Boolean(state?.arrival)
   })
+
+  // The landing page's dive (Landing.tsx) ends on this first-person pose at landingSpot():
+  // start right there, behind a cloud-white veil that fades away, with no arrival sequence
+  const [fromLanding] = useState(() => {
+    const state = location.state as { fromLanding?: boolean } | null
+    if (state?.fromLanding) lastSpot = landingSpot()
+    return Boolean(state?.fromLanding)
+  })
+  const [landingVeil, setLandingVeil] = useState(fromLanding)
+  useEffect(() => {
+    if (!fromLanding) return
+    const id = setTimeout(() => setLandingVeil(false), 300)
+    return () => clearTimeout(id)
+  }, [fromLanding])
 
   // ── Door prompt ───────────────────────────────────────────────────────────
   const [nearDoor, setNearDoor] = useState<BuildingConfig | null>(null)
@@ -507,6 +521,12 @@ export default function Campus3D() {
           </p>
         )}
       </div>
+
+      {fromLanding && (
+        <div
+          className={`pointer-events-none absolute inset-0 z-50 bg-[#F3EEE6] transition-opacity duration-700 ${landingVeil ? 'opacity-100' : 'opacity-0'}`}
+        />
+      )}
 
       {/* ── Arrival overlay (Phase 6 Step 3) ── */}
       {isArriving && (
