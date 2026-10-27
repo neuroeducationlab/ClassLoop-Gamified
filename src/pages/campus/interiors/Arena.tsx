@@ -38,7 +38,7 @@ export default function Arena() {
       <div className="mb-4 grid grid-cols-3 gap-3">
         <Stat icon={<Zap className="h-5 w-5" />} label="XP ของฉัน" value={studentXP} />
         <Stat icon={<Trophy className="h-5 w-5" />} label="อันดับ" value={`#${myRank}`} />
-        <Stat icon={<Flame className="h-5 w-5" />} label="เลเวล" value={Math.floor(studentXP / 100) + 1} />
+        <Stat icon={<Flame className="h-5 w-5" />} label="เลเวล" value={Math.max(1, Math.floor(studentXP / 100))} /* same formula as the campus HUD */ />
       </div>
 
       <Section title="เกมจับคู่คำศัพท์ · Word match" sub={`เลือกความหมายที่ถูก · +${XP_CORRECT} XP ต่อข้อ`}>
