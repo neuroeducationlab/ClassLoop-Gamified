@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Send, Sparkles, Flame, HelpCircle, Lightbulb, AlertTriangle, MessageSquare } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { playClickSound, playCoinSound, playXPSparkle, playLevelUpSound } from '../soundEngine'
 
 const MYSTERY_AVATARS = [
   { id: 'fox', label: '🦊 Fox Sage #42', emoji: '🦊', faculty: { th: 'สถาปัตย์', en: 'Architecture' } },
@@ -81,6 +82,7 @@ export default function HeartDorm() {
       ...prev,
       [postId]: (prev[postId] || 0) + 1,
     }))
+    playCoinSound()
     addXP(5) // Award tiny XP for curating / participating
   }
 
@@ -106,6 +108,7 @@ export default function HeartDorm() {
       : ` — ส่งโดย ${selectedPersona.label} (${facultyStr})`
 
     addPost(`${prefix}${draft}${senderSuffix}`, true, 'ฟีดแบค')
+    playXPSparkle()
     setDraft('')
     setSent(true)
     addXP(15) // Reward for asking a good question
@@ -158,7 +161,10 @@ export default function HeartDorm() {
               <span className="text-[11px] text-white/60">{t.categoryLabel}</span>
               <button
                 type="button"
-                onClick={() => setCategory('sos')}
+                onClick={() => {
+                  playClickSound()
+                  setCategory('sos')
+                }}
                 className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all ${
                   category === 'sos'
                     ? 'bg-rose-500 text-white shadow-md'
@@ -169,7 +175,10 @@ export default function HeartDorm() {
               </button>
               <button
                 type="button"
-                onClick={() => setCategory('quest')}
+                onClick={() => {
+                  playClickSound()
+                  setCategory('quest')
+                }}
                 className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all ${
                   category === 'quest'
                     ? 'bg-amber-500 text-black shadow-md'
@@ -180,7 +189,10 @@ export default function HeartDorm() {
               </button>
               <button
                 type="button"
-                onClick={() => setCategory('spark')}
+                onClick={() => {
+                  playClickSound()
+                  setCategory('spark')
+                }}
                 className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all ${
                   category === 'spark'
                     ? 'bg-emerald-500 text-white shadow-md'
@@ -333,6 +345,7 @@ function TeacherReplyBox({ onSend, placeholder, replyText }: { onSend: (body: st
         e.preventDefault()
         if (!text.trim()) return
         onSend(text)
+        playLevelUpSound()
         setText('')
       }}
     >

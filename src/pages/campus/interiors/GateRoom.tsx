@@ -14,6 +14,7 @@ import {
 import { useApp } from '@/context/AppContext'
 import Section from './Section'
 import AvatarShopModal from '../components/AvatarShopModal'
+import { playClickSound, playCoinSound } from '../soundEngine'
 
 /**
  * GateRoom: SPU Cybernetic Gate & Virtual Student Identity Hub
@@ -150,14 +151,20 @@ export default function GateRoom() {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={() => navigate('/create')}
+            onClick={() => {
+              playClickSound()
+              navigate('/create')
+            }}
             className="flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-pink-500/25 hover:brightness-110 transition-all cursor-pointer"
           >
             <Sparkles className="h-4 w-4" />
             {lang === 'th' ? 'เข้าห้องแต่งตัว 3D' : 'Enter 3D Fitting Room'}
           </button>
           <button
-            onClick={() => setShopOpen(true)}
+            onClick={() => {
+              playCoinSound()
+              setShopOpen(true)
+            }}
             className="flex items-center justify-center gap-2.5 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-5 py-3.5 text-sm font-extrabold text-amber-300 shadow-md hover:bg-amber-500/30 transition-all cursor-pointer"
           >
             <ShoppingBag className="h-4 w-4" />
@@ -179,6 +186,7 @@ export default function GateRoom() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={() => {
+              playClickSound()
               setRole('teacher')
               navigate('/map')
             }}
@@ -189,6 +197,7 @@ export default function GateRoom() {
           </button>
           <button
             onClick={() => {
+              playClickSound()
               signOut()
               navigate('/login')
             }}

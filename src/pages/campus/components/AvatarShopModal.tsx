@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useApp, type AvatarHat, type AvatarOutfit, type AvatarAura } from '@/context/AppContext'
+import { playClickSound, playCoinSound, playLevelUpSound, playWrongSound } from '../soundEngine'
 
 interface ShopItem {
   id: string
@@ -211,6 +212,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
 
     if (isOwned) {
       equipStoreItem(item.category, item.itemKey)
+      playLevelUpSound()
       setPurchaseMsg(
         lang === 'th'
           ? `สวมใส่ ${item.name} เรียบร้อย! ✨`
@@ -221,6 +223,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
       if (studentCoins >= item.price) {
         const ok = buyStoreItem(item.id, item.price)
         if (ok) {
+          playCoinSound()
           equipStoreItem(item.category, item.itemKey)
           setPurchaseMsg(
             lang === 'th'
@@ -230,6 +233,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
           setTimeout(() => setPurchaseMsg(null), 2500)
         }
       } else {
+        playWrongSound()
         setPurchaseMsg(
           lang === 'th'
             ? 'เหรียญของคุณไม่เพียงพอ! ทำการบ้านหรือควิซเพื่อสะสมเหรียญเพิ่มนะ'
@@ -252,7 +256,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
       <div className="relative w-full max-w-xl rounded-3xl border border-white/20 bg-[#16182E]/95 p-6 text-white shadow-2xl">
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            playClickSound()
+            onClose()
+          }}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all cursor-pointer"
         >
           <X className="h-4 w-4" />
@@ -294,7 +301,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
         {/* Category Tabs */}
         <div className="flex rounded-2xl bg-white/5 p-1 mb-4 text-xs font-bold border border-white/10">
           <button
-            onClick={() => setActiveTab('hat')}
+            onClick={() => {
+              playClickSound()
+              setActiveTab('hat')
+            }}
             className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 transition-all ${
               activeTab === 'hat' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
@@ -302,7 +312,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
             <span>{lang === 'th' ? '👑 หมวก & เครื่องประดับ' : '👑 Hats & Accessories'}</span>
           </button>
           <button
-            onClick={() => setActiveTab('outfit')}
+            onClick={() => {
+              playClickSound()
+              setActiveTab('outfit')
+            }}
             className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 transition-all ${
               activeTab === 'outfit' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
@@ -310,7 +323,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
             <span>{lang === 'th' ? '👔 ชุดแฟชั่น' : '👔 Outfits'}</span>
           </button>
           <button
-            onClick={() => setActiveTab('aura')}
+            onClick={() => {
+              playClickSound()
+              setActiveTab('aura')
+            }}
             className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 transition-all ${
               activeTab === 'aura' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
