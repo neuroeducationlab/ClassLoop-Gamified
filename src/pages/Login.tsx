@@ -1,9 +1,90 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, BookOpen, GraduationCap, Loader2, Lock, Mail } from 'lucide-react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Environment, Lightformer } from '@react-three/drei'
+import { MathUtils, Vector3 } from 'three'
+import { AlertCircle, BookOpen, GraduationCap, Loader2, Lock, Mail, Sparkles } from 'lucide-react'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
 import { DEMO_ACCOUNTS, useApp } from '@/context/AppContext'
+import { BUILDINGS, PLAZA_CENTER } from '@/data/buildings'
+import Building from '@/pages/campus/components/Building'
+import ContextBuildings from '@/pages/campus/components/ContextBuildings'
+import Ground from '@/pages/campus/components/Ground'
+import { isLowPower } from '@/pages/campus/lowPower'
 import { cn } from '@/lib/utils'
+
+const GATE = BUILDINGS.find((b) => b.id === 'entry') ?? BUILDINGS[0]
+const DIVE_DURATION_SECONDS = 2.0
+const noop = () => {}
+
+/**
+ * 4DX Bird's-Eye Camera Rig:
+ * - Orbiting high in the sky over SPU campus with a majestic wide view.
+ * - On `diving`, accelerates and swoops down with dynamic FOV & banking roll like a 4DX flight ride.
+ */
+function BirdEyeCameraRig({ isDiving, onLanded }: { isDiving: boolean; onLanded: () => void }) {
+  const { camera } = useThree()
+  const target = useMemo(() => new Vector3(PLAZA_CENTER[0], 2, PLAZA_CENTER[1]), [])
+  const angle = useRef(0.9)
+  const dive = useRef<{ t: number; fromPos: Vector3; fromTarget: Vector3 } | null>(null)
+  const landed = useRef(false)
+  const gatePos = useMemo(() => new Vector3(GATE.position[0] + 4, 2.5, GATE.position[1] + 5), [])
+  const gateLook = useMemo(() => new Vector3(GATE.position[0], 1.6, GATE.position[1]), [])
+  const currentLook = useMemo(() => new Vector3(), [])
+
+  useFrame((_, dt) => {
+    if (isDiving) {
+      if (!dive.current) {
+        dive.current = {
+          t: 0,
+          fromPos: camera.position.clone(),
+          fromTarget: target.clone(),
+        }
+      }
+      const d = dive.current
+      d.t = Math.min(1, d.t + dt / DIVE_DURATION_SECONDS)
+
+      // 4DX S-curve ease for thrilling swoop sensation
+      const t = d.t
+      const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+      // Swoop position down towards SPU Plaza / MRT Exit 2
+      camera.position.lerpVectors(d.fromPos, gatePos, ease)
+
+      // 4DX Dynamic banking roll (tilt left then right like a glider)
+      camera.rotation.z = Math.sin(ease * Math.PI) * 0.07
+
+      // Dynamic FOV rush effect
+      if ('fov' in camera && typeof camera.fov === 'number') {
+        camera.fov = MathUtils.lerp(42, 60, Math.sin(ease * Math.PI))
+        camera.updateProjectionMatrix()
+      }
+
+      currentLook.lerpVectors(d.fromTarget, gateLook, ease)
+      camera.lookAt(currentLook)
+
+      if (d.t >= 1 && !landed.current) {
+        landed.current = true
+        camera.rotation.z = 0
+        onLanded()
+      }
+      return
+    }
+
+    // High Bird's-Eye View: High elevation overlooking sky, towers, plaza & train
+    angle.current += dt * 0.035
+    const radius = 42
+    const height = 35
+    camera.position.set(
+      PLAZA_CENTER[0] + Math.sin(angle.current) * radius,
+      height,
+      PLAZA_CENTER[1] + Math.cos(angle.current) * radius,
+    )
+    camera.lookAt(target)
+  })
+
+  return null
+}
 
 export default function Login() {
   const { signIn } = useApp()
@@ -14,18 +95,13 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedRole, setSelectedRole] = useState<'none' | 'teacher' | 'student'>('none')
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current)
-    },
-    [],
-  )
+  const [isDiving, setIsDiving] = useState(false)
+  const [lowPower] = useState(isLowPower)
+  const targetDestination = useRef<string>('/campus')
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (loading) return
+    if (loading || isDiving) return
 
     if (!email.trim() || !password) {
       setError('กรุณากรอกอีเมลและรหัสผ่าน')
@@ -40,10 +116,17 @@ export default function Login() {
 
     setError(null)
     setLoading(true)
-    timer.current = setTimeout(
-      () => navigate(result.role === 'teacher' ? '/map' : '/create'),
-      800,
-    )
+
+    // Set destination: Teacher goes to /campus (with their new zero-confusion Quick Access panel!),
+    // Students also land in /campus
+    targetDestination.current = '/campus'
+
+    // Trigger the 4DX swoop down animation!
+    setIsDiving(true)
+  }
+
+  const handleLanded = () => {
+    navigate(targetDestination.current)
   }
 
   const fill = (accEmail: string, accPassword: string) => {
@@ -53,165 +136,245 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-canvas p-6">
-      <div className="w-full max-w-sm">
-        {/* Language switch lives here too — a non-Thai reader must be able to
-            change language before they can even sign in. */}
-        <div className="mb-5 flex justify-center">
-          <LanguageSwitcher />
-        </div>
+    <div className="relative min-h-screen w-full select-none overflow-hidden bg-gradient-to-b from-[#2B2D55] via-[#7B4D78] via-45% to-[#F5B98A] font-campus">
+      {/* ── 3D Campus Bird's-Eye Background ── */}
+      <div className="absolute inset-0">
+        <Canvas
+          shadows="percentage"
+          dpr={lowPower ? [1, 1.25] : [1, 1.6]}
+          camera={{ fov: 42, position: [PLAZA_CENTER[0], 35, PLAZA_CENTER[1] + 42] }}
+        >
+          <fog attach="fog" args={['#F5B98A', 50, 115]} />
+          <hemisphereLight args={['#FFF2DF', '#4C586B', 1.3]} />
+          <directionalLight
+            position={[18, 26, 14]}
+            intensity={2.2}
+            color="#FFD6A4"
+            castShadow
+            shadow-mapSize={lowPower ? [512, 512] : [1024, 1024]}
+          />
+          <Environment resolution={lowPower ? 64 : 128}>
+            <Lightformer form="rect" intensity={3.0} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
+            <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
+          </Environment>
 
-        {/* Logo */}
-        <div className="mb-7 text-center">
-          <p className="text-5xl font-extrabold tracking-tight text-grey-300">SPU</p>
-          <h1 className="mt-1 text-3xl font-bold text-pink-600">ClassLoop</h1>
-        </div>
+          <Ground onWalk={noop} />
+          <ContextBuildings />
+          {BUILDINGS.map((b) => (
+            <Building key={b.id} building={b} hovered={false} onHover={noop} onSelect={noop} />
+          ))}
 
-        {selectedRole === 'none' ? (
-          <div className="space-y-4 animate-fadeIn">
-            <h2 className="text-center text-lg font-bold text-ink mb-6">กรุณาเลือกสถานะของคุณ</h2>
-            
-            <button
-              onClick={() => setSelectedRole('teacher')}
-              className="flex w-full items-center gap-4 rounded-3xl border-2 border-grey-300/60 bg-paper p-5 transition-all hover:border-pink-500 hover:bg-pink-50/40 hover:shadow-md cursor-pointer group"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-100 text-pink-600 group-hover:scale-110 transition-transform shadow-xs">
-                <BookOpen className="h-7 w-7" />
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-extrabold text-ink group-hover:text-pink-600 transition-colors">อาจารย์ผู้สอน</h3>
-                <p className="text-sm text-grey-600 mt-1 font-medium">เข้าสู่ระบบจัดการและสร้างสื่อการสอน</p>
-              </div>
-            </button>
+          <BirdEyeCameraRig isDiving={isDiving} onLanded={handleLanded} />
+        </Canvas>
+      </div>
 
-            <button
-              onClick={() => setSelectedRole('student')}
-              className="flex w-full items-center gap-4 rounded-3xl border-2 border-grey-300/60 bg-paper p-5 transition-all hover:border-blue-500 hover:bg-blue-50/40 hover:shadow-md cursor-pointer group"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform shadow-xs">
-                <GraduationCap className="h-7 w-7" />
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-extrabold text-ink group-hover:text-blue-600 transition-colors">นักศึกษา</h3>
-                <p className="text-sm text-grey-600 mt-1 font-medium">เข้าเรียน ทำกิจกรรม และทบทวนบทเรียน</p>
-              </div>
-            </button>
+      {/* ── Soft vignette gradient overlay for contrast ── */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-black/35" />
+
+      {/* ── 4DX Landing HUD (Visible when diving) ── */}
+      {isDiving && (
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-end pb-20 gap-3 text-center animate-in fade-in duration-500">
+          <div className="flex items-center gap-2 rounded-full border border-white/30 bg-black/60 px-5 py-2 text-white backdrop-blur-md shadow-2xl">
+            <span className="animate-spin text-lg">⚡</span>
+            <span className="text-sm font-bold tracking-wide">4DX CAMPUS LANDING</span>
           </div>
-        ) : (
-          <div className="animate-fadeIn">
-            <button 
-              onClick={() => setSelectedRole('none')}
-              className="mb-4 text-sm font-bold text-grey-500 hover:text-pink-600 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              ← ย้อนกลับ
-            </button>
-            <form
-              onSubmit={submit}
-              className="space-y-4 rounded-3xl border border-grey-300/60 bg-paper p-6 shadow-sm"
-            >
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-ink">
-              อีเมล
-            </label>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-grey-400" />
-              <input
-                id="email"
-                type="email"
-                autoComplete="username"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value)
-                  setError(null)
-                }}
-                placeholder="you@spu.ac.th"
-                className="w-full rounded-xl border border-grey-300/80 bg-canvas py-2.5 pl-10 pr-3 text-sm text-ink outline-none transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink">
-              รหัสผ่าน
-            </label>
-            <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-grey-400" />
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value)
-                  setError(null)
-                }}
-                placeholder="••••••••"
-                className="w-full rounded-xl border border-grey-300/80 bg-canvas py-2.5 pl-10 pr-3 text-sm text-ink outline-none transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p
-              role="alert"
-              className="flex items-center gap-1.5 rounded-lg bg-pink-50 px-3 py-2 text-sm font-medium text-pink-600"
-            >
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-pink-600 py-3 text-sm font-bold text-paper shadow-sm transition-all hover:bg-pink-500 active:scale-[0.98] disabled:opacity-80"
-          >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-          </button>
-        </form>
-
-        {/* Demo credentials — visible on purpose so the audience can sign in */}
-        <div className="mt-4 rounded-2xl border border-pink-200 bg-pink-50/60 p-4">
-          <p className="text-xs font-semibold text-grey-600">
-            บัญชีสำหรับเดโม (คลิกเพื่อกรอกอัตโนมัติ)
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+            กำลังนำท่านลงสู่แคมปัส มหาวิทยาลัยศรีปทุม (SPU)…
+          </h2>
+          <p className="text-sm text-white/80 drop-shadow">
+            Swooping into MRT Exit 2 & Campus Plaza · เดินทางถึงในไม่กี่วินาที
           </p>
-          <div className="mt-2 space-y-2">
-            {DEMO_ACCOUNTS.filter(acc => acc.role === selectedRole).map((acc) => (
-              <button
-                key={acc.email}
-                type="button"
-                onClick={() => fill(acc.email, acc.password)}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-xl border border-pink-200 bg-paper px-3 py-2.5 text-left transition-all',
-                  'hover:border-pink-400 hover:shadow-sm active:scale-[0.98]',
-                )}
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-pink-600 text-paper">
-                  {acc.role === 'teacher' ? (
-                    <BookOpen className="h-4 w-4" />
-                  ) : (
-                    <GraduationCap className="h-4 w-4" />
-                  )}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-bold text-ink">
-                    {acc.role === 'teacher' ? 'อาจารย์ / ผู้สอน' : 'นักเรียน / นักศึกษา'}
-                  </span>
-                  <span className="block truncate font-mono text-[11px] text-grey-600">
-                    {acc.email} · {acc.password}
-                  </span>
-                </span>
-              </button>
-            ))}
+          <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden mt-1">
+            <div className="h-full bg-gradient-to-r from-pink-500 to-amber-300 animate-pulse w-full" />
           </div>
         </div>
+      )}
 
-        <p className="mt-5 text-center text-xs text-grey-600">
-          สำหรับบุคลากรและนักศึกษามหาวิทยาลัยศรีปทุม
-        </p>
-          </div>
+      {/* ── Login Glassmorphism Card (Fades out when diving) ── */}
+      <div
+        className={cn(
+          'relative z-20 flex min-h-screen flex-col items-center justify-center p-4 transition-all duration-700 ease-out',
+          isDiving ? 'pointer-events-none scale-90 opacity-0 -translate-y-8' : 'scale-100 opacity-100',
         )}
+      >
+        <div className="w-full max-w-md rounded-3xl border border-white/25 bg-black/45 p-7 text-white shadow-2xl backdrop-blur-xl sm:p-8">
+          {/* Top Header & Language switch */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-600 font-extrabold text-xs text-white shadow">
+                SPU
+              </span>
+              <span className="text-xs font-semibold tracking-wider text-white/80">
+                CLASSLOOP
+              </span>
+            </div>
+            <LanguageSwitcher />
+          </div>
+
+          {/* Logo & Headline */}
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow">
+              ClassLoop <span className="text-[#F2C879]">Campus</span>
+            </h1>
+            <p className="mt-1 text-xs text-white/75">
+              ระบบการเรียนรู้แบบ 3D แคมปัสเสมือนจริง มหาวิทยาลัยศรีปทุม
+            </p>
+          </div>
+
+          {selectedRole === 'none' ? (
+            <div className="space-y-3.5 animate-fadeIn">
+              <h2 className="text-center text-sm font-bold text-white/90 mb-4">
+                เลือกสถานะเพื่อเข้าสู่แคมปัส
+              </h2>
+
+              {/* Teacher option */}
+              <button
+                onClick={() => setSelectedRole('teacher')}
+                className="flex w-full items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 transition-all hover:border-pink-400 hover:bg-pink-500/20 hover:scale-[1.01] active:scale-[0.99] cursor-pointer group text-left"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-500/30 text-pink-300 group-hover:scale-110 transition-transform shadow-sm shrink-0">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white group-hover:text-pink-300 transition-colors">
+                    อาจารย์ผู้สอน (Faculty)
+                  </h3>
+                  <p className="text-xs text-white/70 mt-0.5">
+                    เข้าห้องสตูดิโอ วิเคราะห์ Gap นิสิต และเมนูลัด 1-คลิก
+                  </p>
+                </div>
+              </button>
+
+              {/* Student option */}
+              <button
+                onClick={() => setSelectedRole('student')}
+                className="flex w-full items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 transition-all hover:border-blue-400 hover:bg-blue-500/20 hover:scale-[1.01] active:scale-[0.99] cursor-pointer group text-left"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/30 text-blue-300 group-hover:scale-110 transition-transform shadow-sm shrink-0">
+                  <GraduationCap className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white group-hover:text-blue-300 transition-colors">
+                    นักศึกษา (Student)
+                  </h3>
+                  <p className="text-xs text-white/70 mt-0.5">
+                    เดินเข้าห้องเรียน ทำเควสต์ และเก็บ XP ทบทวนบทเรียน
+                  </p>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="animate-fadeIn">
+              <button
+                onClick={() => setSelectedRole('none')}
+                className="mb-3 text-xs font-semibold text-white/70 hover:text-pink-300 flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                ← เปลี่ยนสถานะ ({selectedRole === 'teacher' ? 'อาจารย์' : 'นักศึกษา'})
+              </button>
+
+              <form onSubmit={submit} className="space-y-3.5">
+                <div>
+                  <label htmlFor="email" className="mb-1 block text-xs font-medium text-white/90">
+                    อีเมลมหาวิทยาลัย
+                  </label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="username"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value)
+                        setError(null)
+                      }}
+                      placeholder="you@spu.ac.th"
+                      className="w-full rounded-xl border border-white/20 bg-white/10 py-2.5 pl-10 pr-3 text-sm text-white placeholder-white/40 outline-none transition-all focus:border-pink-400 focus:bg-white/15 focus:ring-2 focus:ring-pink-500/30"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="mb-1 block text-xs font-medium text-white/90">
+                    รหัสผ่าน
+                  </label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+                    <input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value)
+                        setError(null)
+                      }}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-white/20 bg-white/10 py-2.5 pl-10 pr-3 text-sm text-white placeholder-white/40 outline-none transition-all focus:border-pink-400 focus:bg-white/15 focus:ring-2 focus:ring-pink-500/30"
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <p
+                    role="alert"
+                    className="flex items-center gap-1.5 rounded-lg bg-pink-900/60 border border-pink-500/40 px-3 py-2 text-xs font-medium text-pink-200"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0 text-pink-400" />
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || isDiving}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 py-3 text-sm font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-75 cursor-pointer"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {loading ? 'กำลังเชื่อมต่อ…' : 'เข้าสู่ระบบ (4DX Landing)'}
+                </button>
+              </form>
+
+              {/* Demo Account quick fill chips */}
+              <div className="mt-4 rounded-2xl border border-white/15 bg-white/5 p-3.5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-semibold text-white/70">
+                    คลิกเพื่อกรอกบัญชีเดโมทันที
+                  </p>
+                  <Sparkles className="h-3 w-3 text-amber-300" />
+                </div>
+                <div className="space-y-1.5">
+                  {DEMO_ACCOUNTS.filter((acc) => acc.role === selectedRole).map((acc) => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      onClick={() => fill(acc.email, acc.password)}
+                      className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-left transition-all hover:bg-white/20 active:scale-[0.98] cursor-pointer"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-pink-600/80 text-white text-xs">
+                        {acc.role === 'teacher' ? <BookOpen className="h-3.5 w-3.5" /> : <GraduationCap className="h-3.5 w-3.5" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-bold text-white leading-tight">
+                          {acc.name} ({acc.role === 'teacher' ? 'อาจารย์' : 'นักศึกษา'})
+                        </span>
+                        <span className="block truncate font-mono text-[10px] text-white/60">
+                          {acc.email} · {acc.password}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-semibold text-pink-300">ใช้บัญชีนี้ →</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Small footer credit */}
+        <p className="mt-4 text-center text-xs text-white/60 drop-shadow">
+          มหาวิทยาลัยศรีปทุม (SPU) · พัฒนาเพื่อการเรียนรู้ไร้รอยต่อ
+        </p>
       </div>
     </div>
   )
