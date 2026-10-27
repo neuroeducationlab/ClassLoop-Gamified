@@ -2,6 +2,8 @@ import { useState } from 'react'
 import {
   BookOpen,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock,
   FileText,
   Lightbulb,
@@ -14,14 +16,60 @@ import {
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 import Section, { CoinChip, XPChip } from './Section'
+import {
+  playCoinSound,
+  playCorrectSound,
+  playLevelUpSound,
+  playWrongSound,
+  playXPSparkle,
+} from '../soundEngine'
 
 const XP_VIDEO = 15
 const XP_CORRECT = 10
 const XP_SUBMIT = 35
 
+const STUDY_GUIDES = [
+  {
+    week: 1,
+    title: 'Globalisation & International Market Entry',
+    titleTh: 'โลกาภิวัตน์และการเข้าสู่ตลาดสากล',
+    keyTakeaway:
+      'การเลือกระหว่าง Foreign Direct Investment (FDI), Joint Venture, หรือ Licensing ขึ้นอยู่กับระดับการควบคุมและความเสี่ยงในตลาดเป้าหมาย',
+    keyTakeawayEn:
+      'Choosing between FDI, Joint Ventures, or Licensing depends on risk tolerance, capital readiness, and desired operational control.',
+  },
+  {
+    week: 2,
+    title: 'High-Context vs Low-Context Communication',
+    titleTh: 'การสื่อสารแบบบริบทสูง vs บริบทต่ำ',
+    keyTakeaway:
+      'High-Context (เช่น ญี่ปุ่น, ไทย) เน้นสายสัมพันธ์ น้ำเสียง ภาษากาย และความเงียบ / Low-Context (เช่น เยอรมนี, อเมริกา) เน้นความชัดเจนตรงไปตรงมาในสัญญา',
+    keyTakeawayEn:
+      'High-Context (Japan, Thailand) emphasizes relationships, non-verbal cues, and harmony. Low-Context (USA, Germany) requires precise, literal clarity.',
+  },
+  {
+    week: 3,
+    title: 'Hofstede’s Cultural Dimensions Matrix',
+    titleTh: 'มิติวัฒนธรรม 6 ด้านของ Hofstede',
+    keyTakeaway:
+      'Power Distance (PDI), Individualism (IDV), Masculinity (MAS), Uncertainty Avoidance (UAI), Long-Term Orientation (LTO), Indulgence (IVR)',
+    keyTakeawayEn:
+      'Core matrix: Power Distance, Individualism vs Collectivism, Masculinity vs Femininity, Uncertainty Avoidance, Long-Term Horizon, and Restraint.',
+  },
+  {
+    week: 4,
+    title: 'Glocalization & Cultural Adaptations',
+    titleTh: 'กลยุทธ์คิดระดับโลก ปรับให้ตรงใจท้องถิ่น (Glocalization)',
+    keyTakeaway:
+      'Think Global, Act Local — รักษาวิสัยทัศน์ของแบรนด์หลัก แต่ปรับเมนู บริการ และแคมเปญให้เข้ากับวิถีชีวิตของชุมชนท้องถิ่นอย่างเคารพ',
+    keyTakeawayEn:
+      'Think Global, Act Local — Safeguard brand integrity while thoughtfully adapting product features, flavor palettes, and local marketing resonance.',
+  },
+]
+
 /**
  * FacultyHall: High-Tech Cyber Lecture Amphitheater (Building 1)
- * Features dynamic lesson syllabi, holographic pre-class video terminal,
+ * Features dynamic lesson syllabi, study guide tablet, holographic pre-class video terminal,
  * gamified pre-test assessment with combo multiplier, and quest assignment submitter.
  */
 export default function FacultyHall() {
@@ -39,11 +87,14 @@ export default function FacultyHall() {
   const video = remediation.resources.find((r) => r.type === 'video')
   const [watched, setWatched] = useState(false)
   const [submittedId, setSubmittedId] = useState<string | null>(null)
+  const [expandedWeek, setExpandedWeek] = useState<number | null>(null)
 
   const handleWatchVideo = () => {
     if (!watched) {
       addXP(XP_VIDEO)
       addCoins(10)
+      playCoinSound()
+      playXPSparkle()
     }
     setWatched(true)
   }
@@ -52,6 +103,8 @@ export default function FacultyHall() {
     submitAssignment(id)
     addXP(XP_SUBMIT)
     addCoins(25)
+    playLevelUpSound()
+    playCoinSound()
     setSubmittedId(id)
     setTimeout(() => setSubmittedId(null), 3000)
   }
@@ -85,6 +138,58 @@ export default function FacultyHall() {
             </li>
           ))}
         </ol>
+      </Section>
+
+      {/* ── Holographic Study Guide & Cheat Sheet Tablet ── */}
+      <Section
+        title={lang === 'th' ? 'คลังสรุปเนื้อหาสำคัญ · Holographic Notes' : 'Holographic Study Archive'}
+        sub={
+          lang === 'th'
+            ? 'สรุปแก่นประเด็นที่มักออกสอบประจำสัปดาห์ สำหรับทบทวนล่วงหน้า'
+            : 'Key conceptual takeaways & high-yield exam points for pre-study'
+        }
+        icon={<Sparkles className="h-4 w-4 text-emerald-400" />}
+      >
+        <div className="space-y-2">
+          {STUDY_GUIDES.map((sg) => {
+            const isExpanded = expandedWeek === sg.week
+            return (
+              <div
+                key={sg.week}
+                className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all"
+              >
+                <button
+                  onClick={() => setExpandedWeek(isExpanded ? null : sg.week)}
+                  className="flex w-full items-center justify-between p-3.5 text-left hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/20 text-xs font-extrabold text-emerald-300">
+                      W{sg.week}
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-white">
+                      {lang === 'th' ? sg.titleTh : sg.title}
+                    </span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronUp className="h-4 w-4 text-white/60" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-white/60" />
+                  )}
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-white/10 bg-black/30 p-3.5 text-xs leading-relaxed text-emerald-200/90 animate-in fade-in duration-200">
+                    <p className="font-semibold text-amber-300 mb-1 flex items-center gap-1">
+                      <Lightbulb className="h-3.5 w-3.5 text-amber-400" />
+                      {lang === 'th' ? 'หัวใจสำคัญที่ต้องจำ:' : 'Core Exam Takeaway:'}
+                    </p>
+                    <p>{lang === 'th' ? sg.keyTakeaway : sg.keyTakeawayEn}</p>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </Section>
 
       {/* ── Pre-Class Holographic Video Section ── */}
@@ -310,7 +415,11 @@ function QuizTerminal({ onCorrect, lang }: { onCorrect: () => void; lang: 'th' |
                 setPicked(i)
                 if (isCorrect) {
                   setScore((s) => s + 1)
+                  playCorrectSound()
+                  playXPSparkle()
                   onCorrect()
+                } else {
+                  playWrongSound()
                 }
               }}
               className={cn(
