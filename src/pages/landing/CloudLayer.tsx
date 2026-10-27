@@ -3,14 +3,26 @@ import { useFrame } from '@react-three/fiber'
 import { CanvasTexture, MathUtils, SpriteMaterial, SRGBColorSpace, type Group } from 'three'
 import { PLAZA_CENTER } from '@/data/buildings'
 
-/** Height band the puffs float in; Landing.tsx uses it for the fly-through veil. */
-export const CLOUD_BOTTOM = 12.5
-export const CLOUD_TOP = 16
+/**
+ * The band the cloud deck actually *occupies on screen* — puff centres plus half a
+ * sprite. Landing.tsx fades the fly-through veil across exactly this range, so the
+ * veil is already up by the time a puff can cover the lens (it used to describe only
+ * the centres, which left the camera inside bare sprites with no veil: grey haze).
+ */
+export const CLOUD_BOTTOM = 11.5
+export const CLOUD_TOP = 21.5
 
-const PUFFS = 56
+/**
+ * Puff centres sit in a thin slab well clear of the skyline (the tallest tower is
+ * about 10 units), so the deck reads as a floor of cloud over the campus.
+ */
+const CENTER_BOTTOM = 15
+const CENTER_TOP = 17.5
+
+const PUFFS = 80
 /** No puffs inside this radius, so the campus shows through a hole in the cloud. */
-const HOLE_RADIUS = 15
-const OUTER_RADIUS = 38
+const HOLE_RADIUS = 16
+const OUTER_RADIUS = 46
 const MAX_OPACITY = 0.92
 
 let texture: CanvasTexture | null = null
@@ -44,9 +56,9 @@ function puffTexture() {
   }
   // shaded underside for volume (only where the puff is drawn)
   ctx.globalCompositeOperation = 'source-atop'
-  const shade = ctx.createLinearGradient(0, size * 0.3, 0, size * 0.85)
+  const shade = ctx.createLinearGradient(0, size * 0.5, 0, size * 0.9)
   shade.addColorStop(0, 'rgba(255,255,255,0)')
-  shade.addColorStop(1, 'rgba(176,160,188,0.55)')
+  shade.addColorStop(1, 'rgba(178,164,186,0.34)')
   ctx.fillStyle = shade
   ctx.fillRect(0, 0, size, size)
   texture = new CanvasTexture(canvas)
@@ -82,11 +94,15 @@ export default function CloudLayer({ shown }: { shown: boolean }) {
       Array.from({ length: PUFFS }, (_, i) => {
         const angle = (i / PUFFS) * Math.PI * 2 + rand(i, 1) * 0.5
         const r = HOLE_RADIUS + rand(i, 2) * (OUTER_RADIUS - HOLE_RADIUS)
-        const w = 7 + rand(i, 3) * 7
+        // Puffs grow with distance from the plaza: the ones nearest the hover spot stay
+        // small, so none of them can smear itself across the lens, while the far ones are
+        // big enough to build a horizon. (A uniform size put a wall of white on the lens.)
+        const spread = (r - HOLE_RADIUS) / (OUTER_RADIUS - HOLE_RADIUS)
+        const w = 5 + spread * 9 + rand(i, 3) * 2
         return {
           // relative to the plaza (the parent group sits there)
-          position: [Math.sin(angle) * r, MathUtils.lerp(CLOUD_BOTTOM, CLOUD_TOP, rand(i, 4)), Math.cos(angle) * r] as [number, number, number],
-          scale: [w, w * (0.6 + rand(i, 5) * 0.2), 1] as [number, number, number],
+          position: [Math.sin(angle) * r, MathUtils.lerp(CENTER_BOTTOM, CENTER_TOP, rand(i, 4)), Math.cos(angle) * r] as [number, number, number],
+          scale: [w, w * (0.5 + rand(i, 5) * 0.1), 1] as [number, number, number],
           material: materials[i % materials.length],
         }
       }),

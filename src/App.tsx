@@ -27,6 +27,8 @@ const CampusMap2D = lazy(() => import('@/pages/campus/CampusMap2D'))
 const Landing = lazy(() => import('@/pages/landing/Landing'))
 
 const campusFallback = <div className="min-h-screen bg-[#3A3D7A]" />
+/** The landing dive fades to cloud-white and Campus3D fades back out of it: no indigo flash in between. */
+const landingFallback = <div className="min-h-screen bg-[#F3EEE6]" />
 
 export default function App() {
   return (
@@ -39,7 +41,7 @@ export default function App() {
             <Route path="/" element={<Suspense fallback={<div className="min-h-screen bg-[#E9C9A8]" />}><Landing /></Suspense>} />
             <Route path="/login" element={<Login />} />
             <Route path="/create" element={<Suspense fallback={campusFallback}><CharacterCreate /></Suspense>} />
-            <Route path="/campus" element={<Suspense fallback={campusFallback}><Campus3D /></Suspense>} />
+            <Route path="/campus" element={<Suspense fallback={landingFallback}><Campus3D /></Suspense>} />
             <Route path="/map" element={<Suspense fallback={campusFallback}><CampusMap2D /></Suspense>} />
             <Route
               path="/campus/:buildingId"

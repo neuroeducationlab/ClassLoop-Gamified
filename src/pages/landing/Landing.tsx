@@ -33,9 +33,10 @@ const ORBIT_RADIUS = 36
 const ORBIT_HEIGHT = 21
 const ORBIT_SPEED = 0.045 // radians / second — slow, cinematic
 const ORBIT_FOV = 42
-/** Hover spot for the role cards: just above the cloud tops, half-way in. */
+/** Hover spot for the role cards: clear above the cloud tops, half-way in, so the
+ *  deck reads as a sea of clouds below instead of a puff smeared across the lens. */
 const CLOUD_RADIUS = 22
-const CLOUD_HEIGHT = 18
+const CLOUD_HEIGHT = 23
 /** Campus3D's first-person camera, which the dive ends exactly on. */
 const FP_EYE_HEIGHT = 1.65
 const FP_FOV = 75
@@ -108,10 +109,14 @@ function cylOf(v: Vector3): Cyl {
   return { a: Math.atan2(dx, dz), r: Math.hypot(dx, dz), y: v.y }
 }
 
-/** Opacity of the white veil while the camera is inside the cloud band (a soft bump, never a flash). */
+/**
+ * Opacity of the white veil while the camera is inside the cloud band (a soft bump,
+ * never a flash). The falloff spans the whole band, so the veil is already rising
+ * where the first puffs reach the lens and peaks in the middle of the deck.
+ */
 function cloudVeil(y: number) {
   const mid = (CLOUD_BOTTOM + CLOUD_TOP) / 2
-  const k = MathUtils.clamp((y - mid) / 2.6, -1, 1)
+  const k = MathUtils.clamp((y - mid) / ((CLOUD_TOP - CLOUD_BOTTOM) / 2), -1, 1)
   return 0.7 * Math.cos((k * Math.PI) / 2) ** 2
 }
 
@@ -136,6 +141,13 @@ function CameraRig({
 }) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera
   const plaza = useMemo(() => new Vector3(PLAZA_CENTER[0], 2, PLAZA_CENTER[1]), [])
+  /**
+   * What the camera looks at once it is up at the cloud tops. Aiming at the plaza
+   * floor from up there pitches the camera ~43 degrees down, which puts the whole
+   * cloud deck above the top of frame; this raised target keeps the campus in the
+   * lower half and the clouds and horizon in view.
+   */
+  const hoverLook = useMemo(() => new Vector3(PLAZA_CENTER[0], 11, PLAZA_CENTER[1]), [])
   const end = useMemo(() => {
     const [x, z] = landingSpot()
     const dx = PLAZA_CENTER[0] - x
@@ -175,7 +187,8 @@ function CameraRig({
       c.r = MathUtils.lerp(m.from.r, ORBIT_RADIUS, e)
       c.y = MathUtils.lerp(m.from.y, ORBIT_HEIGHT, e)
       fov = MathUtils.lerp(m.fov, ORBIT_FOV, e)
-      look.copy(plaza)
+      // on the first orbit e is already 1, so this is simply the plaza
+      look.copy(hoverLook).lerp(plaza, e)
     } else if (kind === 'approach') {
       m.t = Math.min(1, m.t + dt / APPROACH_SECONDS)
       const e = smootherstep(m.t)
@@ -183,7 +196,7 @@ function CameraRig({
       c.r = MathUtils.lerp(m.from.r, CLOUD_RADIUS, e)
       // a gentle hover while the role cards are up, so the scene never freezes
       c.y = MathUtils.lerp(m.from.y, CLOUD_HEIGHT, e) + Math.sin(state.clock.elapsedTime * 0.6) * 0.15 * e
-      look.copy(plaza)
+      look.copy(plaza).lerp(hoverLook, e)
       // cards start fading in as the glide settles
       if (m.t >= 0.85 && !notified.current) {
         notified.current = true
@@ -196,8 +209,9 @@ function CameraRig({
       c.a = m.from.a + m.da * (1 - (1 - u) ** 2)
       c.r = MathUtils.lerp(m.from.r, end.cyl.r, u)
       c.y = MathUtils.lerp(m.from.y, FP_EYE_HEIGHT, u)
-      // gaze leads down at the plaza, then levels out to eye height for touchdown
-      look.copy(plaza).lerp(end.ahead, smoothstep(MathUtils.clamp((u - 0.5) / 0.5, 0, 1)))
+      // one continuous sweep: starts where the hover left the gaze, leads the descent
+      // down and levels out on the first-person eyeline for touchdown
+      look.copy(hoverLook).lerp(end.ahead, smoothstep(u))
       fov = MathUtils.lerp(m.fov, FP_FOV, u)
       fade = smoothstep(MathUtils.clamp((m.t - 1) * (DIVE_SECONDS / FADE_OUT_SECONDS) + 1, 0, 1))
       if (m.t >= 1 && !notified.current) {
@@ -212,7 +226,10 @@ function CameraRig({
       camera.fov = fov
       camera.updateProjectionMatrix()
     }
-    if (veil.current) veil.current.style.opacity = String(Math.max(cloudVeil(c.y), fade))
+    // the deck is hidden during the orbit, so its veil must be too (it was washing
+    // the opening title shot with a faint 0.017)
+    const mist = phase === 'orbit' ? 0 : cloudVeil(c.y)
+    if (veil.current) veil.current.style.opacity = String(Math.max(mist, fade))
   })
   return null
 }
