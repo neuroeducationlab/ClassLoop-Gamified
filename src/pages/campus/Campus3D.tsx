@@ -1,17 +1,32 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Sky, Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
-import { MathUtils, Vector3, type Group, type Mesh } from 'three'
+import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
 import { Shirt, LayoutGrid } from 'lucide-react'
 import { useApp, type Avatar } from '@/context/AppContext'
-import { BUILDINGS, CAMPUS_PALETTE, PLAZA_CENTER, type Building as BuildingConfig, type BuildingId } from '@/data/buildings'
+import {
+  BUILDINGS,
+  CAMPUS_PALETTE,
+  PLAZA_CENTER,
+  type Building as BuildingConfig,
+  type BuildingId,
+} from '@/data/buildings'
 import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
 import ContextBuildings from './components/ContextBuildings'
 import { doorPoint, facingPlaza, labelHeight } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
+import Minimap from './components/Minimap'
+import TouchJoystick from './components/TouchJoystick'
 
 const WALK_SPEED = 5 // units / second
 const CAMERA_OFFSET = new Vector3(0, 16, 17)
@@ -23,6 +38,22 @@ const GATE_SPAWN = doorPoint(GATE)
 const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
 const INTRO_SECONDS = 2.4
 const ENTER_DELAY_MS = 550
+
+/**
+ * Phase 6 Step 3 — Arrival animation.
+ * Camera starts above the MRT train line, descends toward Exit 2, and the fog
+ * lifts from dense (foggy arrival) to clear (normal campus view).
+ */
+const ARRIVAL_FROM = new Vector3(-24, 26, -10)
+const ARRIVAL_LOOK_START = new Vector3(-16, 4, -4)
+// const ARRIVAL_LOOK_END = new Vector3(-11.5, 4, -2) // reserved for future sub-step
+const ARRIVAL_SECONDS = 4.8
+const FOG_NEAR_ARRIVAL = 4
+const FOG_FAR_ARRIVAL = 24
+const FOG_NEAR_CLEAR = 48
+const FOG_FAR_CLEAR = 90
+/** Distance threshold for "near door" prompt (in world units). */
+const DOOR_PROMPT_DISTANCE = 2.4
 
 /**
  * The camera looks halfway between the avatar and the plaza: the avatar stays
@@ -48,9 +79,30 @@ const AVATAR_LABEL_HEIGHT = 2.1
 export default function Campus3D() {
   const { avatar, currentStudent, setRole, studentXP } = useApp()
   const navigate = useNavigate()
+  const location = useLocation()
   const [hovered, setHovered] = useState<BuildingId | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
+
+  // ── Phase 6 Step 3: Arrival ─────────────────────────────────────────────
+  const [isArriving, setIsArriving] = useState(() => {
+    // Only show arrival when navigated from /create with state.arrival = true
+    const state = location.state as { arrival?: boolean } | null
+    return Boolean(state?.arrival)
+  })
+
+  // ── Phase 6 Step 5: near-door prompt ──────────────────────────────────
+  const [nearDoor, setNearDoor] = useState<BuildingConfig | null>(null)
+
+  // ── Phase 6 Step 4 & 5: live avatar tracking (shared refs for minimap + WASD) ──
+  const avatarPosRef = useRef<[number, number]>(lastSpot ?? GATE_SPAWN)
+  const avatarRotRef = useRef<number>(0)
+  // Render-trigger state for minimap (updated every ~16ms via rAF, not every frame)
+  const [minimapAvatarPos, setMinimapAvatarPos] = useState<[number, number]>(
+    lastSpot ?? GATE_SPAWN,
+  )
+  const [minimapAvatarRot, setMinimapAvatarRot] = useState(0)
+
   const labels = useRef<LabelMap>(new Map())
   const labelRef = (key: string) => (el: HTMLDivElement | null) => {
     if (el) labels.current.set(key, el)
@@ -75,6 +127,18 @@ export default function Campus3D() {
   }, [toast])
   useEffect(() => () => void (document.body.style.cursor = ''), [])
 
+  // Poll avatarPosRef to update minimap (~60fps via rAF)
+  useEffect(() => {
+    let rafId: number
+    const tick = () => {
+      setMinimapAvatarPos([avatarPosRef.current[0], avatarPosRef.current[1]])
+      setMinimapAvatarRot(avatarRotRef.current)
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [])
+
   const me: Avatar = avatar ?? { color: '#E89BC4', hat: 'grad', nickname: currentStudent.nickname }
 
   const arrive = useCallback(
@@ -94,6 +158,13 @@ export default function Campus3D() {
   const level = Math.floor(studentXP / 100) + 1
   const progress = studentXP % 100
 
+  // ── Phase 6 Step 5: Joystick direction for use in scene ────────────────
+  const joystickRef = useRef<[number, number] | null>(null)
+
+  // Shared walkTo/walkGround callbacks passed down into the scene
+  // These are stored as refs so the scene can call them without re-rendering
+  const walkGroundRef = useRef<(x: number, z: number) => void>(() => {})
+
   return (
     <div className="fixed inset-0 select-none font-campus" style={{ backgroundColor: '#D4B896' }}>
       <Canvas
@@ -112,7 +183,14 @@ export default function Campus3D() {
           mieCoefficient={0.005}
           mieDirectionalG={0.8}
         />
-        <fog attach="fog" args={['#ECCDA5', 48, 90]} />
+        <fog
+          attach="fog"
+          args={[
+            '#ECCDA5',
+            isArriving ? FOG_NEAR_ARRIVAL : FOG_NEAR_CLEAR,
+            isArriving ? FOG_FAR_ARRIVAL : FOG_FAR_CLEAR,
+          ]}
+        />
 
         {/* Ambient & Golden Hour Directional Sunlight */}
         <hemisphereLight args={['#FFF2DF', '#4C586B', 1.2]} />
@@ -154,7 +232,20 @@ export default function Campus3D() {
           />
         </Environment>
 
-        <CampusScene me={me} hovered={hovered} onHover={setHovered} onArrive={arrive} labels={labels} />
+        <CampusScene
+          me={me}
+          hovered={hovered}
+          onHover={setHovered}
+          onArrive={arrive}
+          labels={labels}
+          isArriving={isArriving}
+          onArrivalDone={() => setIsArriving(false)}
+          joystickRef={joystickRef}
+          avatarPosRef={avatarPosRef}
+          avatarRotRef={avatarRotRef}
+          walkGroundRef={walkGroundRef}
+          onNearDoor={setNearDoor}
+        />
 
         {/* Postprocessing effects disabled on mobile for buttery smooth 60fps */}
         {!isMobile && (
@@ -238,14 +329,87 @@ export default function Campus3D() {
         </div>
       </div>
 
+      {/* Bottom HUD: toast + instructions */}
       <div className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center gap-2">
         {toast && (
           <p className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-lg animate-fadeIn">{toast}</p>
         )}
-        <p className="rounded-full bg-black/40 px-4 py-1.5 text-xs text-white/95 backdrop-blur-md border border-white/10 shadow">
-          คลิกพื้นเพื่อเดิน · คลิกอาคารเพื่อเข้า — Click to walk, click a building to enter
-        </p>
+
+        {/* Phase 6 Step 5: Door prompt */}
+        {nearDoor && !isArriving && (
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/70 px-5 py-2.5 text-white backdrop-blur-md border border-white/20 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <span className="text-base">{nearDoor.emoji}</span>
+            <span className="text-sm font-bold">
+              {nearDoor.name.th}
+            </span>
+            <span className="hidden sm:inline text-xs text-white/60 mx-1">—</span>
+            <span className="hidden sm:inline text-xs text-white/60">
+              กด <kbd className="rounded bg-white/20 px-1.5 py-0.5 text-white font-mono">E</kbd> เพื่อเข้า
+            </span>
+            <button
+              onClick={() => arrive(nearDoor)}
+              className="ml-2 rounded-full bg-white/20 hover:bg-white/35 px-3 py-1 text-xs font-bold transition-colors border border-white/30 cursor-pointer"
+            >
+              เข้าอาคาร →
+            </button>
+          </div>
+        )}
+
+        {/* Default walk hint, hidden when near door or arriving */}
+        {!nearDoor && !isArriving && (
+          <p className="rounded-full bg-black/40 px-4 py-1.5 text-xs text-white/95 backdrop-blur-md border border-white/10 shadow">
+            คลิกพื้นเพื่อเดิน · WASD เพื่อเดิน · คลิกอาคารเพื่อเข้า
+          </p>
+        )}
       </div>
+
+      {/* Phase 6 Step 3: Arrival overlay */}
+      {isArriving && (
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-end pb-24 gap-4">
+          {/* Caption */}
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col items-center gap-1">
+            <p className="text-white text-lg font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] tracking-wide">
+              กำลังลงสู่แคมปัส…
+            </p>
+            <p className="text-white/70 text-sm drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+              Arriving at SPU Campus
+            </p>
+          </div>
+          {/* Skip button */}
+          <button
+            className="pointer-events-auto rounded-full bg-black/50 hover:bg-black/70 border border-white/25 px-5 py-2 text-xs font-semibold text-white/90 backdrop-blur-md transition-colors cursor-pointer shadow-lg"
+            onClick={() => setIsArriving(false)}
+          >
+            ข้ามแอนิเมชัน · Skip arrival ↷
+          </button>
+        </div>
+      )}
+
+      {/* Phase 6 Step 4: Minimap (bottom-right) */}
+      {!isArriving && (
+        <Minimap
+          avatarPosition={minimapAvatarPos}
+          avatarColor={me.color}
+          avatarRotation={minimapAvatarRot}
+          onWalk={(x, z) => walkGroundRef.current(x, z)}
+          onSelectBuilding={(b) => {
+            const dp = doorPoint(b)
+            walkGroundRef.current(dp[0], dp[1])
+          }}
+        />
+      )}
+
+      {/* Phase 6 Step 5: Touch Joystick (bottom-left) */}
+      {!isArriving && (
+        <TouchJoystick
+          onMove={(vec) => {
+            joystickRef.current = vec
+          }}
+          onEnd={() => {
+            joystickRef.current = null
+          }}
+        />
+      )}
 
       {entering && (
         <div
@@ -268,6 +432,13 @@ type SceneProps = {
   onHover: (id: BuildingId | null) => void
   onArrive: (b: BuildingConfig) => void
   labels: RefObject<LabelMap>
+  isArriving: boolean
+  onArrivalDone: () => void
+  joystickRef: RefObject<[number, number] | null>
+  avatarPosRef: RefObject<[number, number]>
+  avatarRotRef: RefObject<number>
+  walkGroundRef: RefObject<(x: number, z: number) => void>
+  onNearDoor: (b: BuildingConfig | null) => void
 }
 
 /** True when the segment a→b passes within `r` of point p (all on the ground plane). */
@@ -278,8 +449,21 @@ function passesNear(a: [number, number], b: [number, number], p: [number, number
   return Math.hypot(a[0] + dx * t - p[0], a[1] + dz * t - p[1]) < r
 }
 
-function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
-  const { camera, size } = useThree()
+function CampusScene({
+  me,
+  hovered,
+  onHover,
+  onArrive,
+  labels,
+  isArriving,
+  onArrivalDone,
+  joystickRef,
+  avatarPosRef,
+  avatarRotRef,
+  walkGroundRef,
+  onNearDoor,
+}: SceneProps) {
+  const { camera, size, scene } = useThree()
   const avatarRef = useRef<Group>(null)
   const markerRef = useRef<Mesh>(null)
   const waypoints = useRef<[number, number][]>([])
@@ -287,14 +471,53 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
   const spawn = lastSpot ?? GATE_SPAWN
   const intro = useRef(introPlayed ? 1 : 0)
 
-  // place the camera before the first frame: high up for the intro, else already following
+  // ── Phase 6 Step 3: Arrival animation state ──────────────────────────
+  const arrivalT = useRef(0) // 0→1 over ARRIVAL_SECONDS
+  const fogT = useRef(isArriving ? 0 : 1)
+  const isArrivingRef = useRef(isArriving)
+  useEffect(() => {
+    isArrivingRef.current = isArriving
+    if (!isArriving) {
+      // Skip: snap fog & camera immediately
+      fogT.current = 1
+      arrivalT.current = 1
+    }
+  }, [isArriving])
+
+  // ── Phase 6 Step 5: keyboard state ─────────────────────────────────
+  const keys = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      keys.current.add(e.code)
+      // E key is consumed in useFrame where nearDoorRef is checked
+    }
+    const up = (e: KeyboardEvent) => keys.current.delete(e.code)
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return () => {
+      window.removeEventListener('keydown', down)
+      window.removeEventListener('keyup', up)
+    }
+  }, [onArrive])
+
+  // Ref to track nearest door for E-key press
+  const nearDoorRef = useRef<BuildingConfig | null>(null)
+
+  // place the camera before the first frame
   useEffect(() => {
     const t = lookTarget(spawn[0], spawn[1], new Vector3())
-    if (intro.current < 1) camera.position.copy(INTRO_FROM)
-    else camera.position.copy(t).add(CAMERA_OFFSET)
-    camera.lookAt(intro.current < 1 ? new Vector3(PLAZA_CENTER[0], 0, PLAZA_CENTER[1]) : t)
+    if (isArriving) {
+      camera.position.copy(ARRIVAL_FROM)
+      camera.lookAt(ARRIVAL_LOOK_START)
+    } else if (intro.current < 1) {
+      camera.position.copy(INTRO_FROM)
+      camera.lookAt(new Vector3(PLAZA_CENTER[0], 0, PLAZA_CENTER[1]))
+    } else {
+      camera.position.copy(t).add(CAMERA_OFFSET)
+      camera.lookAt(t)
+    }
     introPlayed = true
-  }, [camera, spawn])
+  }, [camera, spawn, isArriving])
 
   const walkTo = (target: [number, number], building: BuildingConfig | null) => {
     const a = avatarRef.current
@@ -325,6 +548,11 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
     walkTo([x * k, z * k], null)
   }
 
+  // Expose walkGround to parent for minimap tap-to-walk
+  useEffect(() => {
+    walkGroundRef.current = walkGround
+  })
+
   const look = new Vector3()
   const follow = new Vector3()
   const lookAt = new Vector3()
@@ -343,55 +571,160 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
   useFrame((state, dt) => {
     const a = avatarRef.current
     if (!a) return
-    const next = waypoints.current[0]
-    let moving = false
-    if (next) {
-      const dx = next[0] - a.position.x
-      const dz = next[1] - a.position.z
-      const dist = Math.hypot(dx, dz)
-      const step = WALK_SPEED * dt
-      if (dist <= step) {
-        a.position.x = next[0]
-        a.position.z = next[1]
-        waypoints.current.shift()
-        if (waypoints.current.length === 0) {
-          if (markerRef.current) markerRef.current.visible = false
-          const b = destination.current
-          destination.current = null
-          if (b) onArrive(b)
-        }
-      } else {
-        a.position.x += (dx / dist) * step
-        a.position.z += (dz / dist) * step
-        moving = true
+
+    // ── Phase 6 Step 3: Arrival animation ────────────────────────────
+    if (isArrivingRef.current) {
+      arrivalT.current = Math.min(1, arrivalT.current + dt / ARRIVAL_SECONDS)
+      const e = 1 - Math.pow(1 - arrivalT.current, 3)
+
+      // Camera: lerp from ARRIVAL_FROM toward follow position
+      const followTarget = lookTarget(a.position.x, a.position.z, look)
+      const destCam = followTarget.clone().add(CAMERA_OFFSET)
+      camera.position.lerpVectors(ARRIVAL_FROM, destCam, e)
+      // Look target: lerp from the train line down to the avatar
+      const camLookAt = ARRIVAL_LOOK_START.clone().lerp(followTarget, e)
+      camera.lookAt(camLookAt)
+
+      // Fog: lerp from dense to clear
+      fogT.current = Math.min(1, fogT.current + dt / ARRIVAL_SECONDS)
+      if (scene.fog instanceof Fog) {
+        scene.fog.near = MathUtils.lerp(FOG_NEAR_ARRIVAL, FOG_NEAR_CLEAR, fogT.current)
+        scene.fog.far = MathUtils.lerp(FOG_FAR_ARRIVAL, FOG_FAR_CLEAR, fogT.current)
       }
-      // turn smoothly toward the direction of travel (shortest way round)
-      const want = Math.atan2(dx, dz)
+
+      if (arrivalT.current >= 1) {
+        onArrivalDone()
+      }
+
+      // Labels still get updated even during arrival
+      for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+      place('me', a.position.x, a.position.y + AVATAR_LABEL_HEIGHT, a.position.z)
+      return
+    }
+
+    // ── Phase 6 Step 5: WASD + Joystick movement ─────────────────────
+    const k = keys.current
+    let vx = 0
+    let vz = 0
+
+    if (k.has('KeyW') || k.has('ArrowUp')) vz -= 1
+    if (k.has('KeyS') || k.has('ArrowDown')) vz += 1
+    if (k.has('KeyA') || k.has('ArrowLeft')) vx -= 1
+    if (k.has('KeyD') || k.has('ArrowRight')) vx += 1
+
+    // Joystick overrides/adds to keyboard
+    const joy = joystickRef.current
+    if (joy) {
+      vx += joy[0]
+      vz += joy[1]
+    }
+
+    let moving = false
+
+    if (vx !== 0 || vz !== 0) {
+      // Direct velocity movement — clear waypoints
+      waypoints.current = []
+      destination.current = null
+      if (markerRef.current) markerRef.current.visible = false
+
+      // Normalize diagonal movement
+      const mag = Math.hypot(vx, vz)
+      const nx = vx / mag
+      const nz = vz / mag
+
+      const step = WALK_SPEED * dt
+      const newX = a.position.x + nx * step
+      const newZ = a.position.z + nz * step
+
+      // Clamp to campus radius
+      const dist = Math.hypot(newX, newZ)
+      const clamp = dist > CAMPUS_RADIUS ? CAMPUS_RADIUS / dist : 1
+      a.position.x = newX * clamp
+      a.position.z = newZ * clamp
+
+      // Face direction of travel
+      const want = Math.atan2(nx, nz)
       const diff = Math.atan2(Math.sin(want - a.rotation.y), Math.cos(want - a.rotation.y))
       a.rotation.y += diff * Math.min(1, dt * 12)
+
+      moving = true
+    } else {
+      // Waypoint movement (click/tap)
+      const next = waypoints.current[0]
+      if (next) {
+        const dx = next[0] - a.position.x
+        const dz = next[1] - a.position.z
+        const dist = Math.hypot(dx, dz)
+        const step = WALK_SPEED * dt
+        if (dist <= step) {
+          a.position.x = next[0]
+          a.position.z = next[1]
+          waypoints.current.shift()
+          if (waypoints.current.length === 0) {
+            if (markerRef.current) markerRef.current.visible = false
+            const b = destination.current
+            destination.current = null
+            if (b) onArrive(b)
+          }
+        } else {
+          a.position.x += (dx / dist) * step
+          a.position.z += (dz / dist) * step
+          moving = true
+        }
+        // turn smoothly toward the direction of travel
+        const want = Math.atan2(next[0] - a.position.x, next[1] - a.position.z)
+        const diff = Math.atan2(Math.sin(want - a.rotation.y), Math.cos(want - a.rotation.y))
+        a.rotation.y += diff * Math.min(1, dt * 12)
+      }
     }
-    // little hop while walking, settle when stopped
+
+    // hop while walking
     const hop = moving ? Math.abs(Math.sin(state.clock.elapsedTime * 11)) * 0.12 : 0
     a.position.y = MathUtils.damp(a.position.y, hop, 20, dt)
 
     const m = markerRef.current
     if (m?.visible) m.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 6) * 0.12)
 
+    // ── Phase 6 Step 4: Update avatar position refs for minimap ──────
+    avatarPosRef.current = [a.position.x, a.position.z]
+    avatarRotRef.current = a.rotation.y
+
+    // ── Phase 6 Step 5: Door proximity check ─────────────────────────
+    let nearest: BuildingConfig | null = null
+    let nearestDist = DOOR_PROMPT_DISTANCE
+    for (const b of BUILDINGS) {
+      const dp = doorPoint(b)
+      const d = Math.hypot(dp[0] - a.position.x, dp[1] - a.position.z)
+      if (d < nearestDist && b.studentSees !== null) {
+        nearest = b
+        nearestDist = d
+      }
+    }
+    if (nearest !== nearDoorRef.current) {
+      nearDoorRef.current = nearest
+      onNearDoor(nearest)
+    }
+
+    // E key: enter door when near
+    if (k.has('KeyE') && nearDoorRef.current) {
+      k.delete('KeyE') // consume the keypress
+      onArrive(nearDoorRef.current)
+    }
+
+    // Normal camera follow
     lookTarget(a.position.x, a.position.z, look)
     if (intro.current < 1) {
-      // intro swoop: ease from the overview shot into the follow position
       intro.current = Math.min(1, intro.current + dt / INTRO_SECONDS)
-      const e = 1 - Math.pow(1 - intro.current, 3)
+      const e2 = 1 - Math.pow(1 - intro.current, 3)
       follow.copy(look).add(CAMERA_OFFSET)
-      camera.position.lerpVectors(INTRO_FROM, follow, e)
-      lookAt.set(PLAZA_CENTER[0], 0, PLAZA_CENTER[1]).lerp(look, e)
+      camera.position.lerpVectors(INTRO_FROM, follow, e2)
+      lookAt.set(PLAZA_CENTER[0], 0, PLAZA_CENTER[1]).lerp(look, e2)
       camera.lookAt(lookAt)
     } else {
-      // camera follows with a soft lag
-      const k = 1 - Math.exp(-3 * dt)
-      camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * k
-      camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * k
-      camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * k
+      const kk = 1 - Math.exp(-3 * dt)
+      camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * kk
+      camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * kk
+      camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * kk
       camera.lookAt(look)
     }
 

@@ -74,10 +74,10 @@ The user picked a realistic, textured look in a **modern-university urban style,
       (Bloom, AO, Vignette) disabled on mobile.
 - [ ] 2. Grand opening page at `/`: cinematic orbit, title "ClassLoop Campus", Start → `/login`;
       buildings rise in sequence, windows light up, train passes.
-- [ ] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
+- [x] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
       caption "กำลังลงสู่แคมปัส…", **Skip arrival** pill.
-- [ ] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).
-- [ ] 5. WASD/arrows + touch joystick; "เข้าอาคาร" prompt (E / tap) near doors.
+- [x] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).
+- [x] 5. WASD/arrows + touch joystick; "เข้าอาคาร" prompt (E / tap) near doors.
 - [ ] 6. Modern-uni interiors (back pill, accent hero band, dark glass lesson cards) + 390px mobile audit.
 - [ ] 7. Extra wow if time: holographic SPU logo, light-trail cars, confetti on level-up.
 

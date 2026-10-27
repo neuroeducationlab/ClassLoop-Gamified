@@ -19,7 +19,7 @@ export default function CharacterCreate() {
   const submit = (e: FormEvent) => {
     e.preventDefault()
     setAvatar({ color, hat, nickname: nickname.trim() || currentStudent.nickname })
-    navigate('/campus')
+    navigate('/campus', { state: { arrival: true } })
   }
 
   return (
