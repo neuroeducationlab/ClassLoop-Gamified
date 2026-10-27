@@ -38,7 +38,7 @@ export default function Arena() {
       <div className="mb-4 grid grid-cols-3 gap-3">
         <Stat icon={<Zap className="h-5 w-5" />} label="XP ของฉัน" value={studentXP} />
         <Stat icon={<Trophy className="h-5 w-5" />} label="อันดับ" value={`#${myRank}`} />
-        <Stat icon={<Flame className="h-5 w-5" />} label="เลเวล" value={Math.floor(studentXP / 100) + 1} />
+        <Stat icon={<Flame className="h-5 w-5" />} label="เลเวล" value={Math.max(1, Math.floor(studentXP / 100))} /* same formula as the campus HUD */ />
       </div>
 
       <Section title="เกมจับคู่คำศัพท์ · Word match" sub={`เลือกความหมายที่ถูก · +${XP_CORRECT} XP ต่อข้อ`}>
@@ -64,10 +64,11 @@ export default function Arena() {
 
 function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-grey-300/60 bg-paper p-3 text-center shadow-sm">
+    // glass tile — sits directly on the room's dark gradient, above the white cards
+    <div className="rounded-2xl border border-white/20 bg-white/10 p-3 text-center text-white shadow-lg backdrop-blur">
       <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-pink-100 text-pink-600">{icon}</div>
-      <p className="mt-1.5 text-lg font-extrabold text-ink">{value}</p>
-      <p className="text-[11px] text-grey-600">{label}</p>
+      <p className="mt-1.5 text-lg font-extrabold">{value}</p>
+      <p className="text-[11px] text-white/70">{label}</p>
     </div>
   )
 }

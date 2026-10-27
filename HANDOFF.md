@@ -72,14 +72,23 @@ The user picked a realistic, textured look in a **modern-university urban style,
       towers for SPU bldgs 2/3/4/7/8/10/12; lit MRT train + Exit 2 canopy; roads, lamps, parked cars,
       reflective pond; drei `Sky` (golden hour) + `Environment` from `Lightformer`s; `@react-three/postprocessing`
       (Bloom, AO, Vignette) disabled on mobile.
-- [ ] 2. Grand opening page at `/`: cinematic orbit, title "ClassLoop Campus", Start → `/login`;
+- [x] 2. Grand opening page at `/`: cinematic orbit, title "ClassLoop Campus", Start → `/login`;
       buildings rise in sequence, windows light up, train passes.
-- [ ] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
+- [x] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
       caption "กำลังลงสู่แคมปัส…", **Skip arrival** pill.
-- [ ] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).
-- [ ] 5. WASD/arrows + touch joystick; "เข้าอาคาร" prompt (E / tap) near doors.
-- [ ] 6. Modern-uni interiors (back pill, accent hero band, dark glass lesson cards) + 390px mobile audit.
-- [ ] 7. Extra wow if time: holographic SPU logo, light-trail cars, confetti on level-up.
+- [x] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).
+- [x] 5. WASD/arrows + touch joystick; "เข้าอาคาร" prompt (E / tap) near doors.
+- [x] 6. Modern-uni interiors (back pill, accent hero band, dark glass lesson cards) + 390px mobile audit.
+- [x] Lite mode: `src/pages/campus/lowPower.ts` (phones, small screens, GPU-less → no postprocessing; `?hq` / `?lite`).
+- Parallel split (27 Oct): **Antigravity** did steps 3–5 in `Campus3D.tsx`; **Claude** did lite mode, step 2
+  (`src/pages/landing/Landing.tsx`, `/` route) and step 6 (`BuildingInterior.tsx`, `interiors/*`). On phones the
+  campus HUD buttons are icon-only (labels from `sm:` up).
+- [x] 7. Extra wow: holographic **ClassLoop** logo over the plaza + landing finale (`components/Hologram.tsx`),
+      light-trail cars on the MRT road (`components/LightTrails.tsx`), ClassLoop "LEVEL UP!" confetti
+      (`LevelUpCelebration.tsx`, mounted in App, campus routes only).
+- Brand rule: **ClassLoop is the brand; SPU is the client** ("SPU edition"). Keep ClassLoop first in new copy.
+- Students now log in straight to `/campus` in first person (character creation parked; `/create` still exists
+  but nothing links to it). Quality: `?hq` / `?lite` are remembered per browser (localStorage), `?auto` resets.
 
 ## Verify before each push
 
