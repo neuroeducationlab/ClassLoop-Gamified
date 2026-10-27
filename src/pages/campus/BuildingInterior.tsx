@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Lock } from 'lucide-react'
+import { Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
+import { ArrowLeft, Lock, Map as MapIcon, Volume2, VolumeX } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { BUILDINGS, type BuildingId } from '@/data/buildings'
+import { playPortalSound, isSoundMuted, toggleSoundMute } from './soundEngine'
 import GateRoom from './interiors/GateRoom'
 import FacultyHall from './interiors/FacultyHall'
 import Arena from './interiors/Arena'
@@ -16,6 +18,8 @@ export default function BuildingInterior() {
   const { buildingId } = useParams()
   const { role, lang } = useApp()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [muted, setMuted] = useState(isSoundMuted())
   const building = BUILDINGS.find((b) => b.id === buildingId)
   if (!building) return <Navigate to="/campus" replace />
 
@@ -23,9 +27,21 @@ export default function BuildingInterior() {
   // data/plan embed the existing Dashboard/Studio, which are designed for the light canvas
   const wide = building.id === 'data' || building.id === 'plan'
   const blurb = role === 'teacher' ? building.teacherSees : building.studentSees
-  const back = () => navigate(role === 'teacher' ? '/map' : '/campus')
 
-  const backText = role === 'teacher'
+  // Check if teacher specifically came from the 2D map
+  const fromMap = (location.state as { from?: string } | null)?.from === '/map'
+  const backTarget = fromMap ? '/map' : '/campus'
+  const back = () => {
+    playPortalSound()
+    navigate(backTarget)
+  }
+
+  const handleToggleSound = () => {
+    const next = toggleSoundMute()
+    setMuted(next)
+  }
+
+  const backText = backTarget === '/map'
     ? (lang === 'th' ? 'กลับแผนที่ 2D' : 'Back to 2D Map')
     : (lang === 'th' ? 'กลับแคมปัส 3D' : 'Back to 3D Campus')
 
@@ -45,16 +61,46 @@ export default function BuildingInterior() {
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:18px_18px]" />
         <div className={`relative mx-auto px-4 pb-6 pt-4 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
-          <button
-            onClick={back}
-            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/25 cursor-pointer"
-            aria-label={backText}
-          >
-            <ArrowLeft className="h-4 w-4" /> {backText}
-          </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={back}
+                className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-all hover:bg-white/25 cursor-pointer shadow-sm"
+                aria-label={backText}
+              >
+                <ArrowLeft className="h-4 w-4" /> {backText}
+              </button>
+              {role === 'teacher' && !fromMap && (
+                <button
+                  onClick={() => navigate('/map')}
+                  className="hidden sm:flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/20 transition-all cursor-pointer"
+                  title={lang === 'th' ? 'สลับไปแผนที่ 2D' : 'Switch to 2D Map'}
+                >
+                  <MapIcon className="h-3.5 w-3.5" />
+                  <span>2D Map</span>
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleToggleSound}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/80 hover:bg-white/20 transition-all cursor-pointer shadow-sm"
+                title={muted ? (lang === 'th' ? 'เปิดเสียงเอฟเฟกต์' : 'Unmute SFX') : (lang === 'th' ? 'ปิดเสียงเอฟเฟกต์' : 'Mute SFX')}
+                aria-label="Toggle SFX"
+              >
+                {muted ? <VolumeX className="h-4 w-4 text-rose-300" /> : <Volume2 className="h-4 w-4 text-emerald-300" />}
+              </button>
+              <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
+                {role === 'teacher'
+                  ? (lang === 'th' ? '🧑‍🏫 โหมดอาจารย์' : '🧑‍🏫 Faculty Mode')
+                  : (lang === 'th' ? '🧑‍🎓 โหมดนักศึกษา' : '🧑‍🎓 Student Mode')}
+              </span>
+            </div>
+          </div>
           <div className="mt-5 flex items-center gap-4">
             <span
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-4xl shadow-lg backdrop-blur animate-in zoom-in-75 duration-500"
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-4xl shadow-xl backdrop-blur animate-in zoom-in-75 duration-500"
               aria-hidden
             >
               {building.emoji}
@@ -96,11 +142,28 @@ function Room({ id }: { id: BuildingId }): ReactNode {
 }
 
 function Locked() {
+  const { role, lang, setRole } = useApp()
   return (
-    <div className="mt-10 flex flex-col items-center gap-3 rounded-3xl border border-grey-300/60 bg-paper p-10 text-center">
-      <Lock className="h-10 w-10 text-grey-400" />
-      <p className="font-bold text-ink">พื้นที่นี้ไม่ได้เปิดสำหรับบทบาทของคุณ</p>
-      <p className="text-sm text-grey-600">This room isn't open for your role.</p>
+    <div className="mt-10 flex flex-col items-center gap-4 rounded-3xl border border-amber-500/30 bg-black/50 p-8 text-center text-white backdrop-blur-xl shadow-2xl">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-400">
+        <Lock className="h-8 w-8 animate-pulse" />
+      </div>
+      <div>
+        <p className="text-lg font-extrabold text-white">
+          {lang === 'th' ? '🔒 พื้นที่สงวนเฉพาะบทบาท' : '🔒 Restricted Access Zone'}
+        </p>
+        <p className="mt-1 text-sm text-white/70 max-w-md mx-auto">
+          {lang === 'th'
+            ? 'ห้องนี้เปิดเฉพาะผู้มีสิทธิ์เข้าถึง (อาจารย์ผู้สอน หรือนักศึกษาตามหลักสูตร)'
+            : 'This facility is restricted to authorized faculty instructors or students.'}
+        </p>
+      </div>
+      <button
+        onClick={() => setRole(role === 'student' ? 'teacher' : 'student')}
+        className="mt-2 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-pink-500/30 hover:brightness-110 transition-all cursor-pointer"
+      >
+        {lang === 'th' ? '⚡ สลับบทบาทเพื่อทดสอบทันที (Switch Demo Role)' : '⚡ Switch Role for Demo'}
+      </button>
     </div>
   )
 }

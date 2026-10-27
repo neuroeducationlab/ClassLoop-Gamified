@@ -11,7 +11,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
-import { Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll } from 'lucide-react'
+import { Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll, Volume2, VolumeX } from 'lucide-react'
 import { useApp, type Avatar, type Mission } from '@/context/AppContext'
 import {
   BUILDINGS,
@@ -33,6 +33,15 @@ import LeaderboardWidget from './components/LeaderboardWidget'
 import MissionTrackerWidget from './components/MissionTrackerWidget'
 import BrainGymModal from './components/BrainGymModal'
 import AvatarShopModal from './components/AvatarShopModal'
+import CampusNPCs, { CAMPUS_NPCS, type CampusNPC } from './components/CampusNPCs'
+import NPCDialogModal from './components/NPCDialogModal'
+import {
+  playCoinSound,
+  playFootstepSound,
+  playPortalSound,
+  isSoundMuted,
+  toggleSoundMute,
+} from './soundEngine'
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
@@ -148,7 +157,7 @@ const UI = {
 
 /** Student 3D campus: walk around, enter buildings, first-person immersive viewpoint. */
 export default function Campus3D() {
-  const { avatar, currentStudent, setRole, studentXP, role, teacherName, studentCoins, lang, setLang } = useApp()
+  const { avatar, currentStudent, setRole, studentXP, addXP, addCoins, role, teacherName, studentCoins, lang, setLang } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const isTeacher = role === 'teacher'
@@ -205,8 +214,11 @@ export default function Campus3D() {
     return () => clearTimeout(id)
   }, [fromLanding])
 
-  // ── Door prompt ───────────────────────────────────────────────────────────
+  // ── Door & NPC prompt ─────────────────────────────────────────────────────
   const [nearDoor, setNearDoor] = useState<BuildingConfig | null>(null)
+  const [nearNPC, setNearNPC] = useState<CampusNPC | null>(null)
+  const [activeNPC, setActiveNPC] = useState<CampusNPC | null>(null)
+  const [isMuted, setIsMuted] = useState(isSoundMuted())
 
   // ── Live avatar tracking (minimap + WASD) ─────────────────────────────────
   const avatarPosRef = useRef<[number, number]>(lastSpot ?? GATE_SPAWN)
@@ -283,6 +295,7 @@ export default function Campus3D() {
         setToast(`${b.emoji} ${b.name[lang]} — ${t.teachersOnly}`)
         return
       }
+      playPortalSound()
       setEntering(b)
       setTimeout(() => {
         navigate(`/campus/${b.id}`) // the interior route is /campus/:buildingId (App.tsx)
@@ -331,6 +344,9 @@ export default function Campus3D() {
           avatarRotRef={avatarRotRef}
           walkGroundRef={walkGroundRef}
           onNearDoor={setNearDoor}
+          onNearNPC={setNearNPC}
+          onTalkNPC={setActiveNPC}
+          lang={lang}
           fpModeRef={fpModeRef}
           entering={entering}
           turnHeadRef={turnHeadRef}
@@ -526,6 +542,19 @@ export default function Campus3D() {
                 <LayoutGrid className="h-4 w-4" />
                 <span className="hidden sm:inline">{t.back}</span>
               </Link>
+
+              {/* Sound SFX Toggle */}
+              <button
+                onClick={() => {
+                  const next = toggleSoundMute()
+                  setIsMuted(next)
+                  if (!next) playCoinSound()
+                }}
+                className="flex items-center justify-center h-8 w-8 rounded-xl bg-black/40 text-white/90 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-all cursor-pointer shadow"
+                title={isMuted ? (lang === 'th' ? 'เปิดเสียง SFX' : 'Unmute Sound') : (lang === 'th' ? 'ปิดเสียง SFX' : 'Mute Sound')}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4 text-emerald-400" />}
+              </button>
             </>
           )}
         </div>
@@ -550,7 +579,11 @@ export default function Campus3D() {
           {teacherMenuOpen && (
             <div className="space-y-1.5">
               <button
-                onClick={() => navigate('/campus/data')}
+                onClick={() => {
+                  const b = BUILDINGS.find((bld) => bld.id === 'data')
+                  if (b) lastSpot = doorPoint(b)
+                  navigate('/campus/data')
+                }}
                 className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
               >
                 <span className="flex items-center gap-2">
@@ -564,7 +597,11 @@ export default function Campus3D() {
               </button>
 
               <button
-                onClick={() => navigate('/campus/plan')}
+                onClick={() => {
+                  const b = BUILDINGS.find((bld) => bld.id === 'plan')
+                  if (b) lastSpot = doorPoint(b)
+                  navigate('/campus/plan')
+                }}
                 className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
               >
                 <span className="flex items-center gap-2">
@@ -578,7 +615,11 @@ export default function Campus3D() {
               </button>
 
               <button
-                onClick={() => navigate('/campus/dorm')}
+                onClick={() => {
+                  const b = BUILDINGS.find((bld) => bld.id === 'dorm')
+                  if (b) lastSpot = doorPoint(b)
+                  navigate('/campus/dorm')
+                }}
                 className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
               >
                 <span className="flex items-center gap-2">
@@ -625,8 +666,32 @@ export default function Campus3D() {
           </div>
         )}
 
+        {/* NPC prompt with avatar title & speech prompt */}
+        {!nearDoor && nearNPC && !isArriving && (
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-amber-400/50 bg-black/85 px-5 py-2.5 text-white shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <span className="text-xl animate-bounce">{nearNPC.questIcon}</span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-black text-amber-300">
+                {lang === 'th' ? `พบ ${nearNPC.name}` : `Meet ${nearNPC.nameEn}`}
+              </span>
+              <span className="text-[11px] text-white/75 hidden sm:block max-w-sm">
+                {lang === 'th' ? `${nearNPC.faculty} · ${nearNPC.title}` : `${nearNPC.facultyEn} · ${nearNPC.titleEn}`}
+              </span>
+            </div>
+            <span className="hidden sm:flex items-center gap-1 text-xs text-white/70 mx-1 border-l border-white/20 pl-2">
+              {t.pressE} <kbd className="rounded bg-white/20 px-1.5 py-0.5 text-white font-mono text-[10px] mx-0.5">E</kbd> {lang === 'th' ? 'เพื่อคุย' : 'to talk'}
+            </span>
+            <button
+              onClick={() => setActiveNPC(nearNPC)}
+              className="ml-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 px-4 py-1.5 text-xs font-black text-ink shadow-md hover:brightness-110 transition-all cursor-pointer whitespace-nowrap"
+            >
+              {lang === 'th' ? 'สนทนา' : 'Talk'}
+            </button>
+          </div>
+        )}
+
         {/* Walk hint */}
-        {!nearDoor && !isArriving && (
+        {!nearDoor && !nearNPC && !isArriving && (
           <p className="rounded-full bg-black/45 px-4 py-1.5 text-xs text-white/95 backdrop-blur-md border border-white/10 shadow">
             {fpMode ? t.fpHint : t.walkHint}
           </p>
@@ -724,6 +789,32 @@ export default function Campus3D() {
       {/* ── Brain Gym Pre-Learning Arena Modal ── */}
       {showBrainGym && <BrainGymModal onClose={() => setShowBrainGym(false)} />}
 
+      {/* ── Classmate NPC Dialogue Modal ── */}
+      {activeNPC && (
+        <NPCDialogModal
+          npc={activeNPC}
+          lang={lang}
+          onClose={() => setActiveNPC(null)}
+          onAddXP={(amt) => {
+            addXP(amt)
+            setToast(lang === 'th' ? `✨ ได้รับ +${amt} XP!` : `✨ Earned +${amt} XP!`)
+          }}
+          onAddCoins={(amt) => {
+            addCoins(amt)
+            setToast(lang === 'th' ? `🪙 ได้รับ +${amt} SPU Coins!` : `🪙 Earned +${amt} Coins!`)
+          }}
+          onNavigateToBuilding={(id) => {
+            const b = BUILDINGS.find((x) => x.id === id)
+            if (b) {
+              const dp = doorPoint(b)
+              walkGroundRef.current(dp[0], dp[1])
+              setToast(lang === 'th' ? `📍 กำลังนำทางไปที่ ${b.emoji} ${b.name.th}` : `📍 Guiding to ${b.emoji} ${b.name.en}`)
+            }
+          }}
+          onOpenShop={() => setShowAvatarShop(true)}
+        />
+      )}
+
       {/* ── Building enter transition with description ── */}
       {entering && (
         <div
@@ -756,6 +847,9 @@ type SceneProps = {
   avatarRotRef: RefObject<number>
   walkGroundRef: RefObject<(x: number, z: number) => void>
   onNearDoor: (b: BuildingConfig | null) => void
+  onNearNPC: (npc: CampusNPC | null) => void
+  onTalkNPC: (npc: CampusNPC) => void
+  lang: 'th' | 'en'
   fpModeRef: RefObject<boolean>
   entering: BuildingConfig | null
   turnHeadRef: RefObject<((deltaYaw: number) => void) | null>
@@ -781,6 +875,9 @@ function CampusScene({
   avatarRotRef,
   walkGroundRef,
   onNearDoor,
+  onNearNPC,
+  onTalkNPC,
+  lang,
   fpModeRef,
   entering,
   turnHeadRef,
@@ -792,6 +889,7 @@ function CampusScene({
   const destination = useRef<BuildingConfig | null>(null)
   const spawn = lastSpot ?? GATE_SPAWN
   const intro = useRef(introPlayed ? 1 : 0)
+  const nearNPCRef = useRef<CampusNPC | null>(null)
 
   // Arrival animation
   const arrivalT = useRef(0)
@@ -870,8 +968,9 @@ function CampusScene({
 
       if (isPointerLocked.current) {
         mouseYaw.current += e.movementX * 0.003
+        // three.js: positive rotation.x looks UP, so mouse moving down (movementY > 0) must lower pitch (ก้ม)
         mousePitch.current = MathUtils.clamp(
-          mousePitch.current + e.movementY * 0.0022,
+          mousePitch.current - e.movementY * 0.0022,
           -Math.PI / 3,
           Math.PI / 3,
         )
@@ -882,8 +981,9 @@ function CampusScene({
         lastY = e.clientY
 
         mouseYaw.current += dx * 0.0045
+        // drag up = look up (เงย), drag down = look down (ก้ม)
         mousePitch.current = MathUtils.clamp(
-          mousePitch.current + dy * 0.0035,
+          mousePitch.current - dy * 0.0035,
           -Math.PI / 3,
           Math.PI / 3,
         )
@@ -1031,11 +1131,12 @@ function CampusScene({
       if (k.has('ArrowRight') || (!nearDoorRef.current && k.has('KeyE'))) {
         mouseYaw.current += 2.6 * dt
       }
+      // ↑ = tilt up (เงย), ↓ = tilt down (ก้ม) — positive pitch looks up in three.js
       if (k.has('ArrowUp')) {
-        mousePitch.current = Math.max(-Math.PI / 3, mousePitch.current - 1.8 * dt)
+        mousePitch.current = Math.min(Math.PI / 3, mousePitch.current + 1.8 * dt)
       }
       if (k.has('ArrowDown')) {
-        mousePitch.current = Math.min(Math.PI / 3, mousePitch.current + 1.8 * dt)
+        mousePitch.current = Math.max(-Math.PI / 3, mousePitch.current - 1.8 * dt)
       }
 
       // First-person: movement is relative to look heading
@@ -1135,6 +1236,10 @@ function CampusScene({
       }
     }
 
+    if (moving) {
+      playFootstepSound()
+    }
+
     const hop = moving ? Math.abs(Math.sin(state.clock.elapsedTime * 11)) * 0.12 : 0
     a.position.y = MathUtils.damp(a.position.y, hop, 20, dt)
 
@@ -1160,9 +1265,29 @@ function CampusScene({
       onNearDoor(nearest)
     }
 
-    if (k.has('KeyE') && nearDoorRef.current) {
-      k.delete('KeyE')
-      onArrive(nearDoorRef.current)
+    // NPC proximity
+    let nearestNPC: CampusNPC | null = null
+    let nearestNPCDist = 3.6
+    for (const npc of CAMPUS_NPCS) {
+      const d = Math.hypot(npc.position[0] - a.position.x, npc.position[2] - a.position.z)
+      if (d < nearestNPCDist) {
+        nearestNPC = npc
+        nearestNPCDist = d
+      }
+    }
+    if (nearestNPC !== nearNPCRef.current) {
+      nearNPCRef.current = nearestNPC
+      onNearNPC(nearestNPC)
+    }
+
+    if (k.has('KeyE')) {
+      if (nearDoorRef.current) {
+        k.delete('KeyE')
+        onArrive(nearDoorRef.current)
+      } else if (nearNPCRef.current) {
+        k.delete('KeyE')
+        onTalkNPC(nearNPCRef.current)
+      }
     }
 
     // ── Camera ──────────────────────────────────────────────────────
@@ -1239,6 +1364,9 @@ function CampusScene({
       >
         <Avatar3D color={me.color} hat={me.hat} outfit={me.outfit} aura={me.aura} />
       </group>
+
+      {/* Classmate NPCs wandering the campus with quests */}
+      <CampusNPCs lang={lang} onTalk={onTalkNPC} />
     </>
   )
 }

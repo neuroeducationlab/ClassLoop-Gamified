@@ -36,7 +36,7 @@ export default function CampusMap2D() {
         : `${anonCount} anonymous messages`,
   }
   const rooms = BUILDINGS.filter(isTeacherRoom)
-  const open = (b: Building) => navigate(`/campus/${b.id}`)
+  const open = (b: Building) => navigate(`/campus/${b.id}`, { state: { from: '/map' } })
 
   return (
     <div className="min-h-screen bg-canvas font-campus">
@@ -50,12 +50,20 @@ export default function CampusMap2D() {
               {lang === 'th' ? `สวัสดี ${teacherName}` : `Welcome, ${teacherName}`}
             </h1>
           </div>
-          <Link
-            to="/teacher"
-            className="flex items-center gap-1.5 rounded-xl border border-grey-300/80 px-3 py-2 text-sm font-semibold text-ink hover:bg-canvas"
-          >
-            <LayoutGrid className="h-4 w-4" /> {lang === 'th' ? 'สตูดิโอ (หน้าเดิม)' : 'Teacher Studio'}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/campus"
+              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 px-3.5 py-2 text-sm font-bold text-white shadow-md hover:brightness-110 transition-all"
+            >
+              <span>🎮</span> {lang === 'th' ? 'เข้าแคมปัส 3D' : '3D Campus'}
+            </Link>
+            <Link
+              to="/teacher"
+              className="flex items-center gap-1.5 rounded-xl border border-grey-300/80 px-3 py-2 text-sm font-semibold text-ink hover:bg-canvas transition-colors"
+            >
+              <LayoutGrid className="h-4 w-4" /> {lang === 'th' ? 'สตูดิโออาจารย์' : 'Teacher Studio'}
+            </Link>
+          </div>
         </div>
       </header>
 

@@ -437,7 +437,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: 'การบ้านสัปดาห์ที่ 3: สรุป Case Study วัฒนธรรมญี่ปุ่น',
       titleEn: 'Week 3 Assignment: Japanese Business Case Study',
       type: 'homework',
-      buildingId: 'data',
+      buildingId: 'faculty',
       xpReward: 50,
       coinReward: 35,
       completed: false,
