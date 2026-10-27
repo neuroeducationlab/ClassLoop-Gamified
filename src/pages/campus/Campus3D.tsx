@@ -76,7 +76,10 @@ const UI = {
     dress: 'แต่งตัว',
     back: 'แดชบอร์ด',
     walkHint: 'คลิกพื้นหรือ WASD เพื่อเดิน · คลิกอาคารเพื่อเข้า',
-    fpHint: 'WASD เดิน · ลากเมาส์หมุนมุมมอง · กด E หน้าประตูเพื่อเข้า',
+    fpHint: 'WASD เพื่อเดิน · ลากเมาส์/จอ หรือกด ← → / Q E เพื่อหันหัวมอง · E เข้าตึก',
+    turnHead: 'หันมุมมอง',
+    turnLeft: 'หันซ้าย 45° (Q หรือ ←)',
+    turnRight: 'หันขวา 45° (E หรือ →)',
     enterBtn: 'เข้าอาคาร →',
     pressE: 'กด',
     pressEAfter: 'เพื่อเข้า',
@@ -109,7 +112,10 @@ const UI = {
     dress: 'Change Outfit',
     back: 'Dashboard',
     walkHint: 'Click ground or WASD to walk · Click a building to enter',
-    fpHint: 'WASD to walk · Mouse look / drag to rotate view · Press E near door',
+    fpHint: 'WASD to walk · Drag mouse/screen or press ← → / Q E to turn head · E to enter',
+    turnHead: 'Turn Head',
+    turnLeft: 'Turn Left 45° (Q or ←)',
+    turnRight: 'Turn Right 45° (E or →)',
     enterBtn: 'Enter Building →',
     pressE: 'Press',
     pressEAfter: 'to enter',
@@ -205,6 +211,9 @@ export default function Campus3D() {
   const avatarRotRef = useRef<number>(0)
   const [minimapAvatarPos, setMinimapAvatarPos] = useState<[number, number]>(lastSpot ?? GATE_SPAWN)
   const [minimapAvatarRot, setMinimapAvatarRot] = useState(0)
+
+  // First-person head rotation ref for programmatic/button head turning
+  const turnHeadRef = useRef<((deltaYaw: number) => void) | null>(null)
 
   const labels = useRef<LabelMap>(new Map())
   const labelRef = (key: string) => (el: HTMLDivElement | null) => {
@@ -322,6 +331,7 @@ export default function Campus3D() {
           onNearDoor={setNearDoor}
           fpModeRef={fpModeRef}
           entering={entering}
+          turnHeadRef={turnHeadRef}
         />
 
         {!isMobile && (
@@ -674,6 +684,30 @@ export default function Campus3D() {
         />
       )}
 
+      {/* ── First-Person Head Turn Controller (Desktop & Mobile on-screen helper) ── */}
+      {fpMode && !isArriving && (
+        <div className="pointer-events-auto absolute bottom-6 right-6 z-20 flex items-center gap-2 rounded-2xl bg-black/60 px-3 py-2 text-white backdrop-blur-md border border-white/20 shadow-xl">
+          <button
+            onClick={() => turnHeadRef.current?.(-Math.PI / 4)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 active:scale-90 transition-all cursor-pointer font-bold text-lg"
+            title={t.turnLeft}
+          >
+            ⟲
+          </button>
+          <div className="text-center px-1">
+            <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">{t.turnHead}</p>
+            <p className="text-[9px] text-white/60">← → / Q E / Drag</p>
+          </div>
+          <button
+            onClick={() => turnHeadRef.current?.(Math.PI / 4)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 active:scale-90 transition-all cursor-pointer font-bold text-lg"
+            title={t.turnRight}
+          >
+            ⟳
+          </button>
+        </div>
+      )}
+
       {/* ── Gamified Student Features: Leaderboard (Left) & Missions (Right) ── */}
       {!isTeacher && !isArriving && (
         <>
@@ -722,6 +756,7 @@ type SceneProps = {
   onNearDoor: (b: BuildingConfig | null) => void
   fpModeRef: RefObject<boolean>
   entering: BuildingConfig | null
+  turnHeadRef: RefObject<((deltaYaw: number) => void) | null>
 }
 
 function passesNear(a: [number, number], b: [number, number], p: [number, number], r: number) {
@@ -746,6 +781,7 @@ function CampusScene({
   onNearDoor,
   fpModeRef,
   entering,
+  turnHeadRef,
 }: SceneProps) {
   const { camera, size, scene } = useThree()
   const avatarRef = useRef<Group>(null)
@@ -777,6 +813,16 @@ function CampusScene({
   const mousePitch = useRef(0) // Level gaze
   const isPointerLocked = useRef(false)
 
+  // Wire turnHeadRef for external / UI button rotation triggers
+  useEffect(() => {
+    turnHeadRef.current = (deltaYaw: number) => {
+      mouseYaw.current += deltaYaw
+    }
+    return () => {
+      turnHeadRef.current = null
+    }
+  }, [turnHeadRef])
+
   useEffect(() => {
     const down = (e: KeyboardEvent) => keys.current.add(e.code)
     const up = (e: KeyboardEvent) => keys.current.delete(e.code)
@@ -788,71 +834,89 @@ function CampusScene({
     }
   }, [])
 
-  // Mouse look supporting both pointer lock (click) AND drag-to-look
+  // Comprehensive Drag-to-Look, Touch-Look, and Pointer Lock Controller
   useEffect(() => {
-    const canvas = document.querySelector('canvas')
-    if (!canvas) return
-
-    let isMouseDown = false
+    let isDragging = false
     let lastX = 0
     let lastY = 0
+    let activePointerId = -1
 
-    const onPointerDown = (e: MouseEvent) => {
+    const onPointerDown = (e: PointerEvent) => {
       if (!fpModeRef.current) return
-      isMouseDown = true
+      // Ignore if clicking on buttons or interactive UI
+      const target = e.target as HTMLElement | null
+      if (target && target.closest('button, a, input, [role="button"]')) return
+
+      // For touch, only capture look drag on the right 65% of screen (so joystick remains usable on left)
+      if (e.pointerType === 'touch' && e.clientX < window.innerWidth * 0.35) return
+
+      isDragging = true
+      activePointerId = e.pointerId
       lastX = e.clientX
       lastY = e.clientY
-      // Request pointer lock on canvas click if supported
-      if (!isPointerLocked.current && canvas.requestPointerLock) {
-        canvas.requestPointerLock()
+
+      const canvas = document.querySelector('canvas')
+      if (e.pointerType === 'mouse' && canvas && !isPointerLocked.current) {
+        try {
+          canvas.requestPointerLock?.()
+        } catch {}
       }
     }
 
-    const onPointerUp = () => {
-      isMouseDown = false
-    }
-
-    const onMouseMove = (e: MouseEvent) => {
+    const onPointerMove = (e: PointerEvent) => {
       if (!fpModeRef.current) return
-      let dx = 0
-      let dy = 0
 
       if (isPointerLocked.current) {
-        dx = e.movementX
-        dy = e.movementY
-      } else if (isMouseDown) {
-        dx = e.clientX - lastX
-        dy = e.clientY - lastY
+        mouseYaw.current += e.movementX * 0.003
+        mousePitch.current = MathUtils.clamp(
+          mousePitch.current + e.movementY * 0.0022,
+          -Math.PI / 3,
+          Math.PI / 3,
+        )
+      } else if (isDragging && (activePointerId === -1 || e.pointerId === activePointerId)) {
+        const dx = e.clientX - lastX
+        const dy = e.clientY - lastY
         lastX = e.clientX
         lastY = e.clientY
-      } else {
-        return
-      }
 
-      // Moving mouse right (dx > 0) turns heading right (East)
-      mouseYaw.current += dx * 0.0025
-      // Moving mouse down (dy > 0) tilts camera down (pitch > 0)
-      mousePitch.current = MathUtils.clamp(
-        mousePitch.current + dy * 0.002,
-        -Math.PI / 3, // look up limit (~60 deg)
-        Math.PI / 3,  // look down limit (~60 deg)
-      )
+        mouseYaw.current += dx * 0.0045
+        mousePitch.current = MathUtils.clamp(
+          mousePitch.current + dy * 0.0035,
+          -Math.PI / 3,
+          Math.PI / 3,
+        )
+      }
+    }
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (activePointerId === e.pointerId || activePointerId === -1) {
+        isDragging = false
+        activePointerId = -1
+      }
     }
 
     const onLockChange = () => {
-      isPointerLocked.current = document.pointerLockElement === canvas
+      const canvas = document.querySelector('canvas')
+      isPointerLocked.current = Boolean(canvas && document.pointerLockElement === canvas)
     }
 
-    canvas.addEventListener('mousedown', onPointerDown)
-    window.addEventListener('mouseup', onPointerUp)
-    document.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('pointerdown', onPointerDown, { passive: true })
+    window.addEventListener('pointermove', onPointerMove, { passive: true })
+    window.addEventListener('pointerup', onPointerUp, { passive: true })
+    window.addEventListener('pointercancel', onPointerUp, { passive: true })
     document.addEventListener('pointerlockchange', onLockChange)
+
     return () => {
-      canvas.removeEventListener('mousedown', onPointerDown)
-      window.removeEventListener('mouseup', onPointerUp)
-      document.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerUp)
       document.removeEventListener('pointerlockchange', onLockChange)
-      if (document.pointerLockElement === canvas) document.exitPointerLock()
+      if (document.pointerLockElement) {
+        try {
+          document.exitPointerLock?.()
+        } catch {}
+      }
     }
   }, [fpModeRef])
 
@@ -958,25 +1022,39 @@ function CampusScene({
     const isFP = fpModeRef.current
 
     if (isFP) {
+      // First-person head rotation via Keyboard (Instant & smooth!)
+      if (k.has('ArrowLeft') || k.has('KeyQ')) {
+        mouseYaw.current -= 2.6 * dt
+      }
+      if (k.has('ArrowRight') || (!nearDoorRef.current && k.has('KeyE'))) {
+        mouseYaw.current += 2.6 * dt
+      }
+      if (k.has('ArrowUp')) {
+        mousePitch.current = Math.max(-Math.PI / 3, mousePitch.current - 1.8 * dt)
+      }
+      if (k.has('ArrowDown')) {
+        mousePitch.current = Math.min(Math.PI / 3, mousePitch.current + 1.8 * dt)
+      }
+
       // First-person: movement is relative to look heading
       const fwdX = Math.sin(mouseYaw.current)
       const fwdZ = -Math.cos(mouseYaw.current)
       const rightX = Math.cos(mouseYaw.current)
       const rightZ = Math.sin(mouseYaw.current)
 
-      if (k.has('KeyW') || k.has('ArrowUp')) {
+      if (k.has('KeyW')) {
         vx += fwdX
         vz += fwdZ
       }
-      if (k.has('KeyS') || k.has('ArrowDown')) {
+      if (k.has('KeyS')) {
         vx -= fwdX
         vz -= fwdZ
       }
-      if (k.has('KeyD') || k.has('ArrowRight')) {
+      if (k.has('KeyD')) {
         vx += rightX
         vz += rightZ
       }
-      if (k.has('KeyA') || k.has('ArrowLeft')) {
+      if (k.has('KeyA')) {
         vx -= rightX
         vz -= rightZ
       }

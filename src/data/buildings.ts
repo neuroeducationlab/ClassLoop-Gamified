@@ -37,21 +37,55 @@ export const CAMPUS_PALETTE = {
   spuPink: '#E89BC4',
 } as const
 
-/** The central crossroads by the car parks, where every path meets. */
-export const PLAZA_CENTER: [x: number, z: number] = [0, 0]
+/** The central courtyard quad plaza. */
+export const PLAZA_CENTER: [x: number, z: number] = [0, -1.0]
 
 /** MRT viaduct along the campus edge, extended continuously across the visible landscape. */
 export const MRT_LINE: { from: [x: number, z: number]; to: [x: number, z: number] } = {
-  from: [-36, -15],
-  to: [18, 36],
+  from: [-44, -20],
+  to: [14, 48],
 }
 
 /** Car parks and pond from the map — scenery shared by the 3D campus and the teacher map. */
 export const CAR_PARKS: { at: [x: number, z: number]; size: [w: number, d: number] }[] = [
-  { at: [-6.8, -4.8], size: [4.8, 3.2] },
-  { at: [8.8, 4.2], size: [4.8, 3.2] },
+  { at: [-9.5, -6.5], size: [5.2, 3.4] },
+  { at: [9.5, -6.5], size: [5.2, 3.4] },
 ]
-export const POND: { at: [x: number, z: number]; r: number } = { at: [8.5, 12.0], r: 3.6 }
+export const POND: { at: [x: number, z: number]; r: number } = { at: [7.5, 11.5], r: 3.8 }
+
+export interface CampusAvenue {
+  id: string
+  from: [x: number, z: number]
+  to: [x: number, z: number]
+  width: number
+}
+
+/** Authentic RPG Game Campus Avenue & Street Network — connecting districts, avenues, and crosswalks (No roundabout spokes) */
+export const CAMPUS_AVENUES: CampusAvenue[] = [
+  // ── 1. The Sripatum Grand Promenade (East-West Arterial Avenue) ──
+  { id: 'ave-west', from: [-20.0, -1.0], to: [-5.0, -1.0], width: 3.6 },
+  { id: 'ave-central', from: [-5.0, -1.0], to: [5.0, -1.0], width: 4.4 },
+  { id: 'ave-east', from: [5.0, -1.0], to: [21.5, -1.0], width: 3.6 },
+  { id: 'ave-dorm-link', from: [21.5, -1.0], to: [21.5, 3.5], width: 3.2 },
+
+  // ── 2. North Arena Boulevard (Avenue of Champions) ──
+  { id: 'ave-north-arena', from: [0.0, -1.0], to: [0.0, 18.0], width: 4.0 },
+
+  // ── 3. South Academic Concourse (Avenue of Knowledge) ──
+  { id: 'ave-south-main', from: [-14.0, -14.0], to: [20.0, -14.0], width: 3.4 },
+  { id: 'ave-faculty-door', from: [-14.0, -14.0], to: [-14.0, -16.0], width: 3.2 },
+  { id: 'ave-plan-door', from: [4.0, -14.0], to: [4.0, -15.5], width: 3.2 },
+  { id: 'ave-data-door', from: [20.0, -14.0], to: [20.0, -15.5], width: 3.2 },
+
+  // ── 4. North-South Urban Crossways (Connecting Promenades to Academic Concourse) ──
+  { id: 'ave-cross-west', from: [-14.0, -1.0], to: [-14.0, -14.0], width: 3.2 },
+  { id: 'ave-cross-center', from: [4.0, -1.0], to: [4.0, -14.0], width: 3.2 },
+  { id: 'ave-cross-east', from: [18.0, -1.0], to: [20.0, -14.0], width: 3.2 },
+
+  // ── 5. Park Promenade (By Pond towards Sports Court) ──
+  { id: 'ave-park-loop', from: [0.0, 8.0], to: [14.0, 14.0], width: 2.8 },
+  { id: 'ave-sports-link', from: [14.0, 14.0], to: [18.0, 20.0], width: 2.8 },
+]
 
 export const BUILDINGS: Building[] = [
   {
@@ -67,7 +101,7 @@ export const BUILDINGS: Building[] = [
     shape: 'gate',
     studentSees: 'login + pick role + character',
     teacherSees: null,
-    position: [-15.0, -1.0],
+    position: [-22.0, -1.0],
   },
   {
     id: 'faculty',
@@ -82,7 +116,7 @@ export const BUILDINGS: Building[] = [
     shape: 'hall',
     studentSees: 'lessons, pre-class video, quiz, graded test',
     teacherSees: null,
-    position: [-9.0, -13.0],
+    position: [-16.0, -17.0],
   },
   {
     id: 'arena',
@@ -97,7 +131,7 @@ export const BUILDINGS: Building[] = [
     shape: 'arena',
     studentSees: 'word/quiz games, leaderboard, points',
     teacherSees: null,
-    position: [0, 13.0],
+    position: [0, 21.0],
   },
   {
     id: 'dorm',
@@ -112,7 +146,7 @@ export const BUILDINGS: Building[] = [
     shape: 'house',
     studentSees: 'talk to teacher, name hidden (anonymous)',
     teacherSees: 'read feedback, names hidden',
-    position: [16.0, -2.5],
+    position: [24.0, 3.5],
   },
   {
     id: 'data',
@@ -127,7 +161,7 @@ export const BUILDINGS: Building[] = [
     shape: 'hub',
     studentSees: null,
     teacherSees: 'student stats, charts, research store',
-    position: [15.5, -13.5],
+    position: [22.0, -17.0],
   },
   {
     id: 'plan',
@@ -142,6 +176,6 @@ export const BUILDINGS: Building[] = [
     shape: 'office',
     studentSees: null,
     teacherSees: 'drop in syllabus → AI suggests activities → teacher picks',
-    position: [4.0, -12.5],
+    position: [4.0, -17.0],
   },
 ]

@@ -1,12 +1,12 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { DoubleSide, type Group } from 'three'
-import { BUILDINGS, CAMPUS_PALETTE, CAR_PARKS, MRT_LINE, PLAZA_CENTER, POND } from '@/data/buildings'
+import { BUILDINGS, CAMPUS_AVENUES, CAMPUS_PALETTE, CAR_PARKS, MRT_LINE, PLAZA_CENTER, POND } from '@/data/buildings'
 import { doorPoint } from '../geometry'
 import { getAsphaltTexture, getPavingTexture } from '../textures'
 import CampusScenery from './CampusScenery'
 
-export const CAMPUS_RADIUS = 32
+export const CAMPUS_RADIUS = 40
 
 /* ---------------------------------------------------------------- cars -- */
 
@@ -132,17 +132,18 @@ function CarPark({ at, size }: (typeof CAR_PARKS)[number]) {
 /* ---------------------------------------------------------------- street lamps -- */
 
 const LAMP_POSITIONS: [number, number, number][] = [
-  [-12, 0, 3],
-  [-7, 0, 2],
-  [4, 0, -3],
-  [10, 0, -6],
-  [14, 0, 2],
-  [-2, 0, 6.5],
-  [5, 0, 7.5],
-  [-14, 0, -4],
-  [-10, 0, -8],
-  [11, 0, -10],
-  [1, 0, -14],
+  [-17, 0, 1.2],
+  [-10, 0, 1.2],
+  [-3, 0, 1.2],
+  [7, 0, 1.2],
+  [14, 0, 1.2],
+  [0, 0, 6.0],
+  [0, 0, 12.0],
+  [-14, 0, -8.0],
+  [4, 0, -8.0],
+  [18, 0, -8.0],
+  [-7, 0, -14.0],
+  [11, 0, -14.0],
 ]
 
 function StreetLamp({ position, rotation = 0 }: { position: [number, number, number]; rotation?: number }) {
@@ -184,12 +185,15 @@ function StreetLamp({ position, rotation = 0 }: { position: [number, number, num
 /* ---------------------------------------------------------------- modern furniture -- */
 
 const BENCH_POSITIONS: [number, number, number][] = [
-  [-2.5, 0, 4.0],
-  [4.5, 0, 4.0],
-  [4.5, 0, -4.0],
-  [-3.5, 0, -4.0],
-  [11.5, 0, 6.5],
-  [-10.5, 0, 4.5],
+  [-6.5, 0, 1.5],
+  [6.5, 0, 1.5],
+  [-6.5, 0, -3.5],
+  [6.5, 0, -3.5],
+  [-2.2, 0, 8.5],
+  [2.2, 0, 8.5],
+  [17.0, 0, 1.5],
+  [-10.0, 0, -14.0],
+  [10.0, 0, -14.0],
 ]
 
 function ModernBench({ position, rotation = 0 }: { position: [number, number, number]; rotation?: number }) {
@@ -212,12 +216,13 @@ function ModernBench({ position, rotation = 0 }: { position: [number, number, nu
 }
 
 const PLANTER_POSITIONS: [number, number, number][] = [
-  [-6.5, 0, 6.5],
-  [1.5, 0, 6.0],
-  [9.0, 0, 5.5],
-  [-8.5, 0, -6.5],
-  [6.5, 0, -6.5],
-  [15.5, 0, 6.0],
+  [-7.0, 0, 4.0],
+  [7.0, 0, 4.0],
+  [-7.0, 0, -6.0],
+  [7.0, 0, -6.0],
+  [-17.0, 0, -3.0],
+  [17.0, 0, -3.0],
+  [0, 0, 14.5],
 ]
 
 function ModernPlanter({ position }: { position: [number, number, number] }) {
@@ -338,8 +343,8 @@ function Viaduct() {
       })}
 
       {/* SPU MRT EXIT 2 STATION CANOPY & SKYWALK CONNECTOR */}
-      {/* Sits elevated right by the widened entry building [-15, -1] */}
-      <group position={[-16.5, VIADUCT_HEIGHT, -1.0]} rotation={[0, yaw, 0]}>
+      {/* Sits elevated right by the widened entry building [-22, -1] */}
+      <group position={[-23.5, VIADUCT_HEIGHT, -1.0]} rotation={[0, yaw, 0]}>
         {/* Station Platform Canopy */}
         <mesh position={[0, 1.2, 0]} castShadow>
           <boxGeometry args={[2.6, 0.15, 8.5]} />
@@ -577,25 +582,25 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
 
       {/* SPU Campus Boundary Base: Spacious open university precinct */}
       <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
-        <planeGeometry args={[84, 76]} />
+        <planeGeometry args={[98, 88]} />
         <meshStandardMaterial color={CAMPUS_PALETTE.grass} roughness={0.85} />
       </mesh>
 
       {/* Crisp Architectural Campus Perimeter Curbs */}
-      <mesh position={[0, 0.005, -38]}>
-        <boxGeometry args={[84.2, 0.08, 0.3]} />
+      <mesh position={[0, 0.005, -44]}>
+        <boxGeometry args={[98.2, 0.08, 0.3]} />
         <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
-      <mesh position={[0, 0.005, 38]}>
-        <boxGeometry args={[84.2, 0.08, 0.3]} />
+      <mesh position={[0, 0.005, 44]}>
+        <boxGeometry args={[98.2, 0.08, 0.3]} />
         <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
-      <mesh position={[42, 0.005, 0]}>
-        <boxGeometry args={[0.3, 0.08, 76.2]} />
+      <mesh position={[49, 0.005, 0]}>
+        <boxGeometry args={[0.3, 0.08, 88.2]} />
         <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
-      <mesh position={[-42, 0.005, 0]}>
-        <boxGeometry args={[0.3, 0.08, 76.2]} />
+      <mesh position={[-49, 0.005, 0]}>
+        <boxGeometry args={[0.3, 0.08, 88.2]} />
         <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
 
@@ -607,23 +612,26 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
         <CarPark key={c.at.join()} {...c} />
       ))}
 
-      {/* Central Plaza (Grand 5.2m Radius Promenade Paved with modern pavers) */}
-      <mesh position={[PLAZA_CENTER[0], 0.04, PLAZA_CENTER[1]]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[5.2, 48]} />
-        <meshStandardMaterial color="#F5EFE6" map={paving ?? undefined} roughness={0.7} />
-      </mesh>
-      {/* Outer Plaza Ring / Step */}
-      <mesh position={[PLAZA_CENTER[0], 0.038, PLAZA_CENTER[1]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[5.2, 5.6, 48]} />
-        <meshStandardMaterial color="#A9AFBC" roughness={0.6} />
-      </mesh>
-      {/* Inner decorative star / compass inlay */}
-      <mesh position={[PLAZA_CENTER[0], 0.042, PLAZA_CENTER[1]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.2, 2.5, 36]} />
-        <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.5} />
-      </mesh>
+      {/* ── Central Academic Quad Plaza (Grand 14m × 10m Stepped Courtyard — Not a Roundabout) ── */}
+      <group position={[PLAZA_CENTER[0], 0, PLAZA_CENTER[1]]}>
+        {/* Granite Curb Coping */}
+        <mesh position={[0, 0.038, 0]} receiveShadow>
+          <boxGeometry args={[14.4, 0.06, 10.4]} />
+          <meshStandardMaterial color="#9FA6B5" roughness={0.6} />
+        </mesh>
+        {/* Main Paved Courtyard Bed */}
+        <mesh position={[0, 0.042, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[14.0, 10.0]} />
+          <meshStandardMaterial color="#F5EFE6" map={paving ?? undefined} roughness={0.7} />
+        </mesh>
+        {/* Inlaid Bronze / SPU Pink Star Accent Ring */}
+        <mesh position={[0, 0.044, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[2.0, 2.3, 36]} />
+          <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.6} />
+        </mesh>
+      </group>
 
-      {/* SPU Iconic Monument at Crossroads */}
+      {/* SPU Iconic Monument at Central Quad */}
       <group position={[PLAZA_CENTER[0], 0, PLAZA_CENTER[1]]}>
         <mesh position={[0, 0.25, 0]} receiveShadow>
           <boxGeometry args={[2.4, 0.5, 0.8]} />
@@ -645,9 +653,9 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
         </mesh>
       </group>
 
-      {/* Wide Paved Walkways Connecting the Plaza to Every Building Door */}
-      {BUILDINGS.map((b) => (
-        <Path key={b.id} from={PLAZA_CENTER} to={doorPoint(b)} width={3.2} />
+      {/* ── Authentic RPG Game Avenue & Street Network (Boulevards, Promenades & Crosswalks) ── */}
+      {CAMPUS_AVENUES.map((ave) => (
+        <Path key={ave.id} from={ave.from} to={ave.to} width={ave.width} />
       ))}
 
       {/* Entrance Landing Courtyards / Aprons at Every Building Door */}
@@ -656,11 +664,11 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
         return (
           <group key={`apron-${b.id}`} position={[dp[0], 0, dp[1]]}>
             <mesh position={[0, 0.036, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-              <circleGeometry args={[2.6, 32]} />
+              <circleGeometry args={[2.5, 32]} />
               <meshStandardMaterial color="#F2EDE4" map={paving ?? undefined} roughness={0.7} />
             </mesh>
             <mesh position={[0, 0.038, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[2.55, 2.75, 32]} />
+              <ringGeometry args={[2.45, 2.65, 32]} />
               <meshStandardMaterial color={b.color} emissive={b.color} emissiveIntensity={0.5} />
             </mesh>
           </group>

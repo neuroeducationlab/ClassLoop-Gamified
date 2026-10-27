@@ -468,31 +468,31 @@ export default function CampusScenery() {
   const treePositions = useMemo(
     () => [
       // ── SPU Signature Pink Tabebuia Trees (Along wide pedestrian avenues) ──
-      { pos: [-6.5, 0, 9.5], scale: 1.15 },
-      { pos: [2.5, 0, 15.5], scale: 1.2 },
-      { pos: [14.0, 0, 16.5], scale: 1.25 },
-      { pos: [9.5, 0, 16.0], scale: 1.05 },
-      { pos: [24.0, 0, 10.5], scale: 1.1 },
-      { pos: [-1.5, 0, -14.5], scale: 1.1 },
-      { pos: [8.5, 0, -14.5], scale: 1.0 },
-      { pos: [-16.5, 0, 3.5], scale: 1.15 },
-      { pos: [-11.5, 0, -16.5], scale: 1.2 },
+      { pos: [-10.0, 0, 1.5], scale: 1.15 },
+      { pos: [-18.0, 0, 1.5], scale: 1.1 },
+      { pos: [-2.0, 0, 8.0], scale: 1.2 },
+      { pos: [-2.0, 0, 14.0], scale: 1.25 },
+      { pos: [10.0, 0, 1.5], scale: 1.1 },
+      { pos: [16.0, 0, 1.5], scale: 1.15 },
+      { pos: [-8.0, 0, -12.0], scale: 1.05 },
+      { pos: [10.0, 0, -12.0], scale: 1.1 },
+      { pos: [-20.0, 0, -10.0], scale: 1.2 },
 
       // ── Lush Green Shade Trees (Park perimeter, court boundary, background green) ──
-      { pos: [28.0, 0, 24.0], scale: 1.35, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [12.5, 0, 26.0], scale: 1.25, color: '#15803D', crown: '#22C55E' },
-      { pos: [20.0, 0, 28.0], scale: 1.3, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [-8.5, 0, 22.5], scale: 1.2, color: '#15803D', crown: '#22C55E' },
-      { pos: [2.0, 0, 24.5], scale: 1.25, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [-20.5, 0, -14.5], scale: 1.3, color: '#15803D', crown: '#22C55E' },
-      { pos: [-24.0, 0, -22.0], scale: 1.4, color: '#16A34A', crown: '#4ADE80' },
-      { pos: [25.0, 0, -22.0], scale: 1.35, color: '#15803D', crown: '#22C55E' },
-      { pos: [28.0, 0, -10.0], scale: 1.2, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [30.0, 0, 26.0], scale: 1.35, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [10.0, 0, 28.0], scale: 1.25, color: '#15803D', crown: '#22C55E' },
+      { pos: [24.0, 0, 30.0], scale: 1.3, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [-10.0, 0, 25.0], scale: 1.2, color: '#15803D', crown: '#22C55E' },
+      { pos: [0.0, 0, 28.0], scale: 1.25, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [-25.0, 0, -16.0], scale: 1.3, color: '#15803D', crown: '#22C55E' },
+      { pos: [-28.0, 0, -25.0], scale: 1.4, color: '#16A34A', crown: '#4ADE80' },
+      { pos: [28.0, 0, -26.0], scale: 1.35, color: '#15803D', crown: '#22C55E' },
+      { pos: [30.0, 0, -12.0], scale: 1.2, color: '#16A34A', crown: '#4ADE80' },
 
       // ── Tropical Palms (By the pond & entrance avenue) ──
-      { pos: [5.5, 0, 8.0], scale: 1.1 },
-      { pos: [12.0, 0, 14.5], scale: 1.15 },
-      { pos: [-12.5, 0, 8.0], scale: 1.05 },
+      { pos: [4.5, 0, 8.5], scale: 1.1 },
+      { pos: [11.0, 0, 14.5], scale: 1.15 },
+      { pos: [-20.0, 0, 6.0], scale: 1.05 },
     ],
     [],
   )
@@ -500,19 +500,19 @@ export default function CampusScenery() {
   return (
     <group>
       {/* ── 1. SPU Sports Arena: Outdoor Basketball / Futsal Court (North-East lawn) ── */}
-      <SPUSportsCourt position={[20, 0, 22]} />
+      <SPUSportsCourt position={[18, 0, 24]} />
 
-      {/* ── 2. SPU Botanical Pavilion & Zen Rest Gazebo (East lawn by pond) ── */}
-      <SPURestPavilion position={[24, 0, 6.5]} />
+      {/* ── 2. SPU Botanical Pavilion & Zen Rest Gazebo (North lawn by pond) ── */}
+      <SPURestPavilion position={[14, 0, 18]} />
 
       {/* ── 3. SPU Open-Air Coffee Terrace & Sun Umbrella Tables (East of Plaza) ── */}
       <SPUCoffeeTerrace position={[14, 0, -6.5]} />
 
       {/* ── 4. SPU Smart Mobility Station: Scooters & EV Bikes (Near Entrance & Viaduct) ── */}
-      <SPUMobilityStation position={[-20, 0, 8]} />
+      <SPUMobilityStation position={[-24, 0, 8]} />
 
       {/* ── 5. SPU Contemporary Art Infinity Sculpture (South-West lawn) ── */}
-      <SPUInfinitySculpture position={[-18, 0, -22]} />
+      <SPUInfinitySculpture position={[-22, 0, -24]} />
 
       {/* ── 6. Master Stylized Tree Canopy & Nature Flora across Campus ── */}
       {treePositions.map((t, idx) => {

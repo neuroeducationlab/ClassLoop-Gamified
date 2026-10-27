@@ -217,21 +217,19 @@ function CameraRig({
   return null
 }
 
-const ROLE_CARDS: { role: Role; icon: typeof GraduationCap; th: string; en: string; blurb: string; accent: string }[] = [
+const ROLE_CARDS: { role: Role; icon: typeof GraduationCap; title: string; blurb: string; accent: string }[] = [
   {
     role: 'student',
     icon: GraduationCap,
-    th: 'นักศึกษา',
-    en: 'Student',
-    blurb: 'เดินแคมปัสในมุมมองของคุณ เรียน เล่นเกม เก็บ XP',
+    title: 'Student',
+    blurb: 'Explore the 3D campus, complete learning missions, earn XP, and climb the leaderboard.',
     accent: 'from-[#7C9BE8] to-[#4FB0A5]',
   },
   {
     role: 'teacher',
     icon: BookOpen,
-    th: 'อาจารย์',
-    en: 'Teacher',
-    blurb: 'ดูภาพรวมห้องเรียน ข้อมูลนักศึกษา และฟีดแบคไม่ระบุชื่อ',
+    title: 'Faculty / Professor',
+    blurb: 'View live class analytics, student engagement metrics, and design AI-powered lessons.',
     accent: 'from-[#E89BC4] to-[#F2994A]',
   },
 ]
@@ -352,13 +350,13 @@ export default function Landing() {
           ClassLoop <span className="text-[#F2C879]">Campus</span>
         </h1>
         <p className="max-w-md text-base text-white/90 drop-shadow sm:text-lg">
-          เดินเข้าห้องเรียนแห่งอนาคต · Step into a campus that learns with you
+          Step into a campus that learns with you
         </p>
         <button
           onClick={start}
           className="group mt-3 flex w-full max-w-xs items-center justify-between gap-6 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-8 py-4 text-lg font-bold text-[#2B2D55] shadow-[0_0_40px_rgba(242,200,121,0.65)] transition-transform hover:scale-[1.03] active:scale-95 sm:w-auto"
         >
-          เริ่มต้น · Start
+          Enter Campus
           <ArrowUpRight className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </button>
       </div>
@@ -368,7 +366,7 @@ export default function Landing() {
           showTitle && phase === 'orbit' ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        ClassLoop Campus · SPU edition — สร้างให้มหาวิทยาลัยศรีปทุม
+        ClassLoop Campus · SPU Edition — Sripatum University
       </p>
 
       {/* role cards: always mounted, faded with a transition (a keyframe animation can stall on a busy GPU) */}
@@ -382,10 +380,10 @@ export default function Landing() {
           <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.6),transparent_70%)]" />
           <div className="text-center">
             <p className="text-[11px] font-semibold tracking-[0.25em] text-[#7FE3FF]">CLASSLOOP CAMPUS</p>
-            <h2 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">คุณคือใคร? · Who are you?</h2>
+            <h2 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">Select Your Role</h2>
           </div>
           <div className="grid w-full max-w-2xl gap-4 sm:grid-cols-2">
-            {ROLE_CARDS.map(({ role, icon: Icon, th, en, blurb, accent }) => (
+            {ROLE_CARDS.map(({ role, icon: Icon, title, blurb, accent }) => (
               <button
                 key={role}
                 onClick={() => chooseRole(role)}
@@ -395,8 +393,8 @@ export default function Landing() {
                   <Icon className="h-7 w-7" />
                 </span>
                 <span>
-                  <span className="block text-xl font-bold">
-                    {th} <span className="text-base font-semibold text-white/70">· {en}</span>
+                  <span className="block text-xl font-bold text-white">
+                    {title}
                   </span>
                   <span className="mt-1 block text-sm text-white/75">{blurb}</span>
                 </span>
@@ -405,10 +403,10 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-5 text-sm">
             <button onClick={() => setPhase('orbit')} className="flex items-center gap-1.5 text-white/80 hover:text-white">
-              <ArrowLeft className="h-4 w-4" /> ย้อนกลับ
+              <ArrowLeft className="h-4 w-4" /> Back
             </button>
             <button onClick={() => navigate('/login')} className="text-white/80 underline-offset-4 hover:text-white hover:underline">
-              เข้าด้วยอีเมล · Sign in with email
+              Sign in with email
             </button>
           </div>
         </div>
@@ -416,7 +414,7 @@ export default function Landing() {
 
       {diving && (
         <p className="pointer-events-none absolute inset-x-0 bottom-10 flex justify-center animate-in fade-in duration-500">
-          <span className="rounded-full bg-[#16182E]/45 px-4 py-1.5 text-sm text-white backdrop-blur">กำลังลงสู่ MRT Exit 2…</span>
+          <span className="rounded-full bg-[#16182E]/45 px-4 py-1.5 text-sm text-white backdrop-blur">Descending to BTS SPU Station Exit 2…</span>
         </p>
       )}
     </div>

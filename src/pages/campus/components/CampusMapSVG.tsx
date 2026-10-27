@@ -1,6 +1,7 @@
 import { useRef, type MouseEvent } from 'react'
 import {
   BUILDINGS,
+  CAMPUS_AVENUES,
   CAMPUS_PALETTE,
   CAR_PARKS,
   MRT_LINE,
@@ -53,26 +54,26 @@ export default function CampusMapSVG({
   const handleSvgClick = (e: MouseEvent<SVGSVGElement>) => {
     if (!onMapClick || !svgRef.current) return
     const rect = svgRef.current.getBoundingClientRect()
-    // SVG viewBox: -25 -20 50 40 (minX=-25, minY=-20, width=50, height=40)
+    // SVG viewBox: -30 -24 60 48 (minX=-30, minY=-24, width=60, height=48)
     const nx = (e.clientX - rect.left) / rect.width
     const ny = (e.clientY - rect.top) / rect.height
-    const worldX = -25 + nx * 50
-    const worldZ = -20 + ny * 40
+    const worldX = -30 + nx * 60
+    const worldZ = -24 + ny * 48
     onMapClick(worldX, worldZ)
   }
 
   return (
     <svg
       ref={svgRef}
-      viewBox="-25 -20 50 40"
+      viewBox="-30 -24 60 48"
       className={className}
       role="img"
-      aria-label="แผนที่แคมปัส SPU"
+      aria-label="SPU Campus Map"
       onClick={handleSvgClick}
       style={{ cursor: onMapClick ? 'crosshair' : 'default' }}
     >
       {/* Base Campus Ground */}
-      <rect x={-23} y={-18} width={46} height={36} rx={4} fill={CAMPUS_PALETTE.grass} />
+      <rect x={-28} y={-22} width={56} height={44} rx={4} fill={CAMPUS_PALETTE.grass} />
 
       {/* Front Road (Phahonyothin) alongside the MRT */}
       <line
@@ -134,25 +135,30 @@ export default function CampusMapSVG({
       {/* Reflective Pond */}
       <circle cx={POND.at[0]} cy={POND.at[1]} r={POND.r} fill="#1E5274" stroke="#DCE1ED" strokeWidth={0.3} />
 
-      {/* Walkway Paths */}
-      {BUILDINGS.map((b) => {
-        const [dx, dz] = doorPoint(b)
-        return (
-          <line
-            key={b.id}
-            x1={PLAZA_CENTER[0]}
-            y1={PLAZA_CENTER[1]}
-            x2={dx}
-            y2={dz}
-            stroke={CAMPUS_PALETTE.path}
-            strokeWidth={2.4}
-            strokeLinecap="round"
-          />
-        )
-      })}
-      {/* Central Crossroads Plaza */}
-      <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={3.8} fill={CAMPUS_PALETTE.path} />
-      <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={1.0} fill={CAMPUS_PALETTE.spuPink} />
+      {/* Authentic RPG Game Avenue & Street Network (No roundabout) */}
+      {CAMPUS_AVENUES.map((ave) => (
+        <line
+          key={ave.id}
+          x1={ave.from[0]}
+          y1={ave.from[1]}
+          x2={ave.to[0]}
+          y2={ave.to[1]}
+          stroke={CAMPUS_PALETTE.path}
+          strokeWidth={ave.width * 0.7}
+          strokeLinecap="round"
+        />
+      ))}
+
+      {/* Central Academic Quad Plaza (Grand rectangular stepped plaza) */}
+      <rect
+        x={PLAZA_CENTER[0] - 5.5}
+        y={PLAZA_CENTER[1] - 4.0}
+        width={11.0}
+        height={8.0}
+        rx={1.0}
+        fill={CAMPUS_PALETTE.path}
+      />
+      <circle cx={PLAZA_CENTER[0]} cy={PLAZA_CENTER[1]} r={1.2} fill={CAMPUS_PALETTE.spuPink} />
 
       {/* Entrance Aprons at each building door */}
       {BUILDINGS.map((b) => {
