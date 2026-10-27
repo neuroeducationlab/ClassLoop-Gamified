@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
@@ -17,6 +17,13 @@ import { cn } from '@/lib/utils'
 const GATE = BUILDINGS.find((b) => b.id === 'entry') ?? BUILDINGS[0]
 const DIVE_DURATION_SECONDS = 2.0
 const noop = () => {}
+
+const SPU_IMAGE_MAP: Record<TimeOfDay, string> = {
+  morning: '/spu/morning.jpg',
+  midday: '/spu/midday.jpg',
+  evening: '/spu/sunset.jpg',
+  night: '/spu/night.jpg',
+}
 
 /**
  * 4DX Bird's-Eye Camera Rig:
@@ -95,6 +102,7 @@ export default function Login() {
   const [isDiving, setIsDiving] = useState(false)
   const [lowPower] = useState(isLowPower)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
+  const [viewMode, setViewMode] = useState<'cinematic' | '3d'>('cinematic')
   const targetDestination = useRef<string>('/campus')
 
   const cycleTimeOfDay = () => {
@@ -105,6 +113,20 @@ export default function Login() {
       return 'morning'
     })
   }
+
+  const handleLanded = useCallback(() => {
+    navigate(targetDestination.current)
+  }, [navigate])
+
+  // Handle 4DX swoop landing completion for cinematic image mode
+  useEffect(() => {
+    if (isDiving && viewMode === 'cinematic') {
+      const timer = setTimeout(() => {
+        handleLanded()
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [isDiving, viewMode, handleLanded])
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -132,10 +154,6 @@ export default function Login() {
     setIsDiving(true)
   }
 
-  const handleLanded = () => {
-    navigate(targetDestination.current)
-  }
-
   const fill = (accEmail: string, accPassword: string) => {
     setEmail(accEmail)
     setPassword(accPassword)
@@ -149,29 +167,54 @@ export default function Login() {
         background: `linear-gradient(to bottom, ${SKY_PRESETS[timeOfDay].skyGradient.join(', ')})`,
       }}
     >
-      {/* ── 3D Campus Bird's-Eye Background ── */}
-      <div className="absolute inset-0">
-        <Canvas
-          shadows="percentage"
-          dpr={lowPower ? [1, 1.25] : [1, 1.6]}
-          camera={{ fov: 42, position: [PLAZA_CENTER[0], 35, PLAZA_CENTER[1] + 42] }}
-        >
-          <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isDiving} />
+      {/* ── Background: Cinematic High-Fidelity Artwork OR 3D Canvas ── */}
+      {viewMode === 'cinematic' ? (
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={SPU_IMAGE_MAP[timeOfDay]}
+            alt="SPU Campus Universe"
+            className={cn(
+              'h-full w-full object-cover object-center transition-all duration-[2000ms] ease-out will-change-transform select-none pointer-events-none',
+              isDiving ? 'scale-[2.4] translate-x-[-6%] translate-y-[10%] blur-[1.5px]' : 'scale-105'
+            )}
+            style={{
+              filter: isDiving ? 'brightness(1.15)' : 'brightness(1.0)',
+            }}
+          />
 
-          <Environment resolution={lowPower ? 64 : 128}>
-            <Lightformer form="rect" intensity={3.0} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
-            <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
-          </Environment>
+          {/* Atmospheric lighting layers */}
+          {timeOfDay === 'night' && (
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-indigo-950/40 via-transparent to-black/30" />
+          )}
+          {timeOfDay === 'evening' && (
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-orange-950/30 via-transparent to-purple-950/20" />
+          )}
+        </div>
+      ) : (
+        <div className="absolute inset-0">
+          <Canvas
+            shadows="percentage"
+            dpr={lowPower ? [1, 1.25] : [1, 2]}
+            gl={{ antialias: true, powerPreference: 'high-performance' }}
+            camera={{ fov: 42, position: [PLAZA_CENTER[0], 35, PLAZA_CENTER[1] + 42] }}
+          >
+            <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isDiving} />
 
-          <Ground onWalk={noop} />
-          <ContextBuildings />
-          {BUILDINGS.map((b) => (
-            <Building key={b.id} building={b} hovered={false} onHover={noop} onSelect={noop} />
-          ))}
+            <Environment resolution={lowPower ? 64 : 128}>
+              <Lightformer form="rect" intensity={3.0} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
+              <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
+            </Environment>
 
-          <BirdEyeCameraRig isDiving={isDiving} onLanded={handleLanded} />
-        </Canvas>
-      </div>
+            <Ground onWalk={noop} />
+            <ContextBuildings />
+            {BUILDINGS.map((b) => (
+              <Building key={b.id} building={b} hovered={false} onHover={noop} onSelect={noop} />
+            ))}
+
+            <BirdEyeCameraRig isDiving={isDiving} onLanded={handleLanded} />
+          </Canvas>
+        </div>
+      )}
 
       {/* ── Soft vignette gradient overlay for contrast ── */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-black/35" />
@@ -203,7 +246,7 @@ export default function Login() {
         )}
       >
         <div className="w-full max-w-md rounded-3xl border border-white/25 bg-black/45 p-7 text-white shadow-2xl backdrop-blur-xl sm:p-8">
-          {/* Top Header & Language switch */}
+          {/* Top Header & Mode / Time / Language switch */}
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-600 font-extrabold text-xs text-white shadow">
@@ -214,6 +257,14 @@ export default function Login() {
               </span>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setViewMode((m) => (m === 'cinematic' ? '3d' : 'cinematic'))}
+                className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 backdrop-blur hover:bg-white/20 transition-colors shadow-xs cursor-pointer"
+                title="Switch between Cinematic Artwork and 3D Real-time"
+              >
+                <span className="text-[11px] font-bold">{viewMode === 'cinematic' ? '🖼️ HD Art' : '🎮 3D'}</span>
+              </button>
               <button
                 type="button"
                 onClick={cycleTimeOfDay}
