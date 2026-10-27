@@ -1,15 +1,15 @@
 /**
- * The 6 campus buildings shown in the 3D demo (see CAMPUS_BRIEF.md).
- *
- * Only 6 of SPU's 12 buildings — more than this is too many to read in a
- * 6-minute talk. Interiors are plain 2D UI; only the campus itself is 3D.
+ * The 9 campus buildings shown in the 3D demo (see CAMPUS_BRIEF.md), one home
+ * per ClassLoop feature, in three districts: arrival + study (west), the
+ * Academic Row with the staff-only zone (south), student life (north/east).
+ * What each building's rooms hold is in `interiors.ts`.
  * `position` is (x, z) on the ground plane, traced from the official SPU
  * campus map (viewed from the map's bottom edge: -z is the far side with
  * bldgs 9/11, the MRT viaduct runs along the left/front edge). Stylised —
  * spacing is widened so labels and clicks never overlap on video.
  */
 
-export type BuildingId = 'entry' | 'faculty' | 'arena' | 'dorm' | 'data' | 'plan'
+export type BuildingId = 'entry' | 'faculty' | 'arena' | 'dorm' | 'data' | 'plan' | 'library' | 'union' | 'lounge'
 
 /** Low-poly silhouette used by the 3D campus — one per building so each reads at a glance. */
 export type BuildingShape = 'gate' | 'hall' | 'arena' | 'house' | 'hub' | 'office'
@@ -82,6 +82,10 @@ export const CAMPUS_AVENUES: CampusAvenue[] = [
   { id: 'ave-cross-center', from: [4.0, -1.0], to: [4.0, -14.0], width: 3.2 },
   { id: 'ave-cross-east', from: [18.0, -1.0], to: [20.0, -14.0], width: 3.2 },
 
+  // ── Door paths for the Library and Student Union (the Staff Lounge door sits on the concourse) ──
+  { id: 'ave-library-door', from: [-6.2, 8.3], to: [-6.2, -1.0], width: 2.8 },
+  { id: 'ave-union-door', from: [6.9, 16.2], to: [0.0, 16.2], width: 2.8 },
+
   // ── 5. Park Promenade (By Pond towards Sports Court) ──
   { id: 'ave-park-loop', from: [0.0, 8.0], to: [14.0, 14.0], width: 2.8 },
   { id: 'ave-sports-link', from: [14.0, 14.0], to: [18.0, 20.0], width: 2.8 },
@@ -115,7 +119,7 @@ export const BUILDINGS: Building[] = [
     color: '#7C9BE8',
     shape: 'hall',
     studentSees: 'lessons, pre-class video, quiz, graded test',
-    teacherSees: null,
+    teacherSees: 'run a live class',
     position: [-16.0, -17.0],
   },
   {
@@ -177,5 +181,50 @@ export const BUILDINGS: Building[] = [
     studentSees: null,
     teacherSees: 'drop in syllabus → AI suggests activities → teacher picks',
     position: [4.0, -17.0],
+  },
+  {
+    id: 'library',
+    name: { th: 'หอสมุด', en: 'Learning Library' },
+    description: {
+      th: 'ศูนย์ทบทวนบทเรียนและหลักสูตรรายวิชา ทบทวนก่อนสอบ ดูเป้าหมายแต่ละสัปดาห์',
+      en: 'Review centre and course syllabus — revise before the test and see each week’s goals.',
+    },
+    emoji: '📚',
+    spuRef: 'library',
+    color: '#5B8DEF',
+    shape: 'hall',
+    studentSees: 'review centre, course syllabus',
+    teacherSees: null,
+    position: [-8.0, 11.0],
+  },
+  {
+    id: 'union',
+    name: { th: 'สโมสรนักศึกษา', en: 'Student Union' },
+    description: {
+      th: 'ชุมชนแลกเปลี่ยนเรียนรู้และโปรไฟล์ของคุณ ถาม-ตอบ แชร์โน้ต ดูความสำเร็จ',
+      en: 'Community board and your profile — ask, share notes and see your achievements.',
+    },
+    emoji: '🎪',
+    spuRef: 'student union',
+    color: '#9B6BFF',
+    shape: 'hub',
+    studentSees: 'community board, profile',
+    teacherSees: null,
+    position: [8.0, 19.0],
+  },
+  {
+    id: 'lounge',
+    name: { th: 'ห้องพักครู', en: 'Staff Lounge' },
+    description: {
+      th: 'เฉพาะอาจารย์ ศูนย์รวมเครื่องมือครู ออกแบบบทเรียน สถิติ ข้อสอบ สอนสด รายชื่อ และเสียงนักศึกษา',
+      en: 'Staff only — every teaching tool in one room: lesson design, stats, exams, live class, roster and student voice.',
+    },
+    emoji: '☕',
+    spuRef: 'staff room',
+    color: '#E0B04B',
+    shape: 'office',
+    studentSees: null,
+    teacherSees: 'all teaching tools in one room',
+    position: [13.0, -17.0],
   },
 ]
