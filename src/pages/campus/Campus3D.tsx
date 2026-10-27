@@ -219,7 +219,8 @@ export default function Campus3D() {
     >
       <Canvas
         shadows="percentage"
-        dpr={isMobile ? [1, 1.25] : [1, 1.75]}
+        dpr={isMobile ? [1, 1.25] : [1, 2]}
+        gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: fpMode ? 75 : 45, position: [0, 20, 22] }}
       >
         <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isArriving} />
@@ -991,7 +992,6 @@ function CampusScene({
         <meshBasicMaterial color="#FFFFFF" transparent opacity={0.85} />
       </mesh>
 
-      {/* Avatar is hidden in first-person (the player feels they are walking themselves) */}
       <group
         ref={avatarRef}
         position={[spawn[0], 0, spawn[1]]}
