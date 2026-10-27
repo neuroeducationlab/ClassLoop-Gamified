@@ -107,13 +107,15 @@ const UI = {
 
 /** Student 3D campus: walk around, enter buildings, first-person immersive viewpoint. */
 export default function Campus3D() {
-  const { avatar, currentStudent, setRole, studentXP } = useApp()
+  const { avatar, currentStudent, setRole, studentXP, role, teacherName } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
+  const isTeacher = role === 'teacher'
 
   const [hovered, setHovered] = useState<BuildingId | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
+  const [teacherMenuOpen, setTeacherMenuOpen] = useState<boolean>(true)
 
   // ── Language & view mode toggles (default English, default First-Person) ───
   const [lang, setLang] = useState<Lang>('en')
@@ -149,7 +151,11 @@ export default function Campus3D() {
   // Phones, small screens and GPU-less machines skip postprocessing (see lowPower.ts; ?hq / ?lite override)
   const isMobile = useMemo(isLowPower, [])
 
-  useEffect(() => setRole('student'), [setRole])
+  useEffect(() => {
+    if (role !== 'teacher') {
+      setRole('student')
+    }
+  }, [role, setRole])
   useEffect(() => {
     if (!toast) return
     const id = setTimeout(() => setToast(null), 3000)
@@ -312,16 +318,28 @@ export default function Campus3D() {
       </div>
 
       {/* ── Top HUD ── */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
-        {/* Player card */}
-        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-black/45 px-4 py-3 text-white backdrop-blur-md border border-white/10 shadow-lg">
-          <span className="h-9 w-9 rounded-full border-2 border-white shadow shrink-0" style={{ backgroundColor: me.color }} />
-          <div className="min-w-[9rem]">
-            <p className="text-sm font-bold leading-tight">{me.nickname}</p>
-            <p className="text-[11px] text-white/80">Lv.{level} · {studentXP} XP</p>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-              <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: CAMPUS_PALETTE.path }} />
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4 z-20">
+        {/* Player / Teacher card */}
+        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-black/55 px-4 py-3 text-white backdrop-blur-md border border-white/15 shadow-xl">
+          {isTeacher ? (
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-600 text-white shadow-md text-lg shrink-0">
+              🎓
             </div>
+          ) : (
+            <span className="h-9 w-9 rounded-full border-2 border-white shadow shrink-0" style={{ backgroundColor: me.color }} />
+          )}
+          <div className="min-w-[9rem]">
+            <p className="text-sm font-bold leading-tight">{isTeacher ? (teacherName || 'อ.ดร.ธนพร') : me.nickname}</p>
+            {isTeacher ? (
+              <p className="text-[11px] text-pink-300 font-medium">อาจารย์ผู้สอน · Faculty</p>
+            ) : (
+              <>
+                <p className="text-[11px] text-white/80">Lv.{level} · {studentXP} XP</p>
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                  <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: CAMPUS_PALETTE.path }} />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -349,27 +367,104 @@ export default function Campus3D() {
             <span className="hidden sm:inline">{fpMode ? t.fpModeLabel : t.tpModeLabel}</span>
           </button>
 
-          <Link
-            to="/student"
-            aria-label="หน้าเดิม · Classic view"
-            className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
-          >
-            <LayoutGrid className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.back}</span>
-          </Link>
+          {isTeacher ? (
+            <>
+              <Link
+                to="/map"
+                aria-label="แผนที่ 2D · 2D Map"
+                className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
+              >
+                <span>🗺️</span>
+                <span className="hidden sm:inline">แผนที่ 2D</span>
+              </Link>
+              <Link
+                to="/teacher"
+                aria-label="ห้องสตูดิโออาจารย์ · Teacher Studio"
+                className="flex items-center gap-1.5 rounded-xl bg-pink-600/80 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-pink-400/30 hover:bg-pink-600 transition-colors shadow"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden sm:inline">สตูดิโอ</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/student"
+                aria-label="หน้าเดิม · Classic view"
+                className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.back}</span>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
-      {/* ── First-person crosshair ── */}
-      {fpMode && !isArriving && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-6 w-6 opacity-75">
-            <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/70" />
-            <div className="absolute top-1/2 left-0 w-full h-px -translate-y-1/2 bg-white/70" />
-            <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm" />
+      {/* ── Teacher Quick-Access Navigation Bar (Easy for instructors, 0 confusion) ── */}
+      {isTeacher && !isArriving && (
+        <div className="pointer-events-auto absolute top-20 left-4 z-20 w-72 rounded-2xl border border-white/20 bg-black/70 p-3.5 text-white backdrop-blur-xl shadow-2xl transition-all">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm">⚡</span>
+              <p className="text-xs font-bold">เมนูลัดอาจารย์ (ไม่ต้องเดิน)</p>
+            </div>
+            <button
+              onClick={() => setTeacherMenuOpen(!teacherMenuOpen)}
+              className="text-[11px] text-white/60 hover:text-white transition-colors"
+            >
+              {teacherMenuOpen ? 'ย่อ' : 'ขยาย'}
+            </button>
           </div>
+
+          {teacherMenuOpen && (
+            <div className="space-y-1.5">
+              <button
+                onClick={() => navigate('/campus/data')}
+                className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-base">📊</span>
+                  <div>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">สถิติ & Gap Analysis</p>
+                    <p className="text-[10px] text-white/60">อาคาร 11 · วิเคราะห์ผู้เรียน</p>
+                  </div>
+                </span>
+                <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
+              </button>
+
+              <button
+                onClick={() => navigate('/campus/plan')}
+                className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-base">📝</span>
+                  <div>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">สตูดิโอแผนการสอน</p>
+                    <p className="text-[10px] text-white/60">อาคาร 5 · สื่อและกิจกรรม</p>
+                  </div>
+                </span>
+                <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
+              </button>
+
+              <button
+                onClick={() => navigate('/campus/dorm')}
+                className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-base">💬</span>
+                  <div>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">กระทู้ & คำถามนิสิต</p>
+                    <p className="text-[10px] text-white/60">อาคาร 9 · คอมมูนิตี้</p>
+                  </div>
+                </span>
+                <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
+
 
       {/* ── Bottom HUD ── */}
       {/* on phones the joystick + minimap fill the bottom corners, so the prompt sits above them */}
