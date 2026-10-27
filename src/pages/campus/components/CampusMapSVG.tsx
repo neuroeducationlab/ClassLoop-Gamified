@@ -33,6 +33,7 @@ export type CampusMapSVGProps = {
   avatarRotation?: number
   showLabels?: boolean
   interactive?: boolean
+  lang?: 'th' | 'en'
 }
 
 export default function CampusMapSVG({
@@ -45,6 +46,7 @@ export default function CampusMapSVG({
   avatarRotation = 0,
   showLabels = true,
   interactive = true,
+  lang = 'en',
 }: CampusMapSVGProps) {
   const svgRef = useRef<SVGSVGElement>(null)
 
@@ -169,6 +171,7 @@ export default function CampusMapSVG({
             active={isActive}
             onOpen={clickHandler}
             showLabels={showLabels}
+            lang={lang}
           />
         )
       })}
@@ -202,11 +205,13 @@ function MapBuildingItem({
   active,
   onOpen,
   showLabels,
+  lang,
 }: {
   b: Building
   active: boolean
   onOpen?: (e: MouseEvent) => void
   showLabels: boolean
+  lang: 'th' | 'en'
 }) {
   const [x, z] = b.position
   const clickable = Boolean(onOpen)
@@ -231,7 +236,7 @@ function MapBuildingItem({
       onClick={onOpen}
       className={clickable ? 'cursor-pointer hover:opacity-100 transition-opacity' : undefined}
       role={clickable ? 'button' : undefined}
-      aria-label={b.name.th}
+      aria-label={b.name[lang]}
     >
       {active && (
         <circle cx={x} cy={z} r={2.9} fill="none" stroke="#FFFFFF" strokeWidth={0.2} className="animate-pulse" />
@@ -253,7 +258,7 @@ function MapBuildingItem({
           strokeLinejoin="round"
           paintOrder="stroke"
         >
-          {b.name.th}
+          {b.name[lang]}
         </text>
       )}
     </g>
