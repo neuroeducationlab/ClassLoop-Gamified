@@ -74,6 +74,8 @@ The user picked a realistic, textured look in a **modern-university urban style,
       (Bloom, AO, Vignette) disabled on mobile.
 - [x] 2. Grand opening page at `/`: cinematic orbit, title "ClassLoop Campus", Start → `/login`;
       buildings rise in sequence, windows light up, train passes.
+      Start → camera glides half-way in → role cards (นักศึกษา / อาจารย์) fade in → pick one = sign in with that
+      role's demo account and dive into `/campus` ("เข้าด้วยอีเมล" still links to `/login`).
 - [x] 3. Arrival after `/create`: fog-to-clear descent following the train into Exit 2,
       caption "กำลังลงสู่แคมปัส…", **Skip arrival** pill.
 - [x] 4. Minimap bottom-right (extract the SVG from `CampusMap2D.tsx` into a shared component; live avatar dot; tap to walk).

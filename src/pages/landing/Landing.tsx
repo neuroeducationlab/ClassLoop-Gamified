@@ -4,7 +4,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { Bloom, EffectComposer, N8AO, Vignette } from '@react-three/postprocessing'
 import { MathUtils, Vector3, type Group, type Mesh, type MeshBasicMaterial } from 'three'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, BookOpen, GraduationCap } from 'lucide-react'
+import { DEMO_ACCOUNTS, useApp, type Role } from '@/context/AppContext'
 import { BUILDINGS, PLAZA_CENTER } from '@/data/buildings'
 import Building from '@/pages/campus/components/Building'
 import ContextBuildings from '@/pages/campus/components/ContextBuildings'
@@ -20,6 +21,7 @@ const RISE_SECONDS = 1.1
 /** Title fades in once the skyline has finished rising. */
 const TITLE_DELAY_MS = (RISE_START + RISE_STEP * BUILDINGS.length + 0.4) * 1000
 const DIVE_SECONDS = 1.6
+const APPROACH_SECONDS = 1.4
 
 const ORBIT_RADIUS = 36
 const ORBIT_HEIGHT = 21
@@ -27,6 +29,11 @@ const ORBIT_SPEED = 0.045 // radians / second — slow, cinematic
 const GATE = BUILDINGS.find((b) => b.id === 'entry')!
 
 const noop = () => {}
+
+/** orbit → (Start) approach half-way → choose a role → dive into the campus. */
+type Phase = 'orbit' | 'approach' | 'choose' | 'dive'
+
+const smoothstep = (t: number) => t * t * (3 - 2 * t)
 
 /** easeOutBack: overshoots a little, so towers "land" with a bounce. */
 function easeOutBack(t: number) {
@@ -74,49 +81,124 @@ function LightSweep({ delay }: { delay: number }) {
   )
 }
 
-/** Slow orbit around the campus; on `diving`, swoops down to MRT Exit 2. */
-function CameraRig({ diving, onDived }: { diving: boolean; onDived: () => void }) {
+/**
+ * Slow orbit around the campus. On `approach` it glides half-way in toward the
+ * plaza and holds there while the role cards are up; on `dive` it swoops from
+ * wherever it is down to MRT Exit 2.
+ */
+function CameraRig({ phase, onApproached, onDived }: { phase: Phase; onApproached: () => void; onDived: () => void }) {
   const { camera } = useThree()
   const target = useMemo(() => new Vector3(PLAZA_CENTER[0], 2, PLAZA_CENTER[1]), [])
   const angle = useRef(0.6)
-  const dive = useRef<{ t: number; from: Vector3 } | null>(null)
-  const done = useRef(false)
+  const move = useRef<{ phase: Phase; t: number; from: Vector3; to: Vector3 } | null>(null)
+  const notified = useRef<Phase | null>(null)
   const gate = useMemo(() => new Vector3(GATE.position[0] + 5, 3, GATE.position[1] + 5), [])
   const gateLook = useMemo(() => new Vector3(GATE.position[0], 1.5, GATE.position[1]), [])
   const look = useMemo(() => new Vector3(), [])
+  const close = useMemo(() => new Vector3(), [])
 
-  useFrame((_, dt) => {
-    if (diving) {
-      dive.current ??= { t: 0, from: camera.position.clone() }
-      const d = dive.current
-      d.t = Math.min(1, d.t + dt / DIVE_SECONDS)
-      const e = d.t * d.t * (3 - 2 * d.t) // smoothstep
-      camera.position.lerpVectors(d.from, gate, e)
-      look.copy(target).lerp(gateLook, e)
-      camera.lookAt(look)
-      if (d.t >= 1 && !done.current) {
-        done.current = true
-        onDived()
+  useFrame((state, dt) => {
+    if (phase === 'orbit') {
+      move.current = null
+      notified.current = null
+      angle.current += dt * ORBIT_SPEED
+      camera.position.set(
+        PLAZA_CENTER[0] + Math.sin(angle.current) * ORBIT_RADIUS,
+        ORBIT_HEIGHT,
+        PLAZA_CENTER[1] + Math.cos(angle.current) * ORBIT_RADIUS,
+      )
+      camera.lookAt(target)
+      return
+    }
+
+    if (phase === 'approach' || phase === 'choose') {
+      if (!move.current || move.current.phase !== 'approach') {
+        // half-way between where we are and a spot just above/in front of the plaza
+        close.set(
+          PLAZA_CENTER[0] + Math.sin(angle.current) * 12,
+          9,
+          PLAZA_CENTER[1] + Math.cos(angle.current) * 12,
+        )
+        const from = camera.position.clone()
+        move.current = { phase: 'approach', t: 0, from, to: from.clone().lerp(close, 0.5) }
+      }
+      const m = move.current
+      m.t = Math.min(1, m.t + dt / APPROACH_SECONDS)
+      camera.position.lerpVectors(m.from, m.to, smoothstep(m.t))
+      // a gentle drift while the cards are up, so the scene never freezes
+      camera.position.y += Math.sin(state.clock.elapsedTime * 0.6) * 0.15 * m.t
+      camera.lookAt(target)
+      if (m.t >= 1 && notified.current !== 'approach') {
+        notified.current = 'approach'
+        onApproached()
       }
       return
     }
-    angle.current += dt * ORBIT_SPEED
-    camera.position.set(
-      PLAZA_CENTER[0] + Math.sin(angle.current) * ORBIT_RADIUS,
-      ORBIT_HEIGHT,
-      PLAZA_CENTER[1] + Math.cos(angle.current) * ORBIT_RADIUS,
-    )
-    camera.lookAt(target)
+
+    // dive
+    if (!move.current || move.current.phase !== 'dive') {
+      move.current = { phase: 'dive', t: 0, from: camera.position.clone(), to: gate }
+    }
+    const d = move.current
+    d.t = Math.min(1, d.t + dt / DIVE_SECONDS)
+    const e = smoothstep(d.t)
+    camera.position.lerpVectors(d.from, d.to, e)
+    look.copy(target).lerp(gateLook, e)
+    camera.lookAt(look)
+    if (d.t >= 1 && notified.current !== 'dive') {
+      notified.current = 'dive'
+      onDived()
+    }
   })
   return null
 }
 
+const ROLE_CARDS: { role: Role; icon: typeof GraduationCap; th: string; en: string; blurb: string; accent: string }[] = [
+  {
+    role: 'student',
+    icon: GraduationCap,
+    th: 'นักศึกษา',
+    en: 'Student',
+    blurb: 'เดินแคมปัสในมุมมองของคุณ เรียน เล่นเกม เก็บ XP',
+    accent: 'from-[#7C9BE8] to-[#4FB0A5]',
+  },
+  {
+    role: 'teacher',
+    icon: BookOpen,
+    th: 'อาจารย์',
+    en: 'Teacher',
+    blurb: 'ดูภาพรวมห้องเรียน ข้อมูลนักศึกษา และฟีดแบคไม่ระบุชื่อ',
+    accent: 'from-[#E89BC4] to-[#F2994A]',
+  },
+]
+
 /** Grand opening page at `/`: the campus builds itself at golden hour, then Start dives into Exit 2 → login. */
 export default function Landing() {
   const navigate = useNavigate()
+  const { signIn } = useApp()
   const [lowPower] = useState(isLowPower)
   const [showTitle, setShowTitle] = useState(false)
-  const [diving, setDiving] = useState(false)
+  const [phase, setPhase] = useState<Phase>('orbit')
+  const destination = useRef<{ to: string; state?: unknown }>({ to: '/campus' })
+  const diving = phase === 'dive'
+
+  /** Sign in with the chosen role's demo account, then dive straight into the campus. */
+  const chooseRole = (role: Role) => {
+    const account = DEMO_ACCOUNTS.find((a) => a.role === role)
+    if (!account || !signIn(account.email, account.password).ok) return
+    // both roles land on the campus (teachers get their quick-access panel there);
+    // students also get the campus arrival sequence
+    destination.current = role === 'student' ? { to: '/campus', state: { arrival: true } } : { to: '/campus' }
+    setPhase('dive')
+  }
+
+  // Esc on the role cards goes back to the title
+  useEffect(() => {
+    if (phase !== 'choose') return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setPhase('orbit')
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [phase])
 
   useEffect(() => {
     const id = setTimeout(() => setShowTitle(true), TITLE_DELAY_MS)
@@ -165,7 +247,11 @@ export default function Landing() {
           <Hologram position={[PLAZA_CENTER[0], 13, PLAZA_CENTER[1]]} scale={2.2} />
         </Rise>
 
-        <CameraRig diving={diving} onDived={() => navigate('/login')} />
+        <CameraRig
+          phase={phase}
+          onApproached={() => setPhase('choose')}
+          onDived={() => navigate(destination.current.to, { state: destination.current.state })}
+        />
 
         {!lowPower && (
           <EffectComposer multisampling={4}>
@@ -181,7 +267,7 @@ export default function Landing() {
 
       <div
         className={`absolute inset-0 isolate flex flex-col items-center justify-center gap-5 px-6 text-center text-white transition-opacity duration-700 ${
-          showTitle && !diving ? 'opacity-100' : 'pointer-events-none opacity-0'
+          showTitle && phase === 'orbit' ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
         {/* soft dark halo so the copy stays legible over the towers */}
@@ -196,7 +282,7 @@ export default function Landing() {
           เดินเข้าห้องเรียนแห่งอนาคต · Step into a campus that learns with you
         </p>
         <button
-          onClick={() => setDiving(true)}
+          onClick={() => setPhase('approach')}
           className="group mt-3 flex w-full max-w-xs items-center justify-between gap-6 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-8 py-4 text-lg font-bold text-[#2B2D55] shadow-[0_0_40px_rgba(242,200,121,0.65)] transition-transform hover:scale-[1.03] active:scale-95 sm:w-auto"
         >
           เริ่มต้น · Start
@@ -206,11 +292,54 @@ export default function Landing() {
 
       <p
         className={`pointer-events-none absolute inset-x-0 bottom-6 text-center text-xs tracking-wide text-white/85 transition-opacity duration-700 ${
-          showTitle && !diving ? 'opacity-100' : 'opacity-0'
+          showTitle && phase === 'orbit' ? 'opacity-100' : 'opacity-0'
         }`}
       >
         ClassLoop Campus · SPU edition — สร้างให้มหาวิทยาลัยศรีปทุม
       </p>
+
+      {/* role cards: always mounted, faded with a transition (a keyframe animation can stall on a busy GPU) */}
+      {(
+        <div
+          inert={phase !== 'choose'}
+          className={`absolute inset-0 isolate flex flex-col items-center justify-center gap-6 px-5 text-white transition-all duration-700 ${
+            phase === 'choose' ? 'scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
+          }`}
+        >
+          <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.6),transparent_70%)]" />
+          <div className="text-center">
+            <p className="text-[11px] font-semibold tracking-[0.25em] text-[#7FE3FF]">CLASSLOOP CAMPUS</p>
+            <h2 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">คุณคือใคร? · Who are you?</h2>
+          </div>
+          <div className="grid w-full max-w-2xl gap-4 sm:grid-cols-2">
+            {ROLE_CARDS.map(({ role, icon: Icon, th, en, blurb, accent }) => (
+              <button
+                key={role}
+                onClick={() => chooseRole(role)}
+                className="group flex items-center gap-4 rounded-3xl border border-white/25 bg-[#16182E]/70 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:-translate-y-1 hover:border-white/50 hover:bg-[#16182E]/80 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#F2C879]/70 sm:flex-col sm:items-start sm:p-6"
+              >
+                <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} shadow-lg transition-transform group-hover:scale-110`}>
+                  <Icon className="h-7 w-7" />
+                </span>
+                <span>
+                  <span className="block text-xl font-bold">
+                    {th} <span className="text-base font-semibold text-white/70">· {en}</span>
+                  </span>
+                  <span className="mt-1 block text-sm text-white/75">{blurb}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-5 text-sm">
+            <button onClick={() => setPhase('orbit')} className="flex items-center gap-1.5 text-white/80 hover:text-white">
+              <ArrowLeft className="h-4 w-4" /> ย้อนกลับ
+            </button>
+            <button onClick={() => navigate('/login')} className="text-white/80 underline-offset-4 hover:text-white hover:underline">
+              เข้าด้วยอีเมล · Sign in with email
+            </button>
+          </div>
+        </div>
+      )}
 
       {diving && (
         <p className="pointer-events-none absolute inset-x-0 bottom-10 text-center text-sm text-white drop-shadow animate-in fade-in duration-500">
