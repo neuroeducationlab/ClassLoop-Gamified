@@ -51,6 +51,22 @@ export const CAR_PARKS: { at: [x: number, z: number]; size: [w: number, d: numbe
 ]
 export const POND: { at: [x: number, z: number]; r: number } = { at: [6.5, 7.5], r: 2.8 }
 
+/**
+ * The rest of SPU from the campus map — not enterable, there so the skyline
+ * reads as the real campus. White towers with SPU-pink roofs, as on the map.
+ * size = [width, height, depth] in world units; heights are relative, not surveyed.
+ */
+export const CONTEXT_BUILDINGS: { no: string; at: [x: number, z: number]; size: [w: number, h: number, d: number] }[] = [
+  { no: '11', at: [-12, -11.5], size: [4, 9, 4] },
+  { no: '2', at: [-5.5, 3.5], size: [3, 5, 3.5] },
+  { no: '8', at: [-1, -12.5], size: [3, 3.5, 3] },
+  { no: '10', at: [4.5, -12.5], size: [4, 4.5, 3] },
+  { no: '12', at: [15, -14], size: [3, 6.5, 3] },
+  { no: '7', at: [16, 2], size: [3, 3.5, 3] },
+  { no: '4', at: [11, 5.2], size: [2.5, 5.5, 2.5] },
+  { no: '3', at: [15, 7], size: [3, 4.5, 3] },
+]
+
 export const BUILDINGS: Building[] = [
   {
     id: 'entry',

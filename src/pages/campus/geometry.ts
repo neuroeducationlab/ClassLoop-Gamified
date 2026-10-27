@@ -23,6 +23,15 @@ export function doorPoint(b: Building): [number, number] {
 }
 
 /** Height (world units) at which a building's floating name label sits. */
+const LABEL_HEIGHT: Record<BuildingShape, number> = {
+  gate: 4.4,
+  hall: 11.2,
+  hub: 11.6,
+  office: 7.3,
+  house: 7.5,
+  arena: 5.2,
+}
+
 export function labelHeight(shape: BuildingShape) {
-  return shape === 'hall' ? 6.2 : shape === 'gate' ? 4.4 : 4.6
+  return LABEL_HEIGHT[shape]
 }

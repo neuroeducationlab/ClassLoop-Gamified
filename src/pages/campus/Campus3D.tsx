@@ -9,9 +9,11 @@ import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
 import { doorPoint, facingPlaza, labelHeight } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
+import Atmosphere from './components/Atmosphere'
+import { isLowPower } from './lowPower'
 
 const WALK_SPEED = 5 // units / second
-const CAMERA_OFFSET = new Vector3(0, 16, 17)
+const CAMERA_OFFSET = new Vector3(0, 19, 20)
 const GATE = BUILDINGS.find((b) => b.id === 'entry')!
 /** Step out of MRT Exit 2 onto campus. */
 const GATE_SPAWN = doorPoint(GATE)
@@ -49,6 +51,7 @@ export default function Campus3D() {
   const [hovered, setHovered] = useState<BuildingId | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
+  const [lowPower] = useState(isLowPower)
   const labels = useRef<LabelMap>(new Map())
   const labelRef = (key: string) => (el: HTMLDivElement | null) => {
     if (el) labels.current.set(key, el)
@@ -85,22 +88,8 @@ export default function Campus3D() {
 
   return (
     <div className="fixed inset-0 select-none font-campus" style={{ backgroundColor: CAMPUS_PALETTE.sky }}>
-      {/* flat = no tone mapping, so the brief's palette renders as the actual hex colours */}
-      <Canvas flat shadows="percentage" dpr={[1, 1.75]} camera={{ fov: 45, position: [0, 20, 22] }}>
-        <color attach="background" args={[CAMPUS_PALETTE.sky]} />
-        <fog attach="fog" args={[CAMPUS_PALETTE.sky, 40, 70]} />
-        <hemisphereLight args={['#FFF1DC', '#6E7F4A', 1.6]} />
-        <directionalLight
-          position={[12, 20, 10]}
-          intensity={1.5}
-          color="#FFD9A0"
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-          shadow-camera-left={-26}
-          shadow-camera-right={26}
-          shadow-camera-top={26}
-          shadow-camera-bottom={-26}
-        />
+      <Canvas shadows={lowPower ? "percentage" : "soft"} dpr={lowPower ? [1, 1.5] : [1, 2]} camera={{ fov: 45, position: [0, 20, 22] }}>
+        <Atmosphere lowPower={lowPower} />
         <CampusScene me={me} hovered={hovered} onHover={setHovered} onArrive={arrive} labels={labels} />
       </Canvas>
 
