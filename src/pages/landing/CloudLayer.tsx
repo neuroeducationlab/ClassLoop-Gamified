@@ -19,12 +19,12 @@ export const CLOUD_TOP = 21.5
 const CENTER_BOTTOM = 15
 const CENTER_TOP = 17.5
 
-const PUFFS = 80
+const PUFFS = 46
 /** No puffs inside this radius, so the campus shows through a hole in the cloud. */
-const HOLE_RADIUS = 16
-const OUTER_RADIUS = 46
-/** The texture carries its own translucency at the edges, so the core can be solid white. */
-const MAX_OPACITY = 1
+const HOLE_RADIUS = 18
+const OUTER_RADIUS = 62
+/** Sheer: the deck is thin, hazy cloud you can see sky and campus through. */
+const MAX_OPACITY = 0.62
 
 /** Soft-light layout of each texture variant: [x, y, radius] blobs, flatter at the base. */
 const SHAPES: [x: number, y: number, r: number][][] = [
@@ -91,11 +91,11 @@ function puffTexture(variant: number) {
       for (const [bx, by, r] of blobs) mass += Math.exp(-(((x - bx) ** 2 + (y - by) ** 2) / (r * r)) * 1.6)
       const n = fbm(x * 6, y * 6, variant * 7 + 1)
       // a dense white body, plus a wider, sheer halo that the noise frays into wisps
-      const body = mass - 0.4 + (n - 0.5) * 0.5
-      const halo = mass * 0.9 - 0.12 + (n - 0.5) * 1.1
+      const body = mass - 0.6 + (n - 0.5) * 0.55
+      const halo = mass * 0.85 - 0.14 + (n - 0.5) * 1.25
       // never reach the tile border, so no square edges
       const border = 1 - smoothstep(0.38, 0.5, Math.max(Math.abs(x - 0.5), Math.abs(y - 0.5)))
-      const alpha = Math.max(smoothstep(0, 0.65, body), smoothstep(0, 0.6, halo) * 0.45) * border
+      const alpha = Math.max(smoothstep(0, 0.8, body) * 0.82, smoothstep(0, 0.6, halo) * 0.4) * border
       // sunlit white top, the faintest cream underside for volume (never grey)
       const under = smoothstep(0.5, 0.85, y) * 0.5
       const i = (py * size + px) * 4
@@ -113,7 +113,7 @@ function puffTexture(variant: number) {
 }
 
 /** Sprites per cloud: a few overlapping puffs build one soft, billowy cloud. */
-const PUFFS_PER_CLOUD = 3
+const PUFFS_PER_CLOUD = 2
 
 /**
  * A ring of soft cloud puffs at "cloud altitude" over the campus. Hidden on the
