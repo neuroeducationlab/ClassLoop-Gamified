@@ -121,7 +121,7 @@ export default function Login() {
   }
 
   const handleLanded = useCallback(() => {
-    navigate(targetDestination.current, { state: { arrival: true } })
+    navigate(targetDestination.current)
   }, [navigate])
 
   // Handle 4DX swoop landing completion for cinematic image mode

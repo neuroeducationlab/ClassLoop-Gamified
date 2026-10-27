@@ -11,8 +11,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
-import { Shirt, LayoutGrid, Eye, EyeOff, Globe } from 'lucide-react'
-import { useApp, type Avatar } from '@/context/AppContext'
+import { Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll } from 'lucide-react'
+import { useApp, type Avatar, type Mission } from '@/context/AppContext'
 import {
   BUILDINGS,
   CAMPUS_PALETTE,
@@ -29,6 +29,10 @@ import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
 import TouchJoystick from './components/TouchJoystick'
 import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './components/SPUUniverse'
+import LeaderboardWidget from './components/LeaderboardWidget'
+import MissionTrackerWidget from './components/MissionTrackerWidget'
+import BrainGymModal from './components/BrainGymModal'
+import AvatarShopModal from './components/AvatarShopModal'
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
@@ -61,7 +65,7 @@ function lookTarget(x: number, z: number, out: Vector3) {
 }
 
 let lastSpot: [number, number] | null = null
-let introPlayed = false
+let introPlayed = true
 
 type LabelMap = Map<string, HTMLDivElement>
 const AVATAR_LABEL_HEIGHT = 2.1
@@ -108,7 +112,7 @@ const UI = {
 
 /** Student 3D campus: walk around, enter buildings, first-person immersive viewpoint. */
 export default function Campus3D() {
-  const { avatar, currentStudent, setRole, studentXP, role, teacherName } = useApp()
+  const { avatar, currentStudent, setRole, studentXP, role, teacherName, studentCoins } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const isTeacher = role === 'teacher'
@@ -117,6 +121,11 @@ export default function Campus3D() {
   const [toast, setToast] = useState<string | null>(null)
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
   const [teacherMenuOpen, setTeacherMenuOpen] = useState<boolean>(true)
+
+  // ── Student Gamification Modals & Widgets State ───────────────────────────
+  const [showBrainGym, setShowBrainGym] = useState<boolean>(false)
+  const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
+  const [showMissions, setShowMissions] = useState<boolean>(true)
 
   // ── Language & view mode toggles (default English, default Third-Person 3D RPG) ───
   const [lang, setLang] = useState<Lang>('en')
@@ -139,7 +148,7 @@ export default function Campus3D() {
 
   const t = UI[lang]
 
-  // ── Phase 6 Step 3: Arrival ───────────────────────────────────────────────
+  // ── Phase 6 Step 3: Arrival (defaults to false for zero extra spin/flight) ──
   const [isArriving, setIsArriving] = useState(() => {
     const state = location.state as { arrival?: boolean } | null
     return Boolean(state?.arrival)
@@ -187,7 +196,31 @@ export default function Campus3D() {
     return () => cancelAnimationFrame(rafId)
   }, [])
 
-  const me: Avatar = avatar ?? { color: '#E89BC4', hat: 'grad', nickname: currentStudent.nickname }
+  const me: Avatar = avatar ?? {
+    color: '#E89BC4',
+    hat: 'grad',
+    outfit: 'default',
+    aura: 'none',
+    nickname: currentStudent.nickname,
+  }
+
+  const handleSelectMission = useCallback(
+    (mission: Mission) => {
+      if (mission.type === 'drill') {
+        setShowBrainGym(true)
+        return
+      }
+      if (mission.buildingId) {
+        const b = BUILDINGS.find((bld) => bld.id === mission.buildingId)
+        if (b) {
+          const dp = doorPoint(b)
+          walkGroundRef.current(dp[0], dp[1])
+          setToast(`📍 กำลังนำทางไปเควสต์ที่ ${b.emoji} ${b.name[lang]}`)
+        }
+      }
+    },
+    [lang],
+  )
 
   const arrive = useCallback(
     (b: BuildingConfig) => {
@@ -387,6 +420,41 @@ export default function Campus3D() {
             </>
           ) : (
             <>
+              {/* SPU Boutique Shop with Student Coins */}
+              <button
+                onClick={() => setShowAvatarShop(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
+                title="SPU Boutique · ร้านค้าแต่งตัวด้วยเหรียญ"
+              >
+                <span className="text-sm">🪙</span>
+                <span>{studentCoins}</span>
+                <span className="hidden sm:inline font-semibold text-amber-200/90">Coins</span>
+              </button>
+
+              {/* Brain Gym Pre-learning drills */}
+              <button
+                onClick={() => setShowBrainGym(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-500/30 to-indigo-500/20 px-3 py-2 text-xs font-bold text-purple-200 backdrop-blur-md border border-purple-400/40 hover:bg-purple-500/40 transition-all shadow cursor-pointer"
+                title="ลานฝึกสมอง · Pre-learning Brain Gym"
+              >
+                <Brain className="h-3.5 w-3.5 text-purple-300" />
+                <span className="hidden sm:inline">ลานฝึกสมอง</span>
+              </button>
+
+              {/* Challenge Missions / Quests Tracker Toggle */}
+              <button
+                onClick={() => setShowMissions(!showMissions)}
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold backdrop-blur-md border transition-all shadow cursor-pointer ${
+                  showMissions
+                    ? 'bg-pink-600/80 text-white border-pink-400/50 shadow-pink-500/20'
+                    : 'bg-black/40 text-white/90 border-white/10 hover:bg-black/55'
+                }`}
+                title="เควสต์ & การบ้าน"
+              >
+                <Scroll className="h-3.5 w-3.5 text-pink-300" />
+                <span className="hidden sm:inline">เควสต์</span>
+              </button>
+
               <Link
                 to="/create"
                 aria-label="แต่งตัว · Edit character"
@@ -556,6 +624,20 @@ export default function Campus3D() {
           }}
         />
       )}
+
+      {/* ── Gamified Student Features: Leaderboard (Left) & Missions (Right) ── */}
+      {!isTeacher && !isArriving && (
+        <>
+          <LeaderboardWidget />
+          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} />}
+        </>
+      )}
+
+      {/* ── SPU Boutique Avatar Shop Modal ── */}
+      {showAvatarShop && <AvatarShopModal onClose={() => setShowAvatarShop(false)} />}
+
+      {/* ── Brain Gym Pre-Learning Arena Modal ── */}
+      {showBrainGym && <BrainGymModal onClose={() => setShowBrainGym(false)} />}
 
       {/* ── Building enter transition with description ── */}
       {entering && (
@@ -1026,7 +1108,7 @@ function CampusScene({
         rotation={[0, facingPlaza(spawn), 0]}
         visible={!fpModeRef.current}
       >
-        <Avatar3D color={me.color} hat={me.hat} />
+        <Avatar3D color={me.color} hat={me.hat} outfit={me.outfit} aura={me.aura} />
       </group>
     </>
   )
