@@ -29,13 +29,13 @@ const DIVE_SECONDS = 3.4
 const FADE_OUT_SECONDS = 0.45
 const VEIL_COLOR = '#F3EEE6'
 
-const ORBIT_RADIUS = 36
-const ORBIT_HEIGHT = 21
+const ORBIT_RADIUS = 42
+const ORBIT_HEIGHT = 24
 const ORBIT_SPEED = 0.045 // radians / second — slow, cinematic
 const ORBIT_FOV = 42
-/** Hover spot for the role cards: clear above the cloud tops, half-way in, so the
- *  deck reads as a sea of clouds below instead of a puff smeared across the lens. */
-const CLOUD_RADIUS = 22
+/** Hover spot for the role cards: clear above the cloud tops (the deck reaches ~21.5),
+ *  half-way in, so the deck reads as clouds below instead of a puff across the lens. */
+const CLOUD_RADIUS = 26
 const CLOUD_HEIGHT = 23
 /** Campus3D's first-person camera, which the dive ends exactly on. */
 const FP_EYE_HEIGHT = 1.65
@@ -234,21 +234,19 @@ function CameraRig({
   return null
 }
 
-const ROLE_CARDS: { role: Role; icon: typeof GraduationCap; th: string; en: string; blurb: string; accent: string }[] = [
+const ROLE_CARDS: { role: Role; icon: typeof GraduationCap; title: string; blurb: string; accent: string }[] = [
   {
     role: 'student',
     icon: GraduationCap,
-    th: 'นักศึกษา',
-    en: 'Student',
-    blurb: 'เดินแคมปัสในมุมมองของคุณ เรียน เล่นเกม เก็บ XP',
+    title: 'Student',
+    blurb: 'Explore the 3D campus, complete learning missions, earn XP, and climb the leaderboard.',
     accent: 'from-[#7C9BE8] to-[#4FB0A5]',
   },
   {
     role: 'teacher',
     icon: BookOpen,
-    th: 'อาจารย์',
-    en: 'Teacher',
-    blurb: 'ดูภาพรวมห้องเรียน ข้อมูลนักศึกษา และฟีดแบคไม่ระบุชื่อ',
+    title: 'Faculty / Professor',
+    blurb: 'View live class analytics, student engagement metrics, and design AI-powered lessons.',
     accent: 'from-[#E89BC4] to-[#F2994A]',
   },
 ]
@@ -291,27 +289,26 @@ export default function Landing() {
   }, [])
 
   return (
-    // Sky is a CSS golden-hour gradient behind a transparent canvas: the brief's dusk
-    // indigo fading through data-orange to a peach horizon, identical on every device.
-    <div className="fixed inset-0 select-none overflow-hidden bg-gradient-to-b from-[#3A3D7A] via-[#C9708A] via-45% to-[#F5B98A] font-campus">
+    // Sky is a vibrant crisp daytime university azure gradient matching the cumulus clouds
+    <div className="fixed inset-0 select-none overflow-hidden bg-gradient-to-b from-[#1D4ED8] via-[#3B82F6] via-45% to-[#BAE6FD] font-campus">
       <Canvas shadows="percentage" dpr={lowPower ? [1, 1.25] : [1, 1.75]} camera={{ fov: 42, position: [0, ORBIT_HEIGHT, ORBIT_RADIUS] }}>
-        <fog attach="fog" args={['#F5B98A', 60, 120]} />
-        <hemisphereLight args={['#FFF2DF', '#4C586B', 1.2]} />
+        <fog attach="fog" args={['#BAE6FD', 85, 220]} />
+        <hemisphereLight args={['#FFFFFF', '#384B66', 1.4]} />
         <directionalLight
-          position={[18, 22, 14]}
-          intensity={2.2}
-          color="#FFD6A4"
+          position={[20, 28, 16]}
+          intensity={2.6}
+          color="#FFFFFF"
           castShadow
           shadow-mapSize={lowPower ? [512, 512] : [1024, 1024]}
-          shadow-camera-left={-30}
-          shadow-camera-right={30}
-          shadow-camera-top={30}
-          shadow-camera-bottom={-30}
+          shadow-camera-left={-42}
+          shadow-camera-right={42}
+          shadow-camera-top={42}
+          shadow-camera-bottom={-42}
         />
         <Environment resolution={lowPower ? 64 : 256}>
-          <Lightformer form="rect" intensity={3.5} color="#FFA84D" position={[25, 12, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
-          <Lightformer form="rect" intensity={1.2} color="#6B95D1" position={[-25, 18, -22]} scale={[32, 16, 1]} />
-          <Lightformer form="ring" intensity={0.9} color="#FFF4D6" position={[0, 26, 0]} scale={[30, 30, 1]} />
+          <Lightformer form="rect" intensity={2.8} color="#93C5FD" position={[25, 14, 22]} scale={[28, 14, 1]} target={[0, 0, 0]} />
+          <Lightformer form="rect" intensity={1.2} color="#60A5FA" position={[-25, 18, -22]} scale={[32, 16, 1]} />
+          <Lightformer form="ring" intensity={1.0} color="#FFFFFF" position={[0, 28, 0]} scale={[32, 32, 1]} />
         </Environment>
 
         <Ground onWalk={noop} />
@@ -344,15 +341,15 @@ export default function Landing() {
 
         {!lowPower && (
           <EffectComposer multisampling={4}>
-            <Bloom luminanceThreshold={0.72} luminanceSmoothing={0.3} intensity={0.95} mipmapBlur />
-            <N8AO aoRadius={1.5} distanceFalloff={0.2} intensity={1.6} />
-            <Vignette offset={0.28} darkness={0.62} />
+            <Bloom luminanceThreshold={0.75} luminanceSmoothing={0.3} intensity={0.8} mipmapBlur />
+            <N8AO aoRadius={1.5} distanceFalloff={0.2} intensity={1.4} />
+            <Vignette offset={0.35} darkness={0.25} />
           </EffectComposer>
         )}
       </Canvas>
 
-      {/* soft top/bottom shading so the title reads over any part of the scene */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/45" />
+      {/* Gentle top gradient so title and copy read clearly without muddying the horizon */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20" />
       {/* white mist while flying through the cloud band, and the final fade (opacity set per frame by CameraRig) */}
       <div ref={veil} className="pointer-events-none absolute inset-0" style={{ background: VEIL_COLOR, opacity: 0 }} />
 
@@ -370,13 +367,13 @@ export default function Landing() {
           ClassLoop <span className="text-[#F2C879]">Campus</span>
         </h1>
         <p className="max-w-md text-base text-white/90 drop-shadow sm:text-lg">
-          เดินเข้าห้องเรียนแห่งอนาคต · Step into a campus that learns with you
+          Step into a campus that learns with you
         </p>
         <button
           onClick={start}
           className="group mt-3 flex w-full max-w-xs items-center justify-between gap-6 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-8 py-4 text-lg font-bold text-[#2B2D55] shadow-[0_0_40px_rgba(242,200,121,0.65)] transition-transform hover:scale-[1.03] active:scale-95 sm:w-auto"
         >
-          เริ่มต้น · Start
+          Enter Campus
           <ArrowUpRight className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </button>
       </div>
@@ -386,7 +383,7 @@ export default function Landing() {
           showTitle && phase === 'orbit' ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        ClassLoop Campus · SPU edition — สร้างให้มหาวิทยาลัยศรีปทุม
+        ClassLoop Campus · SPU Edition — Sripatum University
       </p>
 
       {/* role cards: always mounted, faded with a transition (a keyframe animation can stall on a busy GPU) */}
@@ -400,10 +397,10 @@ export default function Landing() {
           <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.6),transparent_70%)]" />
           <div className="text-center">
             <p className="text-[11px] font-semibold tracking-[0.25em] text-[#7FE3FF]">CLASSLOOP CAMPUS</p>
-            <h2 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">คุณคือใคร? · Who are you?</h2>
+            <h2 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">Select Your Role</h2>
           </div>
           <div className="grid w-full max-w-2xl gap-4 sm:grid-cols-2">
-            {ROLE_CARDS.map(({ role, icon: Icon, th, en, blurb, accent }) => (
+            {ROLE_CARDS.map(({ role, icon: Icon, title, blurb, accent }) => (
               <button
                 key={role}
                 onClick={() => chooseRole(role)}
@@ -413,8 +410,8 @@ export default function Landing() {
                   <Icon className="h-7 w-7" />
                 </span>
                 <span>
-                  <span className="block text-xl font-bold">
-                    {th} <span className="text-base font-semibold text-white/70">· {en}</span>
+                  <span className="block text-xl font-bold text-white">
+                    {title}
                   </span>
                   <span className="mt-1 block text-sm text-white/75">{blurb}</span>
                 </span>
@@ -423,10 +420,10 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-5 text-sm">
             <button onClick={() => setPhase('orbit')} className="flex items-center gap-1.5 text-white/80 hover:text-white">
-              <ArrowLeft className="h-4 w-4" /> ย้อนกลับ
+              <ArrowLeft className="h-4 w-4" /> Back
             </button>
             <button onClick={() => navigate('/login')} className="text-white/80 underline-offset-4 hover:text-white hover:underline">
-              เข้าด้วยอีเมล · Sign in with email
+              Sign in with email
             </button>
           </div>
         </div>
@@ -434,7 +431,7 @@ export default function Landing() {
 
       {diving && (
         <p className="pointer-events-none absolute inset-x-0 bottom-10 flex justify-center animate-in fade-in duration-500">
-          <span className="rounded-full bg-[#16182E]/45 px-4 py-1.5 text-sm text-white backdrop-blur">กำลังลงสู่ MRT Exit 2…</span>
+          <span className="rounded-full bg-[#16182E]/45 px-4 py-1.5 text-sm text-white backdrop-blur">Descending to BTS SPU Station Exit 2…</span>
         </p>
       )}
     </div>

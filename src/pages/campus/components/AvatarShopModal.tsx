@@ -5,11 +5,13 @@ import { useApp, type AvatarHat, type AvatarOutfit, type AvatarAura } from '@/co
 interface ShopItem {
   id: string
   name: string
+  nameEn: string
   category: 'hat' | 'outfit' | 'aura'
   itemKey: AvatarHat | AvatarOutfit | AvatarAura
   price: number
   icon: string
   description: string
+  descriptionEn: string
   color: string
 }
 
@@ -18,61 +20,73 @@ const SHOP_ITEMS: ShopItem[] = [
   {
     id: 'hat-grad',
     name: 'หมวกรับปริญญา SPU',
+    nameEn: 'SPU Graduation Mortarboard',
     category: 'hat',
     itemKey: 'grad',
     price: 0,
     icon: '🎓',
     description: 'หมวกบัณฑิตคลาสสิก มหาวิทยาลัยศรีปทุม',
+    descriptionEn: 'Classic Sripatum University graduate mortarboard',
     color: '#2B2D55',
   },
   {
     id: 'hat-cyber_cat',
     name: 'หูแมวไซเบอร์ Cyber Cat',
+    nameEn: 'Cyber Cat Neon Ears',
     category: 'hat',
     itemKey: 'cyber_cat',
     price: 80,
     icon: '🐱',
     description: 'หูแมวเรืองแสงนีออนสีชมพูสำหรับเกมเมอร์',
+    descriptionEn: 'Glow-in-the-dark neon pink gaming cat ears',
     color: '#EC4899',
   },
   {
     id: 'hat-dj_headset',
     name: 'หูฟังดีเจนิเทศ DJ Headset',
+    nameEn: 'DJ Studio Headphones',
     category: 'hat',
     itemKey: 'dj_headset',
     price: 90,
     icon: '🎧',
     description: 'หูฟังบลูทูธสตรีมเมอร์ พร้อมไฟสีฟ้า',
+    descriptionEn: 'Streamer Bluetooth headset with cyan LED indicators',
     color: '#06B6D4',
   },
   {
     id: 'hat-crown',
     name: 'มงกุฎเกียรตินิยม Golden Crown',
+    nameEn: 'Golden Honors Crown',
     category: 'hat',
     itemKey: 'crown',
     price: 150,
     icon: '👑',
     description: 'มงกุฎทองคำประดับอัญมณีสำหรับผู้ทำคะแนนสูงสุด',
+    descriptionEn: 'Royal jeweled gold crown for top leaderboard rankers',
     color: '#FBBF24',
   },
   {
     id: 'hat-cap',
     name: 'หมวกแก๊ปเด็กสถาปัตย์',
+    nameEn: 'Architecture Studio Cap',
     category: 'hat',
     itemKey: 'cap',
     price: 40,
     icon: '🧢',
     description: 'หมวกแก๊ปสไตล์เด็กสถาปัตย์สุดคูล',
+    descriptionEn: 'Streetwear baseball cap favored by architecture designers',
     color: '#3B82F6',
   },
   {
     id: 'hat-beanie',
     name: 'หมวกบีนนี่เด็กอินดี้',
+    nameEn: 'Indie Creator Beanie',
     category: 'hat',
     itemKey: 'beanie',
     price: 50,
     icon: '🧶',
     description: 'หมวกไหมพรมสตรีทแฟชั่น',
+    descriptionEn: 'Cozy knitted streetwear beanie for campus wanderers',
     color: '#10B981',
   },
 
@@ -80,41 +94,49 @@ const SHOP_ITEMS: ShopItem[] = [
   {
     id: 'outfit-default',
     name: 'เครื่องแบบนักศึกษา SPU',
+    nameEn: 'SPU Official Student Uniform',
     category: 'outfit',
     itemKey: 'default',
     price: 0,
     icon: '👕',
     description: 'ชุดนักศึกษาสีชมพูอันเป็นเอกลักษณ์ของ SPU',
+    descriptionEn: 'Signature Sripatum University pink uniform',
     color: '#E89BC4',
   },
   {
     id: 'outfit-hoodie',
     name: 'สตรีทฮู้ดดี้ Esports Team',
+    nameEn: 'Esports Varsity Hoodie',
     category: 'outfit',
     itemKey: 'hoodie',
     price: 70,
     icon: '🧥',
     description: 'เสื้อฮู้ดดี้ทีมนักกีฬาอีสปอร์ตมหาวิทยาลัย',
+    descriptionEn: 'Official team hoodie for university esports athletes',
     color: '#3B82F6',
   },
   {
     id: 'outfit-suit',
     name: 'สูทเบลเซอร์ Business Blazer',
+    nameEn: 'Executive Business Blazer',
     category: 'outfit',
     itemKey: 'suit',
     price: 110,
     icon: '👔',
     description: 'สูทผู้บริหารระดับสากลพร้อมเนกไทสีชมพู',
+    descriptionEn: 'Tailored corporate blazer with SPU signature pink tie',
     color: '#1E2235',
   },
   {
     id: 'outfit-labcoat',
     name: 'เสื้อกาวน์แล็บวิทยาการคอมฯ',
+    nameEn: 'Computer Science Lab Coat',
     category: 'outfit',
     itemKey: 'labcoat',
     price: 120,
     icon: '🥼',
     description: 'ชุดกาวน์ห้องปฏิบัติการนวัตกรรมและ AI',
+    descriptionEn: 'Innovation & AI lab coat for research projects',
     color: '#F8FAFC',
   },
 
@@ -122,41 +144,49 @@ const SHOP_ITEMS: ShopItem[] = [
   {
     id: 'aura-none',
     name: 'ไม่มีออร่า',
+    nameEn: 'No Aura',
     category: 'aura',
     itemKey: 'none',
     price: 0,
     icon: '✨',
     description: 'มุมมองเรียบง่าย สบายตา',
+    descriptionEn: 'Clean, minimalist everyday campus presence',
     color: '#94A3B8',
   },
   {
     id: 'aura-neon',
     name: 'วงแหวนไซเบอร์นีออน',
+    nameEn: 'Cyber Neon Rings',
     category: 'aura',
     itemKey: 'neon',
     price: 140,
     icon: '💫',
     description: 'วงแหวนแสงคู่หมุนรอบเท้าสไตล์เกม Sci-Fi',
+    descriptionEn: 'Twin orbiting luminescent rings around the avatar',
     color: '#38BDF8',
   },
   {
     id: 'aura-gold',
     name: 'ละอองแสงทองคำ Golden Aura',
+    nameEn: 'Radiant Golden Aura',
     category: 'aura',
     itemKey: 'gold',
     price: 130,
     icon: '🌟',
     description: 'ออร่าแสงสีทองเรืองรองเปล่งประกายรอบตัว',
+    descriptionEn: 'Gleaming gold starlight emanating from the student',
     color: '#F59E0B',
   },
   {
     id: 'aura-stars',
     name: 'ดวงดาวโคจร Star Dust',
+    nameEn: 'Orbiting Star Dust',
     category: 'aura',
     itemKey: 'stars',
     price: 160,
     icon: '⭐',
     description: 'ดาวหมุนลอยรอบตัวละครเหมือนเวทมนตร์',
+    descriptionEn: 'Constellations orbiting the avatar like a magic spell',
     color: '#FDE047',
   },
 ]
@@ -168,6 +198,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
     buyStoreItem,
     equipStoreItem,
     avatar,
+    lang,
   } = useApp()
 
   const [activeTab, setActiveTab] = useState<'hat' | 'outfit' | 'aura'>('hat')
@@ -180,18 +211,30 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
 
     if (isOwned) {
       equipStoreItem(item.category, item.itemKey)
-      setPurchaseMsg(`สวมใส่ ${item.name} เรียบร้อย! ✨`)
+      setPurchaseMsg(
+        lang === 'th'
+          ? `สวมใส่ ${item.name} เรียบร้อย! ✨`
+          : `Equipped ${item.name} successfully! ✨`
+      )
       setTimeout(() => setPurchaseMsg(null), 2500)
     } else {
       if (studentCoins >= item.price) {
         const ok = buyStoreItem(item.id, item.price)
         if (ok) {
           equipStoreItem(item.category, item.itemKey)
-          setPurchaseMsg(`ซื้อและสวมใส่ ${item.name} สำเร็จ! 🎉`)
+          setPurchaseMsg(
+            lang === 'th'
+              ? `ซื้อและสวมใส่ ${item.name} สำเร็จ! 🎉`
+              : `Purchased & equipped ${item.name}! 🎉`
+          )
           setTimeout(() => setPurchaseMsg(null), 2500)
         }
       } else {
-        setPurchaseMsg('เหรียญของคุณไม่เพียงพอ! ทำการบ้านหรือควิซเพื่อสะสมเหรียญเพิ่มนะ')
+        setPurchaseMsg(
+          lang === 'th'
+            ? 'เหรียญของคุณไม่เพียงพอ! ทำการบ้านหรือควิซเพื่อสะสมเหรียญเพิ่มนะ'
+            : 'Not enough coins! Complete quizzes or quests to earn more coins.'
+        )
         setTimeout(() => setPurchaseMsg(null), 3000)
       }
     }
@@ -223,9 +266,13 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
             </span>
             <div>
               <h3 className="text-base font-extrabold text-white">
-                ร้านค้าแฟชั่น SPU Boutique
+                {lang === 'th' ? 'ร้านค้าแฟชั่น SPU Boutique' : 'SPU Boutique Fashion Shop'}
               </h3>
-              <p className="text-xs text-white/60">แต่งตัวคาแรคเตอร์ด้วยเหรียญจากการเรียน</p>
+              <p className="text-xs text-white/60">
+                {lang === 'th'
+                  ? 'แต่งตัวคาแรคเตอร์ด้วยเหรียญจากการเรียน'
+                  : 'Style your character with earned study coins'}
+              </p>
             </div>
           </div>
 
@@ -233,7 +280,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-1.5 rounded-2xl bg-amber-500/20 border border-amber-400/40 px-3.5 py-1.5 text-amber-300 shadow-md">
             <span className="text-base">🪙</span>
             <span className="text-sm font-extrabold">{studentCoins}</span>
-            <span className="text-[10px] text-amber-400/80">Coins</span>
+            <span className="text-[10px] text-amber-400/80">{lang === 'th' ? 'Coins' : 'Coins'}</span>
           </div>
         </div>
 
@@ -252,7 +299,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'hat' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>👑 หมวก & เครื่องประดับ</span>
+            <span>{lang === 'th' ? '👑 หมวก & เครื่องประดับ' : '👑 Hats & Accessories'}</span>
           </button>
           <button
             onClick={() => setActiveTab('outfit')}
@@ -260,7 +307,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'outfit' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>👔 ชุดแฟชั่น</span>
+            <span>{lang === 'th' ? '👔 ชุดแฟชั่น' : '👔 Outfits'}</span>
           </button>
           <button
             onClick={() => setActiveTab('aura')}
@@ -268,7 +315,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'aura' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>✨ ออร่าเรืองแสง</span>
+            <span>{lang === 'th' ? '✨ ออร่าเรืองแสง' : '✨ Glowing Auras'}</span>
           </button>
         </div>
 
@@ -293,7 +340,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
                 {/* Equipped Badge */}
                 {equipped && (
                   <span className="absolute right-2 top-2 rounded-full bg-pink-500 px-1.5 py-0.5 text-[9px] font-black text-white shadow">
-                    ใส่แล้ว ✓
+                    {lang === 'th' ? 'ใส่แล้ว ✓' : 'Equipped ✓'}
                   </span>
                 )}
 
@@ -302,9 +349,11 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
                   <div className="flex items-center justify-center h-12 w-12 mx-auto rounded-2xl bg-white/10 text-2xl shadow mb-2">
                     {item.icon}
                   </div>
-                  <h4 className="font-bold text-xs text-center text-white line-clamp-1">{item.name}</h4>
+                  <h4 className="font-bold text-xs text-center text-white line-clamp-1">
+                    {lang === 'en' && item.nameEn ? item.nameEn : item.name}
+                  </h4>
                   <p className="text-[10px] text-white/60 text-center mt-0.5 line-clamp-2 leading-relaxed">
-                    {item.description}
+                    {lang === 'en' && item.descriptionEn ? item.descriptionEn : item.description}
                   </p>
                 </div>
 
@@ -324,13 +373,13 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
                     }`}
                   >
                     {equipped ? (
-                      'ใช้งานอยู่'
+                      lang === 'th' ? 'ใช้งานอยู่' : 'Equipped'
                     ) : isOwned ? (
-                      'สวมใส่'
+                      lang === 'th' ? 'สวมใส่' : 'Equip'
                     ) : (
                       <>
                         <span>🪙 {item.price}</span>
-                        <span>ซื้อเลย</span>
+                        <span>{lang === 'th' ? 'ซื้อเลย' : 'Buy Now'}</span>
                       </>
                     )}
                   </button>

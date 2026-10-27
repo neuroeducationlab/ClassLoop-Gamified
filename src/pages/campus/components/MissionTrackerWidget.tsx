@@ -7,7 +7,7 @@ export default function MissionTrackerWidget({
 }: {
   onSelectMission: (mission: Mission) => void
 }) {
-  const { missions } = useApp()
+  const { missions, lang } = useApp()
   const [expanded, setExpanded] = useState(true)
 
   const activeMissions = missions.filter((m) => !m.completed)
@@ -25,7 +25,7 @@ export default function MissionTrackerWidget({
             <div>
               <div className="flex items-center gap-1.5">
                 <h3 className="text-xs font-extrabold tracking-wide uppercase text-white">
-                  เควสต์ & การบ้าน
+                  {lang === 'th' ? 'เควสต์ & การบ้าน' : 'Quests & Homework'}
                 </h3>
                 <span className="flex h-5 items-center justify-center rounded-full bg-pink-500/30 px-1.5 text-[10px] font-black text-pink-300 border border-pink-400/40">
                   {activeMissions.length}
@@ -38,7 +38,11 @@ export default function MissionTrackerWidget({
           <button
             onClick={() => setExpanded(!expanded)}
             className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all cursor-pointer"
-            title={expanded ? 'ย่อเควสต์' : 'ขยายเควสต์'}
+            title={
+              expanded
+                ? (lang === 'th' ? 'ย่อเควสต์' : 'Collapse Quests')
+                : (lang === 'th' ? 'ขยายเควสต์' : 'Expand Quests')
+            }
           >
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
@@ -69,11 +73,11 @@ export default function MissionTrackerWidget({
                           {isExam ? '⚔️' : isQuiz ? '🎯' : mission.type === 'drill' ? '🧠' : '📝'}
                         </span>
                         <h4 className="font-bold text-xs leading-tight text-white group-hover:text-pink-300 transition-colors">
-                          {mission.title}
+                          {lang === 'en' && mission.titleEn ? mission.titleEn : mission.title}
                         </h4>
                       </div>
                       <p className="mt-1 text-[11px] text-white/70 line-clamp-2 leading-relaxed">
-                        {mission.description}
+                        {lang === 'en' && mission.descriptionEn ? mission.descriptionEn : mission.description}
                       </p>
                     </div>
                   </div>
@@ -92,7 +96,7 @@ export default function MissionTrackerWidget({
                       {mission.dueDate && (
                         <span className="flex items-center gap-0.5 text-white/50 text-[10px]">
                           <Clock className="h-2.5 w-2.5" />
-                          <span>{mission.dueDate}</span>
+                          <span>{lang === 'en' && mission.dueDateEn ? mission.dueDateEn : mission.dueDate}</span>
                         </span>
                       )}
                     </div>
@@ -101,7 +105,7 @@ export default function MissionTrackerWidget({
                       onClick={() => onSelectMission(mission)}
                       className="flex items-center gap-1 rounded-xl bg-pink-600/80 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-pink-600 transition-all shadow cursor-pointer group-hover:translate-x-0.5"
                     >
-                      <span>ทำเควสต์</span>
+                      <span>{lang === 'th' ? 'ทำเควสต์' : 'Start Quest'}</span>
                       <ArrowRight className="h-3 w-3" />
                     </button>
                   </div>
@@ -114,7 +118,7 @@ export default function MissionTrackerWidget({
               <div className="pt-2 border-t border-white/10">
                 <p className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  ภารกิจที่พิชิตแล้ว ({completedMissions.length})
+                  {lang === 'th' ? 'ภารกิจที่พิชิตแล้ว' : 'Completed Missions'} ({completedMissions.length})
                 </p>
                 <div className="mt-1.5 space-y-1">
                   {completedMissions.map((cm) => (
@@ -122,8 +126,8 @@ export default function MissionTrackerWidget({
                       key={cm.id}
                       className="flex items-center justify-between rounded-xl bg-emerald-950/20 border border-emerald-500/20 px-2.5 py-1 text-[10px] text-white/60"
                     >
-                      <span className="line-through">{cm.title}</span>
-                      <span className="text-emerald-400 font-bold">สำเร็จแล้ว ✓</span>
+                      <span className="line-through">{lang === 'en' && cm.titleEn ? cm.titleEn : cm.title}</span>
+                      <span className="text-emerald-400 font-bold">{lang === 'th' ? 'สำเร็จแล้ว ✓' : 'Completed ✓'}</span>
                     </div>
                   ))}
                 </div>

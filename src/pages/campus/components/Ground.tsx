@@ -1,12 +1,12 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { DoubleSide, type Group } from 'three'
-import { BUILDINGS, CAMPUS_PALETTE, CAR_PARKS, MRT_LINE, PLAZA_CENTER, POND } from '@/data/buildings'
+import { BUILDINGS, CAMPUS_AVENUES, CAMPUS_PALETTE, CAR_PARKS, MRT_LINE, PLAZA_CENTER, POND } from '@/data/buildings'
 import { doorPoint } from '../geometry'
 import { getAsphaltTexture, getPavingTexture } from '../textures'
 import CampusScenery from './CampusScenery'
 
-export const CAMPUS_RADIUS = 22
+export const CAMPUS_RADIUS = 40
 
 /* ---------------------------------------------------------------- cars -- */
 
@@ -132,17 +132,18 @@ function CarPark({ at, size }: (typeof CAR_PARKS)[number]) {
 /* ---------------------------------------------------------------- street lamps -- */
 
 const LAMP_POSITIONS: [number, number, number][] = [
-  [-9, 0, 3],
-  [-5, 0, 1],
-  [3, 0, -2],
-  [7, 0, -5],
-  [12, 0, 1],
-  [-2, 0, 4.5],
-  [4, 0, 5],
-  [-11, 0, -4],
-  [-8, 0, -6],
-  [9, 0, -8],
-  [1, 0, -10],
+  [-17, 0, 1.2],
+  [-10, 0, 1.2],
+  [-3, 0, 1.2],
+  [7, 0, 1.2],
+  [14, 0, 1.2],
+  [0, 0, 6.0],
+  [0, 0, 12.0],
+  [-14, 0, -8.0],
+  [4, 0, -8.0],
+  [18, 0, -8.0],
+  [-7, 0, -14.0],
+  [11, 0, -14.0],
 ]
 
 function StreetLamp({ position, rotation = 0 }: { position: [number, number, number]; rotation?: number }) {
@@ -184,12 +185,15 @@ function StreetLamp({ position, rotation = 0 }: { position: [number, number, num
 /* ---------------------------------------------------------------- modern furniture -- */
 
 const BENCH_POSITIONS: [number, number, number][] = [
-  [-1.5, 0, 2.5],
-  [3.5, 0, 2.5],
-  [3.5, 0, -2.5],
-  [-2.5, 0, -2.5],
-  [8.5, 0, 5],
-  [-7.5, 0, 3],
+  [-6.5, 0, 1.5],
+  [6.5, 0, 1.5],
+  [-6.5, 0, -3.5],
+  [6.5, 0, -3.5],
+  [-2.2, 0, 8.5],
+  [2.2, 0, 8.5],
+  [17.0, 0, 1.5],
+  [-10.0, 0, -14.0],
+  [10.0, 0, -14.0],
 ]
 
 function ModernBench({ position, rotation = 0 }: { position: [number, number, number]; rotation?: number }) {
@@ -212,12 +216,13 @@ function ModernBench({ position, rotation = 0 }: { position: [number, number, nu
 }
 
 const PLANTER_POSITIONS: [number, number, number][] = [
-  [-4.5, 0, 4.5],
-  [1.0, 0, 4.2],
-  [6.5, 0, 3.8],
-  [-6.5, 0, -4.5],
-  [4.5, 0, -4.5],
-  [11.5, 0, 4.5],
+  [-7.0, 0, 4.0],
+  [7.0, 0, 4.0],
+  [-7.0, 0, -6.0],
+  [7.0, 0, -6.0],
+  [-17.0, 0, -3.0],
+  [17.0, 0, -3.0],
+  [0, 0, 14.5],
 ]
 
 function ModernPlanter({ position }: { position: [number, number, number] }) {
@@ -239,27 +244,40 @@ function ModernPlanter({ position }: { position: [number, number, number] }) {
 
 /* ---------------------------------------------------------------- path -- */
 
-function Path({ from, to, width = 1.6 }: { from: [number, number]; to: [number, number]; width?: number }) {
+function Path({ from, to, width = 3.2 }: { from: [number, number]; to: [number, number]; width?: number }) {
   const paving = useMemo(() => getPavingTexture(), [])
   const dx = to[0] - from[0]
   const dz = to[1] - from[1]
   const length = Math.hypot(dx, dz)
+  const angle = -Math.atan2(dz, dx)
+
   return (
-    <mesh
-      position={[(from[0] + to[0]) / 2, 0.035, (from[1] + to[1]) / 2]}
-      rotation={[-Math.PI / 2, 0, -Math.atan2(dz, dx)]}
-      receiveShadow
-    >
-      <planeGeometry args={[length, width]} />
-      <meshStandardMaterial color="#E0DCD4" map={paving ?? undefined} roughness={0.8} />
-    </mesh>
+    <group position={[(from[0] + to[0]) / 2, 0, (from[1] + to[1]) / 2]} rotation={[-Math.PI / 2, 0, angle]}>
+      {/* Architectural curb border trim on both edges for crisp visual contrast */}
+      <mesh position={[0, 0, 0.032]} receiveShadow>
+        <planeGeometry args={[length, width + 0.5]} />
+        <meshStandardMaterial color="#B8BECB" roughness={0.6} />
+      </mesh>
+      {/* Main Paver Bed (Clean, wide, prominent pedestrian promenade) */}
+      <mesh position={[0, 0, 0.038]} receiveShadow>
+        <planeGeometry args={[length, width]} />
+        <meshStandardMaterial color="#F2EDE4" map={paving ?? undefined} roughness={0.7} />
+      </mesh>
+      {/* Subtle edge illumination runners for day/night visibility */}
+      {[-width / 2, width / 2].map((edgeX, idx) => (
+        <mesh key={idx} position={[0, edgeX, 0.04]}>
+          <planeGeometry args={[length, 0.08]} />
+          <meshStandardMaterial color="#FFE8A3" emissive="#FFE8A3" emissiveIntensity={0.6} />
+        </mesh>
+      ))}
+    </group>
   )
 }
 
 /* ---------------------------------------------------------------- MRT viaduct & station canopy -- */
 
 const VIADUCT_HEIGHT = 2.8
-const TRAIN_LAP_SECONDS = 12
+const TRAIN_LAP_SECONDS = 14
 
 function Viaduct() {
   const train = useRef<Group>(null)
@@ -269,52 +287,55 @@ function Viaduct() {
   const dz = tz - fz
   const length = Math.hypot(dx, dz)
   const yaw = Math.atan2(dx, dz)
-  const pillars = Math.floor(length / 3.4)
+  const totalLength = length + 24
+  const pillars = Math.floor(totalLength / 3.6)
 
   useFrame((state) => {
     const g = train.current
     if (!g) return
-    const t = ((state.clock.elapsedTime % TRAIN_LAP_SECONDS) / TRAIN_LAP_SECONDS) * 1.6 - 0.3
+    // Smooth looping transit progress that stays strictly on the continuous viaduct rail bed
+    const progress = (state.clock.elapsedTime % TRAIN_LAP_SECONDS) / TRAIN_LAP_SECONDS
+    const t = 0.08 + progress * 0.84
     g.position.set(fx + dx * t, VIADUCT_HEIGHT + 0.48, fz + dz * t)
   })
 
   return (
     <group>
-      {/* Elevated Guideway Concrete Box Girder */}
+      {/* Continuous Elevated Guideway Concrete Box Girder (Extended seamlessly across horizon) */}
       <mesh
         position={[(fx + tx) / 2, VIADUCT_HEIGHT, (fz + tz) / 2]}
         rotation={[0, yaw, 0]}
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[1.5, 0.35, length + 8]} />
+        <boxGeometry args={[1.6, 0.45, totalLength]} />
         <meshStandardMaterial color="#C4CAD6" roughness={0.5} />
       </mesh>
 
       {/* Viaduct Side Parapets */}
-      {[-0.72, 0.72].map((px) => (
+      {[-0.78, 0.78].map((px) => (
         <mesh
           key={px}
           position={[(fx + tx) / 2 + Math.cos(yaw) * px, VIADUCT_HEIGHT + 0.22, (fz + tz) / 2 - Math.sin(yaw) * px]}
           rotation={[0, yaw, 0]}
         >
-          <boxGeometry args={[0.12, 0.4, length + 8]} />
+          <boxGeometry args={[0.14, 0.42, totalLength]} />
           <meshStandardMaterial color="#9FA6B5" roughness={0.6} />
         </mesh>
       ))}
 
-      {/* Structural Piers / Columns */}
+      {/* Structural Piers / Columns (Supporting the entire elevated viaduct smoothly) */}
       {Array.from({ length: pillars + 1 }, (_, i) => {
-        const t = i / pillars
+        const t = (i / pillars) * (totalLength / length) - ((totalLength - length) / (2 * length))
         return (
           <group key={i} position={[fx + dx * t, 0, fz + dz * t]} rotation={[0, yaw, 0]}>
             <mesh position={[0, VIADUCT_HEIGHT / 2, 0]} castShadow>
-              <cylinderGeometry args={[0.3, 0.38, VIADUCT_HEIGHT, 12]} />
+              <cylinderGeometry args={[0.34, 0.42, VIADUCT_HEIGHT, 12]} />
               <meshStandardMaterial color="#B0B6C4" roughness={0.65} />
             </mesh>
             {/* Column Pier Cap */}
             <mesh position={[0, VIADUCT_HEIGHT - 0.15, 0]} castShadow>
-              <boxGeometry args={[1.6, 0.3, 0.6]} />
+              <boxGeometry args={[1.7, 0.3, 0.6]} />
               <meshStandardMaterial color="#9DA4B2" roughness={0.6} />
             </mesh>
           </group>
@@ -322,16 +343,16 @@ function Viaduct() {
       })}
 
       {/* SPU MRT EXIT 2 STATION CANOPY & SKYWALK CONNECTOR */}
-      {/* Sits elevated right by the entry building [-10, -1] */}
-      <group position={[-11.5, VIADUCT_HEIGHT, -2]} rotation={[0, yaw, 0]}>
+      {/* Sits elevated right by the widened entry building [-22, -1] */}
+      <group position={[-23.5, VIADUCT_HEIGHT, -1.0]} rotation={[0, yaw, 0]}>
         {/* Station Platform Canopy */}
         <mesh position={[0, 1.2, 0]} castShadow>
-          <boxGeometry args={[2.6, 0.15, 7.5]} />
+          <boxGeometry args={[2.6, 0.15, 8.5]} />
           <meshStandardMaterial color="#252A36" metalness={0.7} roughness={0.3} />
         </mesh>
         {/* Translucent Station Glass Roof */}
         <mesh position={[0, 1.32, 0]}>
-          <boxGeometry args={[2.4, 0.06, 7.2]} />
+          <boxGeometry args={[2.4, 0.06, 8.2]} />
           <meshPhysicalMaterial
             color="#A8E0FF"
             transmission={0.4}
@@ -341,7 +362,7 @@ function Viaduct() {
           />
         </mesh>
         {/* Steel Arch Trusses */}
-        {[-3, -1.5, 0, 1.5, 3].map((tzPos, idx) => (
+        {[-3.2, -1.6, 0, 1.6, 3.2].map((tzPos, idx) => (
           <group key={idx} position={[0, 0.6, tzPos]}>
             <mesh>
               <torusGeometry args={[1.25, 0.05, 8, 16, Math.PI]} />
@@ -352,7 +373,7 @@ function Viaduct() {
 
         {/* Illuminated Bang Bua (N15) Station Banner */}
         <mesh position={[1.35, 0.6, 0]} rotation={[0, Math.PI / 2, 0]}>
-          <planeGeometry args={[4.5, 0.4]} />
+          <planeGeometry args={[5.2, 0.4]} />
           <meshStandardMaterial
             color="#00A859"
             emissive="#00A859"
@@ -362,12 +383,12 @@ function Viaduct() {
 
         {/* Skywalk Corridor descending to SPU Gate */}
         <mesh position={[1.8, -0.6, 0.5]} rotation={[0.2, -Math.PI / 4, 0]} castShadow>
-          <boxGeometry args={[1.2, 0.2, 3.8]} />
+          <boxGeometry args={[1.2, 0.2, 4.2]} />
           <meshStandardMaterial color="#8E96A6" />
         </mesh>
 
         {/* Station Platform Warm Downlight */}
-        <pointLight position={[0, 0.8, 0]} color="#FFF0D0" intensity={3.5} distance={10} decay={2} />
+        <pointLight position={[0, 0.8, 0]} color="#FFF0D0" intensity={3.5} distance={12} decay={2} />
       </group>
 
       {/* MODERN LIT COMMUTER TRAIN (Bangkok Green Line / Sukhumvit Line) */}
@@ -553,29 +574,33 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
 
   return (
     <group>
-      {/* Expansive Surrounding Landscape (Seamless ground covering camera view without cut-off) */}
+      {/* Expansive Surrounding Landscape (Vibrant university lawn extending smoothly to horizon) */}
       <mesh position={[0, -0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
-        <planeGeometry args={[260, 260]} />
-        <meshStandardMaterial color="#64914E" roughness={0.95} />
+        <planeGeometry args={[360, 360]} />
+        <meshStandardMaterial color="#4EA342" roughness={0.92} />
       </mesh>
 
-      {/* SPU Campus Boundary Base: Modern landscaped university zone (Based on SPU Blueprint Map) */}
+      {/* SPU Campus Boundary Base: Spacious open university precinct */}
       <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow onClick={click}>
-        <planeGeometry args={[56, 52]} />
-        <meshStandardMaterial color={CAMPUS_PALETTE.grass} roughness={0.88} />
+        <planeGeometry args={[98, 88]} />
+        <meshStandardMaterial color={CAMPUS_PALETTE.grass} roughness={0.85} />
       </mesh>
 
-      {/* Crisp Architectural Campus Perimeter Curb */}
-      <mesh position={[0, 0.005, -26]}>
-        <boxGeometry args={[56.2, 0.08, 0.25]} />
+      {/* Crisp Architectural Campus Perimeter Curbs */}
+      <mesh position={[0, 0.005, -44]}>
+        <boxGeometry args={[98.2, 0.08, 0.3]} />
         <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
-      <mesh position={[28, 0.005, 0]}>
-        <boxGeometry args={[0.25, 0.08, 52.2]} />
+      <mesh position={[0, 0.005, 44]}>
+        <boxGeometry args={[98.2, 0.08, 0.3]} />
         <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
-      <mesh position={[-28, 0.005, 0]}>
-        <boxGeometry args={[0.25, 0.08, 52.2]} />
+      <mesh position={[49, 0.005, 0]}>
+        <boxGeometry args={[0.3, 0.08, 88.2]} />
+        <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
+      </mesh>
+      <mesh position={[-49, 0.005, 0]}>
+        <boxGeometry args={[0.3, 0.08, 88.2]} />
         <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
       </mesh>
 
@@ -587,25 +612,33 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
         <CarPark key={c.at.join()} {...c} />
       ))}
 
-      {/* Central Plaza (Paved with modern pavers) */}
-      <mesh position={[PLAZA_CENTER[0], 0.04, PLAZA_CENTER[1]]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[3.2, 36]} />
-        <meshStandardMaterial color="#E0DCD4" map={paving ?? undefined} roughness={0.75} />
-      </mesh>
-      {/* Outer Plaza Ring / Step */}
-      <mesh position={[PLAZA_CENTER[0], 0.038, PLAZA_CENTER[1]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[3.2, 3.45, 36]} />
-        <meshStandardMaterial color="#A9AFBC" roughness={0.6} />
-      </mesh>
+      {/* ── Central Academic Quad Plaza (Grand 14m × 10m Stepped Courtyard — Not a Roundabout) ── */}
+      <group position={[PLAZA_CENTER[0], 0, PLAZA_CENTER[1]]}>
+        {/* Granite Curb Coping */}
+        <mesh position={[0, 0.038, 0]} receiveShadow>
+          <boxGeometry args={[14.4, 0.06, 10.4]} />
+          <meshStandardMaterial color="#9FA6B5" roughness={0.6} />
+        </mesh>
+        {/* Main Paved Courtyard Bed */}
+        <mesh position={[0, 0.042, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[14.0, 10.0]} />
+          <meshStandardMaterial color="#F5EFE6" map={paving ?? undefined} roughness={0.7} />
+        </mesh>
+        {/* Inlaid Bronze / SPU Pink Star Accent Ring */}
+        <mesh position={[0, 0.044, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[2.0, 2.3, 36]} />
+          <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.6} />
+        </mesh>
+      </group>
 
-      {/* SPU Iconic Monument at Crossroads */}
+      {/* SPU Iconic Monument at Central Quad */}
       <group position={[PLAZA_CENTER[0], 0, PLAZA_CENTER[1]]}>
         <mesh position={[0, 0.25, 0]} receiveShadow>
-          <boxGeometry args={[2.2, 0.5, 0.7]} />
+          <boxGeometry args={[2.4, 0.5, 0.8]} />
           <meshStandardMaterial color="#2B2E38" roughness={0.4} metalness={0.4} />
         </mesh>
         <mesh position={[0, 0.7, 0]} castShadow>
-          <boxGeometry args={[2.0, 0.65, 0.25]} />
+          <boxGeometry args={[2.2, 0.65, 0.28]} />
           <meshStandardMaterial
             color={CAMPUS_PALETTE.spuPink}
             emissive={CAMPUS_PALETTE.spuPink}
@@ -614,22 +647,39 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
             roughness={0.2}
           />
         </mesh>
-        <mesh position={[0, 0.7, 0.14]}>
-          <planeGeometry args={[1.7, 0.4]} />
+        <mesh position={[0, 0.7, 0.16]}>
+          <planeGeometry args={[1.8, 0.42]} />
           <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={0.9} />
         </mesh>
       </group>
 
-      {/* Paved Walkways Connecting the Plaza to Every Building Door */}
-      {BUILDINGS.map((b) => (
-        <Path key={b.id} from={PLAZA_CENTER} to={doorPoint(b)} />
+      {/* ── Authentic RPG Game Avenue & Street Network (Boulevards, Promenades & Crosswalks) ── */}
+      {CAMPUS_AVENUES.map((ave) => (
+        <Path key={ave.id} from={ave.from} to={ave.to} width={ave.width} />
       ))}
+
+      {/* Entrance Landing Courtyards / Aprons at Every Building Door */}
+      {BUILDINGS.map((b) => {
+        const dp = doorPoint(b)
+        return (
+          <group key={`apron-${b.id}`} position={[dp[0], 0, dp[1]]}>
+            <mesh position={[0, 0.036, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+              <circleGeometry args={[2.5, 32]} />
+              <meshStandardMaterial color="#F2EDE4" map={paving ?? undefined} roughness={0.7} />
+            </mesh>
+            <mesh position={[0, 0.038, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[2.45, 2.65, 32]} />
+              <meshStandardMaterial color={b.color} emissive={b.color} emissiveIntensity={0.5} />
+            </mesh>
+          </group>
+        )
+      })}
 
       {/* REFLECTIVE ARCHITECTURAL POND (Matching SPU Official Map Blueprint) */}
       <group position={[POND.at[0], 0, POND.at[1]]}>
         {/* Deep Reflective Water (meshPhysicalMaterial for true water reflections) */}
         <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[6.8, 5.0]} />
+          <planeGeometry args={[8.5, 6.2]} />
           <meshPhysicalMaterial
             color="#143A52"
             roughness={0.04}
@@ -641,25 +691,25 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
           />
         </mesh>
         {/* Architectural Granite Curb Coping */}
-        <mesh position={[0, 0.08, -2.55]} receiveShadow>
-          <boxGeometry args={[7.2, 0.12, 0.28]} />
+        <mesh position={[0, 0.08, -3.15]} receiveShadow>
+          <boxGeometry args={[8.9, 0.12, 0.28]} />
           <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
         </mesh>
-        <mesh position={[0, 0.08, 2.55]} receiveShadow>
-          <boxGeometry args={[7.2, 0.12, 0.28]} />
+        <mesh position={[0, 0.08, 3.15]} receiveShadow>
+          <boxGeometry args={[8.9, 0.12, 0.28]} />
           <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
         </mesh>
-        <mesh position={[-3.45, 0.08, 0]} receiveShadow>
-          <boxGeometry args={[0.28, 0.12, 5.2]} />
+        <mesh position={[-4.3, 0.08, 0]} receiveShadow>
+          <boxGeometry args={[0.28, 0.12, 6.4]} />
           <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
         </mesh>
-        <mesh position={[3.45, 0.08, 0]} receiveShadow>
-          <boxGeometry args={[0.28, 0.12, 5.2]} />
+        <mesh position={[4.3, 0.08, 0]} receiveShadow>
+          <boxGeometry args={[0.28, 0.12, 6.4]} />
           <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
         </mesh>
 
         {/* Modern Center Aerator / Fountain Jets */}
-        {[-1.5, 0, 1.5].map((fx, i) => (
+        {[-2.0, 0, 2.0].map((fx, i) => (
           <group key={i} position={[fx, 0, 0]}>
             <mesh position={[0, 0.35, 0]}>
               <cylinderGeometry args={[0.06, 0.09, 0.6, 12]} />
@@ -674,24 +724,20 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
           </group>
         ))}
 
-        {/* ── SPU OFFICIAL MONUMENT SIGN (As shown in official 3D map) ── */}
-        <group position={[2.6, 0, 2.8]} rotation={[0, -0.38, 0]}>
-          {/* Base foundation */}
+        {/* SPU OFFICIAL MONUMENT SIGN (As shown in official 3D map) */}
+        <group position={[3.2, 0, 3.4]} rotation={[0, -0.38, 0]}>
           <mesh position={[0, 0.2, 0]} receiveShadow>
             <boxGeometry args={[2.8, 0.4, 0.8]} />
             <meshStandardMaterial color="#2B2F3A" roughness={0.5} />
           </mesh>
-          {/* Main White Stone Sign Wall */}
           <mesh position={[0, 0.75, 0]} castShadow receiveShadow>
             <boxGeometry args={[2.6, 0.75, 0.35]} />
             <meshStandardMaterial color="#F4F6FA" roughness={0.3} metalness={0.1} />
           </mesh>
-          {/* SPU Pink Accent Stripe */}
           <mesh position={[0, 1.05, 0.18]} userData={{ glow: true }}>
             <boxGeometry args={[2.4, 0.08, 0.03]} />
             <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.9} />
           </mesh>
-          {/* SPU Emblem / Lettering Plate */}
           <mesh position={[-0.8, 0.72, 0.19]}>
             <planeGeometry args={[0.5, 0.3]} />
             <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.6} />

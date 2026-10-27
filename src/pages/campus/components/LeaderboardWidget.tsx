@@ -69,16 +69,32 @@ const LEADERBOARD_DATA: LeaderboardEntry[] = [
 ]
 
 export default function LeaderboardWidget() {
-  const { studentXP } = useApp()
+  const { studentXP, lang } = useApp()
   const [collapsed, setCollapsed] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'faculty' | 'class'>('all')
+  const [filter, setFilter] = useState<'all' | 'faculty'>('all')
 
   // Live updated user XP
   const liveData = LEADERBOARD_DATA.map((entry) => {
     if (entry.isUser) {
-      return { ...entry, xp: Math.max(entry.xp, studentXP) }
+      return {
+        ...entry,
+        nickname: lang === 'th' ? 'ณัฐ (คุณ)' : 'Nat (You)',
+        faculty: lang === 'th' ? 'วิศวกรรมศาสตร์' : 'Engineering',
+        xp: Math.max(entry.xp, studentXP),
+      }
     }
-    return entry
+    return {
+      ...entry,
+      faculty: lang === 'th'
+        ? entry.faculty
+        : entry.faculty === 'สถาปัตย์'
+        ? 'Architecture'
+        : entry.faculty === 'ดิจิทัลมีเดีย'
+        ? 'Digital Media'
+        : entry.faculty === 'บริหารธุรกิจ'
+        ? 'Business'
+        : 'Engineering',
+    }
   }).sort((a, b) => b.xp - a.xp).map((entry, idx) => ({ ...entry, rank: idx + 1 }))
 
   return (
@@ -98,10 +114,12 @@ export default function LeaderboardWidget() {
               </span>
               <div>
                 <h3 className="text-xs font-extrabold tracking-wide uppercase text-white flex items-center gap-1.5">
-                  อันดับประจำสัปดาห์
+                  {lang === 'th' ? 'อันดับประจำสัปดาห์' : 'Weekly Leaderboard'}
                   <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 </h3>
-                <p className="text-[10px] text-white/60">Weekly Hall of Fame</p>
+                <p className="text-[10px] text-white/60">
+                  {lang === 'th' ? 'Weekly Hall of Fame' : 'Hall of Fame'}
+                </p>
               </div>
             </div>
 
@@ -121,7 +139,7 @@ export default function LeaderboardWidget() {
                   filter === 'faculty' ? 'bg-amber-400 text-black shadow' : 'text-white/70 hover:text-white'
                 }`}
               >
-                คณะ
+                {lang === 'th' ? 'คณะ' : 'Faculty'}
               </button>
             </div>
           </div>
@@ -195,9 +213,9 @@ export default function LeaderboardWidget() {
           <div className="mt-3 flex items-center justify-between rounded-xl bg-white/5 px-2.5 py-1.5 text-[11px] text-white/70">
             <span className="flex items-center gap-1 text-pink-300 font-medium">
               <Sparkles className="h-3 w-3 text-pink-400" />
-              อีก 160 XP ถึงอันดับ 2
+              {lang === 'th' ? 'อีก 160 XP ถึงอันดับ 2' : '160 XP to Rank 2'}
             </span>
-            <span className="text-white/40">รีเซ็ตทุกวันจันทร์</span>
+            <span className="text-white/40">{lang === 'th' ? 'รีเซ็ตทุกวันจันทร์' : 'Resets Monday'}</span>
           </div>
         </div>
 
@@ -205,7 +223,11 @@ export default function LeaderboardWidget() {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="ml-1 flex h-10 w-6 items-center justify-center rounded-r-xl border border-l-0 border-white/20 bg-black/70 text-white/80 backdrop-blur-md hover:bg-black/90 hover:text-white transition-all shadow-xl cursor-pointer"
-          title={collapsed ? 'เปิดลีดเดอร์บอร์ด' : 'ซ่อนลีดเดอร์บอร์ด'}
+          title={
+            collapsed
+              ? (lang === 'th' ? 'เปิดลีดเดอร์บอร์ด' : 'Open Leaderboard')
+              : (lang === 'th' ? 'ซ่อนลีดเดอร์บอร์ด' : 'Hide Leaderboard')
+          }
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

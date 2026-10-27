@@ -43,13 +43,16 @@ export type AvatarAura = 'none' | 'gold' | 'neon' | 'stars'
 export type Mission = {
   id: string
   title: string
+  titleEn?: string
   type: 'homework' | 'quiz' | 'drill' | 'exam'
   buildingId: string
   xpReward: number
   coinReward: number
   completed: boolean
   description: string
+  descriptionEn?: string
   dueDate?: string
+  dueDateEn?: string
 }
 
 /** The student's campus character, chosen on /create or SPU Boutique. */
@@ -347,8 +350,8 @@ type AppState = {
   setAvatar: (avatar: Avatar) => void
 
   // language internationalization state
-  lang: 'th' | 'en'
-  setLang: (lang: 'th' | 'en') => void
+  lang: Language
+  setLang: (lang: Language | ((prev: Language) => Language)) => void
   t: (key: keyof typeof TRANSLATIONS['th']) => string
 
   // actions
@@ -432,51 +435,83 @@ export function AppProvider({ children }: { children: ReactNode }) {
     {
       id: 'm-hw1',
       title: 'การบ้านสัปดาห์ที่ 3: สรุป Case Study วัฒนธรรมญี่ปุ่น',
+      titleEn: 'Week 3 Assignment: Japanese Business Case Study',
       type: 'homework',
       buildingId: 'data',
       xpReward: 50,
       coinReward: 35,
       completed: false,
       description: 'วิเคราะห์การเจรจาธุรกิจแบบ High-Context vs Low-Context',
+      descriptionEn: 'Analyze cross-cultural negotiations in High-Context vs Low-Context environments',
       dueDate: 'พรุ่งนี้ 23:59',
+      dueDateEn: 'Tomorrow 23:59',
     },
     {
       id: 'm-quiz1',
       title: 'ควิซท้าทาย: Speed Cross-Cultural Quiz',
+      titleEn: 'Challenge Quiz: Speed Cross-Cultural Arena',
       type: 'quiz',
       buildingId: 'arena',
       xpReward: 80,
       coinReward: 50,
       completed: false,
       description: 'ทดสอบความเร็วและความแม่นยำ 5 ข้อ หัวข้อ Hofstede Dimensions',
+      descriptionEn: 'Rapid 5-question speed test on Hofstede Cultural Dimensions',
       dueDate: 'เปิดให้ทำตลอด',
+      dueDateEn: 'Open Anytime',
     },
     {
       id: 'm-drill1',
       title: 'ลานฝึกสมอง: คำศัพท์สำคัญล่วงหน้าคาบถัดไป',
+      titleEn: 'Brain Gym: Key Terms for Next Class',
       type: 'drill',
       buildingId: 'arena',
       xpReward: 40,
       coinReward: 25,
       completed: false,
       description: 'ฝึกฝน 10 Flashcards สำคัญก่อนเริ่มคลาสสัปดาห์หน้า',
+      descriptionEn: 'Practice 10 high-impact flashcards before next week class',
       dueDate: 'ฝึกฝนล่วงหน้า',
+      dueDateEn: 'Pre-learning',
     },
     {
       id: 'm-exam1',
       title: 'บอสเควสต์ปลายภาค: พิชิตคะแนน A+ ในอารีน่า',
+      titleEn: 'Final Boss Quest: Score A+ in the Arena',
       type: 'exam',
       buildingId: 'arena',
       xpReward: 200,
       coinReward: 150,
       completed: false,
       description: 'ข้อสอบจำลองเสมือนจริง 20 ข้อ ประเมินความพร้อมก่อนสอบจริง',
+      descriptionEn: 'Realistic 20-question mock exam to evaluate readiness for real assessments',
       dueDate: 'อีก 14 วัน',
+      dueDateEn: '14 days left',
     },
   ])
   const [ownedStoreItems, setOwnedStoreItems] = useState<string[]>(['hat-grad', 'outfit-default'])
   const [avatar, setAvatar] = useState<Avatar | null>(null)
-  const [lang, setLang] = useState<Language>('th')
+  const [lang, setLangState] = useState<Language>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const urlLang = urlParams.get('lang')
+      if (urlLang === 'th' || urlLang === 'en') return urlLang
+      const saved = localStorage.getItem('classloop_lang_v3')
+      if (saved === 'th' || saved === 'en') return saved
+    } catch {}
+    return 'en' // Default primary language: English for demo presentation
+  })
+
+  const setLang = useCallback((newLang: Language | ((prev: Language) => Language)) => {
+    setLangState((prev) => {
+      const next = typeof newLang === 'function' ? (newLang as (prev: Language) => Language)(prev) : newLang
+      try {
+        localStorage.setItem('classloop_lang_v3', next)
+        localStorage.setItem('classloop_lang', next)
+      } catch {}
+      return next
+    })
+  }, [])
 
   const addXP = useCallback((amount: number) => {
     setStudentXP((prev) => prev + amount)

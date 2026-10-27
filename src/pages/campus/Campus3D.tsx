@@ -36,7 +36,7 @@ import AvatarShopModal from './components/AvatarShopModal'
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
-const CAMERA_OFFSET = new Vector3(0, 16, 17)
+const CAMERA_OFFSET = new Vector3(0, 18, 19)
 /** First-person eye height (world units above the ground). */
 const FP_EYE_HEIGHT = 1.65
 const GATE = BUILDINGS.find((b) => b.id === 'entry')!
@@ -71,14 +71,15 @@ type LabelMap = Map<string, HTMLDivElement>
 const AVATAR_LABEL_HEIGHT = 2.1
 
 // ── Language helpers ────────────────────────────────────────────────────────
-type Lang = 'th' | 'en'
-
 const UI = {
   th: {
     dress: 'แต่งตัว',
     back: 'แดชบอร์ด',
     walkHint: 'คลิกพื้นหรือ WASD เพื่อเดิน · คลิกอาคารเพื่อเข้า',
-    fpHint: 'WASD เดิน · ลากเมาส์หมุนมุมมอง · กด E หน้าประตูเพื่อเข้า',
+    fpHint: 'WASD เพื่อเดิน · ลากเมาส์/จอ หรือกด ← → / Q E เพื่อหันหัวมอง · E เข้าตึก',
+    turnHead: 'หันมุมมอง',
+    turnLeft: 'หันซ้าย 45° (Q หรือ ←)',
+    turnRight: 'หันขวา 45° (E หรือ →)',
     enterBtn: 'เข้าอาคาร →',
     pressE: 'กด',
     pressEAfter: 'เพื่อเข้า',
@@ -90,12 +91,31 @@ const UI = {
     tpModeLabel: 'มุมมองบุคคลที่ 3',
     clickToEnter: 'กด E หรือคลิกเพื่อเข้า',
     facultyOnly: 'เฉพาะอาจารย์',
+    coins: 'เหรียญ',
+    shop: 'ร้านค้า',
+    brainGym: 'ลานฝึกสมอง',
+    missions: 'เควสต์',
+    studio: 'สตูดิโอ',
+    map2d: 'แผนที่ 2D',
+    facultyRole: 'อาจารย์ผู้สอน · Faculty',
+    quickNav: 'เมนูลัดอาจารย์ (ไม่ต้องเดิน)',
+    collapse: 'ย่อ',
+    expand: 'ขยาย',
+    dataNav: 'สถิติ & Gap Analysis',
+    dataSub: 'อาคาร 11 · วิเคราะห์ผู้เรียน',
+    planNav: 'สตูดิโอแผนการสอน',
+    planSub: 'อาคาร 5 · สื่อและกิจกรรม',
+    dormNav: 'กระทู้ & คำถามนิสิต',
+    dormSub: 'อาคาร 9 · คอมมูนิตี้',
   },
   en: {
     dress: 'Change Outfit',
     back: 'Dashboard',
     walkHint: 'Click ground or WASD to walk · Click a building to enter',
-    fpHint: 'WASD to walk · Mouse look / drag to rotate view · Press E near door',
+    fpHint: 'WASD to walk · Drag mouse/screen or press ← → / Q E to turn head · E to enter',
+    turnHead: 'Turn Head',
+    turnLeft: 'Turn Left 45° (Q or ←)',
+    turnRight: 'Turn Right 45° (E or →)',
     enterBtn: 'Enter Building →',
     pressE: 'Press',
     pressEAfter: 'to enter',
@@ -107,12 +127,28 @@ const UI = {
     tpModeLabel: '3rd Person',
     clickToEnter: 'Press E or click to enter',
     facultyOnly: 'Faculty only',
+    coins: 'Coins',
+    shop: 'Shop',
+    brainGym: 'Brain Gym',
+    missions: 'Quests',
+    studio: 'Studio',
+    map2d: '2D Map',
+    facultyRole: 'Instructor · Faculty',
+    quickNav: 'Quick Faculty Links',
+    collapse: 'Collapse',
+    expand: 'Expand',
+    dataNav: 'Analytics & Gap Analysis',
+    dataSub: 'Bldg 11 · Student Insights',
+    planNav: 'Lesson Planning Studio',
+    planSub: 'Bldg 5 · Activities & Media',
+    dormNav: 'Student Feedback & Forum',
+    dormSub: 'Bldg 9 · Community',
   },
 } as const
 
 /** Student 3D campus: walk around, enter buildings, first-person immersive viewpoint. */
 export default function Campus3D() {
-  const { avatar, currentStudent, setRole, studentXP, role, teacherName, studentCoins } = useApp()
+  const { avatar, currentStudent, setRole, studentXP, role, teacherName, studentCoins, lang, setLang } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const isTeacher = role === 'teacher'
@@ -127,10 +163,11 @@ export default function Campus3D() {
   const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
   const [showMissions, setShowMissions] = useState<boolean>(true)
 
-  // ── Language & view mode toggles (default English, default First-Person RPG eye view; the HUD button switches) ───
-  const [lang, setLang] = useState<Lang>('en')
+  // ── View mode and time of day toggles ───
+  // First person by default: the landing dive ends on the first-person pose at the gate,
+  // so starting in third person swoops the camera out again ("lands, then spins around").
   const [fpMode, setFpMode] = useState<boolean>(true)
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday')
 
   const cycleTimeOfDay = () => {
     setTimeOfDay((prev) => {
@@ -176,6 +213,9 @@ export default function Campus3D() {
   const avatarRotRef = useRef<number>(0)
   const [minimapAvatarPos, setMinimapAvatarPos] = useState<[number, number]>(lastSpot ?? GATE_SPAWN)
   const [minimapAvatarRot, setMinimapAvatarRot] = useState(0)
+
+  // First-person head rotation ref for programmatic/button head turning
+  const turnHeadRef = useRef<((deltaYaw: number) => void) | null>(null)
 
   const labels = useRef<LabelMap>(new Map())
   const labelRef = (key: string) => (el: HTMLDivElement | null) => {
@@ -293,6 +333,7 @@ export default function Campus3D() {
           onNearDoor={setNearDoor}
           fpModeRef={fpModeRef}
           entering={entering}
+          turnHeadRef={turnHeadRef}
         />
 
         {!isMobile && (
@@ -326,7 +367,7 @@ export default function Campus3D() {
                   {locked && <span className="text-[10px] opacity-75">🔒</span>}
                 </div>
                 <p className="mt-1 text-[10px] font-normal leading-snug text-white/90 whitespace-normal text-center">
-                  {b.description}
+                  {b.description[lang]}
                 </p>
                 {!locked && (isHovered || isNear) && (
                   <p className="mt-1 text-[10px] font-semibold text-white/95 border-t border-white/20 pt-1">
@@ -417,19 +458,19 @@ export default function Campus3D() {
             <>
               <Link
                 to="/map"
-                aria-label="แผนที่ 2D · 2D Map"
+                aria-label={t.map2d}
                 className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
               >
                 <span>🗺️</span>
-                <span className="hidden sm:inline">แผนที่ 2D</span>
+                <span className="hidden sm:inline">{t.map2d}</span>
               </Link>
               <Link
                 to="/teacher"
-                aria-label="ห้องสตูดิโออาจารย์ · Teacher Studio"
+                aria-label={t.studio}
                 className="flex items-center gap-1.5 rounded-xl bg-pink-600/80 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-pink-400/30 hover:bg-pink-600 transition-colors shadow"
               >
                 <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">สตูดิโอ</span>
+                <span className="hidden sm:inline">{t.studio}</span>
               </Link>
             </>
           ) : (
@@ -438,21 +479,21 @@ export default function Campus3D() {
               <button
                 onClick={() => setShowAvatarShop(true)}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
-                title="SPU Boutique · ร้านค้าแต่งตัวด้วยเหรียญ"
+                title={`SPU Boutique · ${t.shop}`}
               >
                 <span className="text-sm">🪙</span>
                 <span>{studentCoins}</span>
-                <span className="hidden sm:inline font-semibold text-amber-200/90">Coins</span>
+                <span className="hidden sm:inline font-semibold text-amber-200/90">{t.coins}</span>
               </button>
 
               {/* Brain Gym Pre-learning drills */}
               <button
                 onClick={() => setShowBrainGym(true)}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-500/30 to-indigo-500/20 px-3 py-2 text-xs font-bold text-purple-200 backdrop-blur-md border border-purple-400/40 hover:bg-purple-500/40 transition-all shadow cursor-pointer"
-                title="ลานฝึกสมอง · Pre-learning Brain Gym"
+                title={t.brainGym}
               >
                 <Brain className="h-3.5 w-3.5 text-purple-300" />
-                <span className="hidden sm:inline">ลานฝึกสมอง</span>
+                <span className="hidden sm:inline">{t.brainGym}</span>
               </button>
 
               {/* Challenge Missions / Quests Tracker Toggle */}
@@ -463,15 +504,15 @@ export default function Campus3D() {
                     ? 'bg-pink-600/80 text-white border-pink-400/50 shadow-pink-500/20'
                     : 'bg-black/40 text-white/90 border-white/10 hover:bg-black/55'
                 }`}
-                title="เควสต์ & การบ้าน"
+                title={t.missions}
               >
                 <Scroll className="h-3.5 w-3.5 text-pink-300" />
-                <span className="hidden sm:inline">เควสต์</span>
+                <span className="hidden sm:inline">{t.missions}</span>
               </button>
 
               <Link
                 to="/create"
-                aria-label="แต่งตัว · Edit character"
+                aria-label={t.dress}
                 className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
               >
                 <Shirt className="h-4 w-4" />
@@ -479,7 +520,7 @@ export default function Campus3D() {
               </Link>
               <Link
                 to="/student"
-                aria-label="หน้าเดิม · Classic view"
+                aria-label={t.back}
                 className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
               >
                 <LayoutGrid className="h-4 w-4" />
@@ -496,13 +537,13 @@ export default function Campus3D() {
           <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2.5">
             <div className="flex items-center gap-1.5">
               <span className="text-sm">⚡</span>
-              <p className="text-xs font-bold">เมนูลัดอาจารย์ (ไม่ต้องเดิน)</p>
+              <p className="text-xs font-bold">{t.quickNav}</p>
             </div>
             <button
               onClick={() => setTeacherMenuOpen(!teacherMenuOpen)}
               className="text-[11px] text-white/60 hover:text-white transition-colors"
             >
-              {teacherMenuOpen ? 'ย่อ' : 'ขยาย'}
+              {teacherMenuOpen ? t.collapse : t.expand}
             </button>
           </div>
 
@@ -515,8 +556,8 @@ export default function Campus3D() {
                 <span className="flex items-center gap-2">
                   <span className="text-base">📊</span>
                   <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">สถิติ & Gap Analysis</p>
-                    <p className="text-[10px] text-white/60">อาคาร 11 · วิเคราะห์ผู้เรียน</p>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.dataNav}</p>
+                    <p className="text-[10px] text-white/60">{t.dataSub}</p>
                   </div>
                 </span>
                 <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
@@ -529,8 +570,8 @@ export default function Campus3D() {
                 <span className="flex items-center gap-2">
                   <span className="text-base">📝</span>
                   <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">สตูดิโอแผนการสอน</p>
-                    <p className="text-[10px] text-white/60">อาคาร 5 · สื่อและกิจกรรม</p>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.planNav}</p>
+                    <p className="text-[10px] text-white/60">{t.planSub}</p>
                   </div>
                 </span>
                 <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
@@ -543,8 +584,8 @@ export default function Campus3D() {
                 <span className="flex items-center gap-2">
                   <span className="text-base">💬</span>
                   <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">กระทู้ & คำถามนิสิต</p>
-                    <p className="text-[10px] text-white/60">อาคาร 9 · คอมมูนิตี้</p>
+                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.dormNav}</p>
+                    <p className="text-[10px] text-white/60">{t.dormSub}</p>
                   </div>
                 </span>
                 <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
@@ -570,7 +611,7 @@ export default function Campus3D() {
             <span className="text-xl">{nearDoor.emoji}</span>
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold">{nearDoor.name[lang]}</span>
-              <span className="text-[11px] text-white/75 hidden sm:block max-w-sm">{nearDoor.description}</span>
+              <span className="text-[11px] text-white/75 hidden sm:block max-w-sm">{nearDoor.description[lang]}</span>
             </div>
             <span className="hidden sm:flex items-center gap-1 text-xs text-white/70 mx-1 border-l border-white/20 pl-2">
               {t.pressE} <kbd className="rounded bg-white/20 px-1.5 py-0.5 text-white font-mono text-[10px] mx-0.5">E</kbd> {t.pressEAfter}
@@ -645,6 +686,30 @@ export default function Campus3D() {
         />
       )}
 
+      {/* ── First-Person Head Turn Controller (Desktop & Mobile on-screen helper) ── */}
+      {fpMode && !isArriving && (
+        <div className="pointer-events-auto absolute bottom-6 right-6 z-20 flex items-center gap-2 rounded-2xl bg-black/60 px-3 py-2 text-white backdrop-blur-md border border-white/20 shadow-xl">
+          <button
+            onClick={() => turnHeadRef.current?.(-Math.PI / 4)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 active:scale-90 transition-all cursor-pointer font-bold text-lg"
+            title={t.turnLeft}
+          >
+            ⟲
+          </button>
+          <div className="text-center px-1">
+            <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">{t.turnHead}</p>
+            <p className="text-[9px] text-white/60">← → / Q E / Drag</p>
+          </div>
+          <button
+            onClick={() => turnHeadRef.current?.(Math.PI / 4)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 active:scale-90 transition-all cursor-pointer font-bold text-lg"
+            title={t.turnRight}
+          >
+            ⟳
+          </button>
+        </div>
+      )}
+
       {/* ── Gamified Student Features: Leaderboard (Left) & Missions (Right) ── */}
       {!isTeacher && !isArriving && (
         <>
@@ -668,7 +733,7 @@ export default function Campus3D() {
           <span className="text-7xl animate-in zoom-in-50 duration-500">{entering.emoji}</span>
           <p className="text-2xl font-bold animate-in slide-in-from-bottom-4 duration-500">{entering.name[lang]}</p>
           <p className="text-sm text-white/85 max-w-sm text-center animate-in slide-in-from-bottom-4 duration-700 px-4">
-            {entering.description}
+            {entering.description[lang]}
           </p>
         </div>
       )}
@@ -693,6 +758,7 @@ type SceneProps = {
   onNearDoor: (b: BuildingConfig | null) => void
   fpModeRef: RefObject<boolean>
   entering: BuildingConfig | null
+  turnHeadRef: RefObject<((deltaYaw: number) => void) | null>
 }
 
 function passesNear(a: [number, number], b: [number, number], p: [number, number], r: number) {
@@ -717,6 +783,7 @@ function CampusScene({
   onNearDoor,
   fpModeRef,
   entering,
+  turnHeadRef,
 }: SceneProps) {
   const { camera, size, scene } = useThree()
   const avatarRef = useRef<Group>(null)
@@ -748,6 +815,16 @@ function CampusScene({
   const mousePitch = useRef(0) // Level gaze
   const isPointerLocked = useRef(false)
 
+  // Wire turnHeadRef for external / UI button rotation triggers
+  useEffect(() => {
+    turnHeadRef.current = (deltaYaw: number) => {
+      mouseYaw.current += deltaYaw
+    }
+    return () => {
+      turnHeadRef.current = null
+    }
+  }, [turnHeadRef])
+
   useEffect(() => {
     const down = (e: KeyboardEvent) => keys.current.add(e.code)
     const up = (e: KeyboardEvent) => keys.current.delete(e.code)
@@ -759,71 +836,89 @@ function CampusScene({
     }
   }, [])
 
-  // Mouse look supporting both pointer lock (click) AND drag-to-look
+  // Comprehensive Drag-to-Look, Touch-Look, and Pointer Lock Controller
   useEffect(() => {
-    const canvas = document.querySelector('canvas')
-    if (!canvas) return
-
-    let isMouseDown = false
+    let isDragging = false
     let lastX = 0
     let lastY = 0
+    let activePointerId = -1
 
-    const onPointerDown = (e: MouseEvent) => {
+    const onPointerDown = (e: PointerEvent) => {
       if (!fpModeRef.current) return
-      isMouseDown = true
+      // Ignore if clicking on buttons or interactive UI
+      const target = e.target as HTMLElement | null
+      if (target && target.closest('button, a, input, [role="button"]')) return
+
+      // For touch, only capture look drag on the right 65% of screen (so joystick remains usable on left)
+      if (e.pointerType === 'touch' && e.clientX < window.innerWidth * 0.35) return
+
+      isDragging = true
+      activePointerId = e.pointerId
       lastX = e.clientX
       lastY = e.clientY
-      // Request pointer lock on canvas click if supported
-      if (!isPointerLocked.current && canvas.requestPointerLock) {
-        canvas.requestPointerLock()
+
+      const canvas = document.querySelector('canvas')
+      if (e.pointerType === 'mouse' && canvas && !isPointerLocked.current) {
+        try {
+          canvas.requestPointerLock?.()
+        } catch {}
       }
     }
 
-    const onPointerUp = () => {
-      isMouseDown = false
-    }
-
-    const onMouseMove = (e: MouseEvent) => {
+    const onPointerMove = (e: PointerEvent) => {
       if (!fpModeRef.current) return
-      let dx = 0
-      let dy = 0
 
       if (isPointerLocked.current) {
-        dx = e.movementX
-        dy = e.movementY
-      } else if (isMouseDown) {
-        dx = e.clientX - lastX
-        dy = e.clientY - lastY
+        mouseYaw.current += e.movementX * 0.003
+        mousePitch.current = MathUtils.clamp(
+          mousePitch.current + e.movementY * 0.0022,
+          -Math.PI / 3,
+          Math.PI / 3,
+        )
+      } else if (isDragging && (activePointerId === -1 || e.pointerId === activePointerId)) {
+        const dx = e.clientX - lastX
+        const dy = e.clientY - lastY
         lastX = e.clientX
         lastY = e.clientY
-      } else {
-        return
-      }
 
-      // Moving mouse right (dx > 0) turns heading right (East)
-      mouseYaw.current += dx * 0.0025
-      // Moving mouse down (dy > 0) tilts camera down (pitch > 0)
-      mousePitch.current = MathUtils.clamp(
-        mousePitch.current + dy * 0.002,
-        -Math.PI / 3, // look up limit (~60 deg)
-        Math.PI / 3,  // look down limit (~60 deg)
-      )
+        mouseYaw.current += dx * 0.0045
+        mousePitch.current = MathUtils.clamp(
+          mousePitch.current + dy * 0.0035,
+          -Math.PI / 3,
+          Math.PI / 3,
+        )
+      }
+    }
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (activePointerId === e.pointerId || activePointerId === -1) {
+        isDragging = false
+        activePointerId = -1
+      }
     }
 
     const onLockChange = () => {
-      isPointerLocked.current = document.pointerLockElement === canvas
+      const canvas = document.querySelector('canvas')
+      isPointerLocked.current = Boolean(canvas && document.pointerLockElement === canvas)
     }
 
-    canvas.addEventListener('mousedown', onPointerDown)
-    window.addEventListener('mouseup', onPointerUp)
-    document.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('pointerdown', onPointerDown, { passive: true })
+    window.addEventListener('pointermove', onPointerMove, { passive: true })
+    window.addEventListener('pointerup', onPointerUp, { passive: true })
+    window.addEventListener('pointercancel', onPointerUp, { passive: true })
     document.addEventListener('pointerlockchange', onLockChange)
+
     return () => {
-      canvas.removeEventListener('mousedown', onPointerDown)
-      window.removeEventListener('mouseup', onPointerUp)
-      document.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerUp)
       document.removeEventListener('pointerlockchange', onLockChange)
-      if (document.pointerLockElement === canvas) document.exitPointerLock()
+      if (document.pointerLockElement) {
+        try {
+          document.exitPointerLock?.()
+        } catch {}
+      }
     }
   }, [fpModeRef])
 
@@ -929,25 +1024,39 @@ function CampusScene({
     const isFP = fpModeRef.current
 
     if (isFP) {
+      // First-person head rotation via Keyboard (Instant & smooth!)
+      if (k.has('ArrowLeft') || k.has('KeyQ')) {
+        mouseYaw.current -= 2.6 * dt
+      }
+      if (k.has('ArrowRight') || (!nearDoorRef.current && k.has('KeyE'))) {
+        mouseYaw.current += 2.6 * dt
+      }
+      if (k.has('ArrowUp')) {
+        mousePitch.current = Math.max(-Math.PI / 3, mousePitch.current - 1.8 * dt)
+      }
+      if (k.has('ArrowDown')) {
+        mousePitch.current = Math.min(Math.PI / 3, mousePitch.current + 1.8 * dt)
+      }
+
       // First-person: movement is relative to look heading
       const fwdX = Math.sin(mouseYaw.current)
       const fwdZ = -Math.cos(mouseYaw.current)
       const rightX = Math.cos(mouseYaw.current)
       const rightZ = Math.sin(mouseYaw.current)
 
-      if (k.has('KeyW') || k.has('ArrowUp')) {
+      if (k.has('KeyW')) {
         vx += fwdX
         vz += fwdZ
       }
-      if (k.has('KeyS') || k.has('ArrowDown')) {
+      if (k.has('KeyS')) {
         vx -= fwdX
         vz -= fwdZ
       }
-      if (k.has('KeyD') || k.has('ArrowRight')) {
+      if (k.has('KeyD')) {
         vx += rightX
         vz += rightZ
       }
-      if (k.has('KeyA') || k.has('ArrowLeft')) {
+      if (k.has('KeyA')) {
         vx -= rightX
         vz -= rightZ
       }
