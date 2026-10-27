@@ -41,7 +41,7 @@ const GATE_SPAWN = doorPoint(GATE)
 /** Opening shot: start high over the whole campus, swoop down to avatar. */
 const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
 const INTRO_SECONDS = 2.4
-const ENTER_DELAY_MS = 550
+const ENTER_DELAY_MS = 650
 
 // ── Phase 6 Step 3 — Arrival animation ─────────────────────────────────────
 const ARRIVAL_FROM = new Vector3(-24, 26, -10)
@@ -118,9 +118,9 @@ export default function Campus3D() {
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
   const [teacherMenuOpen, setTeacherMenuOpen] = useState<boolean>(true)
 
-  // ── Language & view mode toggles (default English, default First-Person) ───
+  // ── Language & view mode toggles (default English, default Third-Person 3D RPG) ───
   const [lang, setLang] = useState<Lang>('en')
-  const [fpMode, setFpMode] = useState<boolean>(true)
+  const [fpMode, setFpMode] = useState<boolean>(false)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
 
   const cycleTimeOfDay = () => {
@@ -132,7 +132,7 @@ export default function Campus3D() {
     })
   }
 
-  const fpModeRef = useRef<boolean>(true)
+  const fpModeRef = useRef<boolean>(false)
   useEffect(() => {
     fpModeRef.current = fpMode
   }, [fpMode])
@@ -219,7 +219,8 @@ export default function Campus3D() {
     >
       <Canvas
         shadows="percentage"
-        dpr={isMobile ? [1, 1.25] : [1, 1.75]}
+        dpr={isMobile ? [1, 1.25] : [1, 2]}
+        gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: fpMode ? 75 : 45, position: [0, 20, 22] }}
       >
         <SPUUniverseEnvironment timeOfDay={timeOfDay} isArriving={isArriving} />
@@ -244,6 +245,7 @@ export default function Campus3D() {
           walkGroundRef={walkGroundRef}
           onNearDoor={setNearDoor}
           fpModeRef={fpModeRef}
+          entering={entering}
         />
 
         {!isMobile && (
@@ -588,6 +590,7 @@ type SceneProps = {
   walkGroundRef: RefObject<(x: number, z: number) => void>
   onNearDoor: (b: BuildingConfig | null) => void
   fpModeRef: RefObject<boolean>
+  entering: BuildingConfig | null
 }
 
 function passesNear(a: [number, number], b: [number, number], p: [number, number], r: number) {
@@ -611,6 +614,7 @@ function CampusScene({
   walkGroundRef,
   onNearDoor,
   fpModeRef,
+  entering,
 }: SceneProps) {
   const { camera, size, scene } = useThree()
   const avatarRef = useRef<Group>(null)
@@ -657,6 +661,7 @@ function CampusScene({
   useEffect(() => {
     const canvas = document.querySelector('canvas')
     if (!canvas) return
+
     let isMouseDown = false
     let lastX = 0
     let lastY = 0
@@ -666,6 +671,7 @@ function CampusScene({
       isMouseDown = true
       lastX = e.clientX
       lastY = e.clientY
+      // Request pointer lock on canvas click if supported
       if (!isPointerLocked.current && canvas.requestPointerLock) {
         canvas.requestPointerLock()
       }
@@ -692,11 +698,13 @@ function CampusScene({
         return
       }
 
+      // Moving mouse right (dx > 0) turns heading right (East)
       mouseYaw.current += dx * 0.0025
+      // Moving mouse down (dy > 0) tilts camera down (pitch > 0)
       mousePitch.current = MathUtils.clamp(
         mousePitch.current + dy * 0.002,
-        -Math.PI / 3,
-        Math.PI / 3,
+        -Math.PI / 3, // look up limit (~60 deg)
+        Math.PI / 3,  // look down limit (~60 deg)
       )
     }
 
@@ -819,6 +827,7 @@ function CampusScene({
     const isFP = fpModeRef.current
 
     if (isFP) {
+      // First-person: movement is relative to look heading
       const fwdX = Math.sin(mouseYaw.current)
       const fwdZ = -Math.cos(mouseYaw.current)
       const rightX = Math.cos(mouseYaw.current)
@@ -843,10 +852,12 @@ function CampusScene({
 
       const joy = joystickRef.current
       if (joy) {
+        // In touch joystick, joy[1] < 0 is pushing UP (forward)
         vx += joy[0] * rightX - joy[1] * fwdX
         vz += joy[0] * rightZ - joy[1] * fwdZ
       }
     } else {
+      // Third-person: movement is world-axis aligned
       if (k.has('KeyW') || k.has('ArrowUp')) vz -= 1
       if (k.has('KeyS') || k.has('ArrowDown')) vz += 1
       if (k.has('KeyA') || k.has('ArrowLeft')) vx -= 1
@@ -884,6 +895,7 @@ function CampusScene({
       }
       moving = true
     } else {
+      // Waypoint movement
       const next = waypoints.current[0]
       if (next) {
         const dx = next[0] - a.position.x
@@ -943,12 +955,25 @@ function CampusScene({
     }
 
     // ── Camera ──────────────────────────────────────────────────────
+    if (entering) {
+      // 3D Door Swoop Dive: Camera glides gracefully toward building entrance
+      const door = doorPoint(entering)
+      const targetCamPos = new Vector3(door[0] + 0.6, 2.0, door[1] + 2.8)
+      const targetLook = new Vector3(door[0], 1.8, door[1])
+      camera.position.lerp(targetCamPos, Math.min(1, dt * 5))
+      camera.lookAt(targetLook)
+      for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+      return
+    }
+
     if (isFP) {
+      // First-person: camera is at eye level, looking in mouse heading direction
       camera.position.set(a.position.x, a.position.y + FP_EYE_HEIGHT, a.position.z)
       camera.rotation.order = 'YXZ'
       camera.rotation.y = -mouseYaw.current
       camera.rotation.x = mousePitch.current
     } else {
+      // Third-person follow
       lookTarget(a.position.x, a.position.z, look)
       if (intro.current < 1) {
         intro.current = Math.min(1, intro.current + dt / INTRO_SECONDS)
@@ -959,8 +984,11 @@ function CampusScene({
         camera.lookAt(lookAt)
       } else {
         const kk = 1 - Math.exp(-3 * dt)
-        camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * kk
-        camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * kk
+        const t = state.clock.elapsedTime
+        const floatY = Math.sin(t * 1.5) * 0.14
+        const floatX = Math.cos(t * 0.8) * 0.1
+        camera.position.x += (look.x + CAMERA_OFFSET.x + floatX - camera.position.x) * kk
+        camera.position.y += (look.y + CAMERA_OFFSET.y + floatY - camera.position.y) * kk
         camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * kk
         camera.lookAt(look)
       }

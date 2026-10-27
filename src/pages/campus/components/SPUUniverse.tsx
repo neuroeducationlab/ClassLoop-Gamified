@@ -382,8 +382,54 @@ export function SPUUniverseEnvironment({
       {/* Extra Wow: Holographic SPU Monument at Plaza (Step 7) */}
       <HolographicSPULogo />
 
+      {/* Floating Ambient Light Motes & Whimsical Sparkles */}
+      <FloatingCampusMotes />
+
       {/* Extra Wow: Moving Traffic with Light Trails on Phahonyothin Road (Step 7) */}
       <MovingTraffic />
     </>
+  )
+}
+
+/* ---------------------------------------------------------------- floating magical motes -- */
+
+export function FloatingCampusMotes({ count = 32 }: { count?: number }) {
+  const motes = useMemo(() => {
+    return Array.from({ length: count }, (_, i) => ({
+      x: (Math.random() - 0.5) * 48,
+      y: 0.8 + Math.random() * 8,
+      z: (Math.random() - 0.5) * 44,
+      speed: 0.35 + Math.random() * 0.7,
+      phase: Math.random() * Math.PI * 2,
+      scale: 0.07 + Math.random() * 0.08,
+      color: i % 3 === 0 ? '#F472B6' : i % 3 === 1 ? '#60A5FA' : '#FDE047',
+    }))
+  }, [count])
+
+  const groupRef = useRef<Group>(null)
+
+  useFrame((state) => {
+    const g = groupRef.current
+    if (!g) return
+    const t = state.clock.elapsedTime
+    g.children.forEach((child, i) => {
+      const m = motes[i]
+      if (!m) return
+      // Upward drift with wrap-around and sinusoidal floating breeze
+      child.position.y = ((m.y + t * m.speed) % 8.5) + 0.6
+      child.position.x = m.x + Math.sin(t * 0.7 + m.phase) * 0.8
+      child.position.z = m.z + Math.cos(t * 0.6 + m.phase) * 0.8
+    })
+  })
+
+  return (
+    <group ref={groupRef}>
+      {motes.map((m, i) => (
+        <mesh key={i} position={[m.x, m.y, m.z]} scale={m.scale}>
+          <sphereGeometry args={[1, 8, 8]} />
+          <meshBasicMaterial color={m.color} transparent opacity={0.65} />
+        </mesh>
+      ))}
+    </group>
   )
 }

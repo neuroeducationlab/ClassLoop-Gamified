@@ -25,7 +25,6 @@ const Campus3D = lazy(() => import('@/pages/campus/Campus3D'))
 const BuildingInterior = lazy(() => import('@/pages/campus/BuildingInterior'))
 const CampusMap2D = lazy(() => import('@/pages/campus/CampusMap2D'))
 const Landing = lazy(() => import('@/pages/landing/Landing'))
-const LevelUpCelebration = lazy(() => import('@/pages/campus/LevelUpCelebration'))
 
 const campusFallback = <div className="min-h-screen bg-[#3A3D7A]" />
 
@@ -36,9 +35,6 @@ export default function App() {
         <BrowserRouter>
           <AppNavigationBridge />
           <AutoTranslate />
-          <Suspense fallback={null}>
-            <LevelUpCelebration />
-          </Suspense>
           <Routes>
             <Route path="/" element={<Suspense fallback={<div className="min-h-screen bg-[#E9C9A8]" />}><Landing /></Suspense>} />
             <Route path="/login" element={<Login />} />

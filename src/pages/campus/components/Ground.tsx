@@ -448,31 +448,45 @@ function FrontRoad() {
   const [tx, tz] = MRT_LINE.to
   const dx = tx - fx
   const dz = tz - fz
-  const length = Math.hypot(dx, dz) + 22
+  const length = Math.hypot(dx, dz) + 24
   const yaw = Math.atan2(dx, dz)
-  const roadWidth = 3.8
+  const roadWidth = 4.2
 
   return (
-    <group position={[(fx + tx) / 2 + 1.2, 0.02, (fz + tz) / 2 - 1.2]} rotation={[0, yaw, 0]}>
-      {/* Road surface */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[roadWidth, length]} />
-        <meshStandardMaterial color="#25272D" map={asphalt ?? undefined} roughness={0.85} />
+    <group position={[(fx + tx) / 2 + 1.2, 0.03, (fz + tz) / 2 - 1.2]} rotation={[0, yaw, 0]}>
+      {/* Road solid bed with slight depth to eliminate shadow acne & z-fighting */}
+      <mesh position={[0, 0, 0]} receiveShadow>
+        <boxGeometry args={[roadWidth, 0.06, length]} />
+        <meshStandardMaterial
+          color="#22242A"
+          map={asphalt ?? undefined}
+          roughness={0.85}
+        />
       </mesh>
+
+      {/* Concrete roadside curbs */}
+      {[-roadWidth / 2 - 0.1, roadWidth / 2 + 0.1].map((cx, idx) => (
+        <mesh key={idx} position={[cx, 0.04, 0]} receiveShadow>
+          <boxGeometry args={[0.2, 0.12, length]} />
+          <meshStandardMaterial color="#B0B6C2" roughness={0.6} />
+        </mesh>
+      ))}
+
       {/* Dashed center lane divider */}
       {Array.from({ length: Math.floor(length / 2.2) }, (_, i) => (
-        <mesh key={i} position={[0, 0.022, -length / 2 + i * 2.2 + 1.1]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[0.12, 1.1]} />
+        <mesh key={i} position={[0, 0.032, -length / 2 + i * 2.2 + 1.1]}>
+          <boxGeometry args={[0.12, 0.005, 1.1]} />
           <meshBasicMaterial color="#FFFFFF" />
         </mesh>
       ))}
-      {/* Outer curb lines */}
-      <mesh position={[-roadWidth / 2 + 0.06, 0.022, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.12, length]} />
+
+      {/* Outer solid lane boundary lines */}
+      <mesh position={[-roadWidth / 2 + 0.14, 0.032, 0]}>
+        <boxGeometry args={[0.12, 0.005, length]} />
         <meshBasicMaterial color="#FFFFFF" />
       </mesh>
-      <mesh position={[roadWidth / 2 - 0.06, 0.022, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.12, length]} />
+      <mesh position={[roadWidth / 2 - 0.14, 0.032, 0]}>
+        <boxGeometry args={[0.12, 0.005, length]} />
         <meshBasicMaterial color="#FFFFFF" />
       </mesh>
     </group>
@@ -563,11 +577,11 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
         <Path key={b.id} from={PLAZA_CENTER} to={doorPoint(b)} />
       ))}
 
-      {/* REFLECTIVE ARCHITECTURAL POND */}
+      {/* REFLECTIVE ARCHITECTURAL POND (Matching SPU Official Map Blueprint) */}
       <group position={[POND.at[0], 0, POND.at[1]]}>
         {/* Deep Reflective Water (meshPhysicalMaterial for true water reflections) */}
         <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <circleGeometry args={[POND.r, 48]} />
+          <planeGeometry args={[6.8, 5.0]} />
           <meshPhysicalMaterial
             color="#143A52"
             roughness={0.04}
@@ -575,25 +589,70 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
             clearcoat={1.0}
             clearcoatRoughness={0.04}
             reflectivity={0.95}
-            transmission={0.15}
+            transmission={0.2}
           />
         </mesh>
         {/* Architectural Granite Curb Coping */}
-        <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[POND.r - 0.05, POND.r + 0.35, 48]} />
-          <meshStandardMaterial color="#C5CAD6" roughness={0.5} />
+        <mesh position={[0, 0.08, -2.55]} receiveShadow>
+          <boxGeometry args={[7.2, 0.12, 0.28]} />
+          <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
         </mesh>
-        {/* Modern Center Aerator / Fountain Jet */}
-        <mesh position={[0, 0.4, 0]}>
-          <cylinderGeometry args={[0.08, 0.12, 0.7, 12]} />
-          <meshStandardMaterial
-            color="#E8F4FA"
-            emissive="#A8D8F0"
-            emissiveIntensity={0.8}
-            metalness={0.1}
-            roughness={0.1}
-          />
+        <mesh position={[0, 0.08, 2.55]} receiveShadow>
+          <boxGeometry args={[7.2, 0.12, 0.28]} />
+          <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
         </mesh>
+        <mesh position={[-3.45, 0.08, 0]} receiveShadow>
+          <boxGeometry args={[0.28, 0.12, 5.2]} />
+          <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
+        </mesh>
+        <mesh position={[3.45, 0.08, 0]} receiveShadow>
+          <boxGeometry args={[0.28, 0.12, 5.2]} />
+          <meshStandardMaterial color="#CAD0DC" roughness={0.5} />
+        </mesh>
+
+        {/* Modern Center Aerator / Fountain Jets */}
+        {[-1.5, 0, 1.5].map((fx, i) => (
+          <group key={i} position={[fx, 0, 0]}>
+            <mesh position={[0, 0.35, 0]}>
+              <cylinderGeometry args={[0.06, 0.09, 0.6, 12]} />
+              <meshStandardMaterial
+                color="#E8F4FA"
+                emissive="#A8D8F0"
+                emissiveIntensity={0.8}
+                metalness={0.1}
+                roughness={0.1}
+              />
+            </mesh>
+          </group>
+        ))}
+
+        {/* ── SPU OFFICIAL MONUMENT SIGN (As shown in official 3D map) ── */}
+        <group position={[2.6, 0, 2.8]} rotation={[0, -0.38, 0]}>
+          {/* Base foundation */}
+          <mesh position={[0, 0.2, 0]} receiveShadow>
+            <boxGeometry args={[2.8, 0.4, 0.8]} />
+            <meshStandardMaterial color="#2B2F3A" roughness={0.5} />
+          </mesh>
+          {/* Main White Stone Sign Wall */}
+          <mesh position={[0, 0.75, 0]} castShadow receiveShadow>
+            <boxGeometry args={[2.6, 0.75, 0.35]} />
+            <meshStandardMaterial color="#F4F6FA" roughness={0.3} metalness={0.1} />
+          </mesh>
+          {/* SPU Pink Accent Stripe */}
+          <mesh position={[0, 1.05, 0.18]} userData={{ glow: true }}>
+            <boxGeometry args={[2.4, 0.08, 0.03]} />
+            <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.9} />
+          </mesh>
+          {/* SPU Emblem / Lettering Plate */}
+          <mesh position={[-0.8, 0.72, 0.19]}>
+            <planeGeometry args={[0.5, 0.3]} />
+            <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.6} />
+          </mesh>
+          <mesh position={[0.3, 0.72, 0.19]}>
+            <planeGeometry args={[1.4, 0.25]} />
+            <meshStandardMaterial color="#20242E" roughness={0.3} />
+          </mesh>
+        </group>
       </group>
 
       {/* MRT Elevated Viaduct + Lit Train + Exit 2 Canopy */}

@@ -23,6 +23,7 @@ export default function Building({ building, hovered, onHover, onSelect }: Props
     if (!g) return
     const s = 1 + glow.current * 0.04
     g.scale.set(s, s, s)
+    g.position.y = glow.current * 0.35
     g.traverse((o) => {
       const mat = (o as { material?: { emissive?: Color; emissiveIntensity?: number } }).material
       if (mat?.emissive && o.userData.glow) {
@@ -157,7 +158,7 @@ function ModernGate({ color }: { color: string }) {
   )
 }
 
-/** 2. FACULTY HALL (Building 11 / IT & Design Tower) */
+/** 2. FACULTY HALL (Building 11 · 40 Years SPU & Building 1 · Dr. Sook Pookayaporn Complex) */
 function ModernFacultyHall({
   color,
   textures,
@@ -170,100 +171,188 @@ function ModernFacultyHall({
 }) {
   return (
     <group>
-      {/* Podium base */}
-      <mesh position={[0, 0.25, 0]} receiveShadow>
-        <boxGeometry args={[5.6, 0.5, 4.8]} />
-        <meshStandardMaterial color="#9CA2B0" roughness={0.7} />
+      {/* ── BUILDING 11 (Rear High-Rise & Curved Glass Atrium) ── */}
+      {/* Foundation podium */}
+      <mesh position={[-0.4, 0.25, -1.2]} receiveShadow>
+        <boxGeometry args={[7.2, 0.5, 4.4]} />
+        <meshStandardMaterial color="#8E95A5" roughness={0.7} />
       </mesh>
 
-      {/* Main Tower Body (Height ~8.4) */}
-      <mesh position={[0, 4.4, 0]} castShadow receiveShadow>
-        <boxGeometry args={[5.0, 8.0, 4.2]} />
+      {/* Main Building 11 Tower Body (Height ~9.2) */}
+      <mesh position={[-0.4, 5.0, -1.2]} castShadow receiveShadow>
+        <boxGeometry args={[6.8, 9.2, 3.8]} />
         <meshStandardMaterial
           color="#E8EBF2"
           map={concrete ?? undefined}
           roughness={0.65}
-          metalness={0.15}
+          metalness={0.12}
         />
       </mesh>
 
-      {/* Front Glass Facade with Window Texture */}
-      <mesh position={[0, 4.5, 2.12]} castShadow receiveShadow>
-        <planeGeometry args={[4.6, 7.2]} />
-        <meshPhysicalMaterial
-          color="#22384D"
-          map={textures.diffuse ?? undefined}
-          emissive="#FFE399"
-          emissiveMap={textures.emissive ?? undefined}
-          emissiveIntensity={0.9}
-          roughness={0.12}
-          metalness={0.2}
-          clearcoat={1}
-          reflectivity={0.9}
-        />
+      {/* Building 11 Right Wing Iconic Terracotta Accent Stripe (as seen on official map) */}
+      <mesh position={[2.95, 5.0, -1.2]} castShadow>
+        <boxGeometry args={[0.2, 9.0, 3.82]} />
+        <meshStandardMaterial color="#A83232" roughness={0.7} />
       </mesh>
 
-      {/* Rear Glass Facade */}
-      <mesh position={[0, 4.5, -2.12]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[4.6, 7.2]} />
+      {/* Building 11 Left Wing: Sweeping Curved Cyan Glass Facade */}
+      <group position={[-1.8, 5.0, 0.72]}>
+        {/* Curved Glass Front Segment */}
+        <mesh castShadow receiveShadow>
+          <cylinderGeometry args={[2.2, 2.2, 8.4, 24, 1, false, Math.PI * 0.75, Math.PI * 0.7]} />
+          <meshPhysicalMaterial
+            color="#1B4D68"
+            emissive="#1B4D68"
+            emissiveIntensity={0.2}
+            roughness={0.08}
+            metalness={0.25}
+            clearcoat={1.0}
+            clearcoatRoughness={0.05}
+            transmission={0.35}
+            reflectivity={0.95}
+          />
+        </mesh>
+        {/* Curved Vertical Aluminum Mullions with illuminated center accent fin */}
+        {[-0.8, -0.4, 0, 0.4, 0.8].map((offset, idx) => (
+          <mesh key={idx} position={[offset * 1.6, 0, 0.55]} castShadow userData={idx === 2 ? { glow: true } : undefined}>
+            <boxGeometry args={[0.08, 8.6, 0.22]} />
+            <meshStandardMaterial
+              color={idx === 2 ? color : '#D8DEEA'}
+              emissive={idx === 2 ? color : undefined}
+              emissiveIntensity={idx === 2 ? 0.6 : 0}
+              metalness={0.7}
+              roughness={0.25}
+            />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Building 11 Window Grid on Main Facade */}
+      <mesh position={[-0.4, 5.2, 0.72]} castShadow receiveShadow>
+        <planeGeometry args={[6.2, 7.8]} />
         <meshPhysicalMaterial
-          color="#22384D"
+          color="#20384E"
           map={textures.diffuse ?? undefined}
-          emissive="#FFE399"
+          emissive="#FFE090"
           emissiveMap={textures.emissive ?? undefined}
-          emissiveIntensity={0.8}
+          emissiveIntensity={0.85}
           roughness={0.12}
           metalness={0.2}
           clearcoat={0.9}
         />
       </mesh>
 
-      {/* Architectural Aerodynamic Accent Fins (Iconic SPU Bldg 11 louvers) */}
-      {[-2.1, -1.1, 0, 1.1, 2.1].map((fx, i) => (
-        <mesh key={i} position={[fx, 4.5, 2.25]} castShadow userData={{ glow: true }}>
-          <boxGeometry args={[0.08, 7.4, 0.35]} />
+      {/* Iconic Building 11 Arched Architectural Crown / Roof Curve */}
+      <group position={[-0.4, 9.9, -1.0]}>
+        {/* Cantilevered Top Penthouse */}
+        <mesh castShadow>
+          <boxGeometry args={[7.2, 0.6, 4.2]} />
+          <meshStandardMaterial color="#20242E" metalness={0.7} roughness={0.3} />
+        </mesh>
+        {/* Sweeping Architectural Roof Arch */}
+        <mesh position={[-1.2, 0.6, 0.5]} rotation={[0, 0, 0.08]}>
+          <boxGeometry args={[4.4, 0.35, 3.2]} />
+          <meshStandardMaterial color="#2B303C" metalness={0.8} roughness={0.2} />
+        </mesh>
+        {/* Illuminated SPU 40 Signboard */}
+        <mesh position={[-0.4, 0.05, 2.12]} userData={{ glow: true }}>
+          <boxGeometry args={[3.8, 0.4, 0.06]} />
+          <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={1.3} />
+        </mesh>
+      </group>
+
+      {/* ── BUILDING 1 (Dr. Sook Pookayaporn Hall - Stepped Hexagonal in Front) ── */}
+      <group position={[1.2, 0, 1.8]}>
+        {/* Hexagonal Stepped Tower Base (Height 5.4) */}
+        <mesh position={[0, 2.7, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[1.9, 2.2, 5.4, 6]} />
           <meshStandardMaterial
-            color={i === 2 ? '#E89BC4' : color}
-            emissive={i === 2 ? '#E89BC4' : color}
-            emissiveIntensity={0.4}
-            metalness={0.5}
-            roughness={0.25}
+            color="#F2F4F8"
+            map={concrete ?? undefined}
+            roughness={0.6}
+            metalness={0.15}
           />
         </mesh>
-      ))}
 
-      {/* Cantilevered Top Penthouse / Architectural Crown */}
-      <mesh position={[0, 8.6, 0.2]} castShadow>
-        <boxGeometry args={[5.3, 0.7, 4.5]} />
-        <meshStandardMaterial color="#222530" metalness={0.6} roughness={0.3} />
-      </mesh>
-      {/* Top Building 11 Signage Strip */}
-      <mesh position={[0, 8.6, 2.47]} userData={{ glow: true }}>
-        <boxGeometry args={[3.2, 0.35, 0.05]} />
-        <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={1.2} />
-      </mesh>
+        {/* Stepped Upper Hexagonal Penthouse */}
+        <mesh position={[0, 5.7, 0]} castShadow>
+          <cylinderGeometry args={[1.4, 1.7, 1.0, 6]} />
+          <meshStandardMaterial color="#E0E4EC" roughness={0.5} />
+        </mesh>
 
-      {/* Ground Floor Double-Height Glass Entrance Lobby */}
-      <mesh position={[0, 1.1, 2.2]}>
-        <boxGeometry args={[2.8, 1.8, 0.3]} />
-        <meshPhysicalMaterial
-          color="#A8D8F8"
-          transmission={0.5}
-          roughness={0.1}
-          metalness={0.1}
-          clearcoat={1}
-        />
-      </mesh>
-      {/* Entrance Canopy */}
-      <mesh position={[0, 2.1, 2.6]} castShadow>
-        <boxGeometry args={[3.2, 0.12, 1.2]} />
-        <meshStandardMaterial color="#2B2F3D" metalness={0.7} roughness={0.3} />
-      </mesh>
-      {/* Front Entrance Door */}
-      <mesh position={[0, 0.9, 2.36]}>
-        <boxGeometry args={[1.2, 1.6, 0.04]} />
-        <meshStandardMaterial color="#1E2028" metalness={0.8} roughness={0.2} />
-      </mesh>
+        {/* Building 1 Horizontal Architectural Window Louver Rings */}
+        {[1.4, 2.3, 3.2, 4.1, 5.0].map((ly) => (
+          <mesh key={ly} position={[0, ly, 0]} castShadow>
+            <cylinderGeometry args={[2.02, 2.02, 0.1, 6]} />
+            <meshStandardMaterial color="#4A5262" metalness={0.5} roughness={0.3} />
+          </mesh>
+        ))}
+
+        {/* Building 1 Stepped Front Entrance Terrace */}
+        <mesh position={[0, 0.25, 1.8]} receiveShadow>
+          <boxGeometry args={[3.4, 0.5, 1.8]} />
+          <meshStandardMaterial color="#CAD0DC" roughness={0.65} />
+        </mesh>
+
+        {/* SPU Official Crest / Emblem on Building 1 Facade */}
+        <mesh position={[0, 4.2, 1.82]} userData={{ glow: true }}>
+          <circleGeometry args={[0.38, 24]} />
+          <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.8} />
+        </mesh>
+
+        {/* ── 3 ICONIC CAMPUS FLAGPOLES (Thai Flag, SPU Pink, Blue) ── */}
+        <group position={[0, 0.5, 2.3]}>
+          {/* Thai National Flag (Center) */}
+          <group position={[0, 0, 0]}>
+            <mesh position={[0, 1.4, 0]}>
+              <cylinderGeometry args={[0.02, 0.03, 2.8, 8]} />
+              <meshStandardMaterial color="#E0E4EC" metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0.28, 2.5, 0]}>
+              <planeGeometry args={[0.55, 0.35]} />
+              <meshStandardMaterial color="#E11D48" roughness={0.5} />
+            </mesh>
+            <mesh position={[0.28, 2.5, 0.005]}>
+              <planeGeometry args={[0.55, 0.12]} />
+              <meshStandardMaterial color="#1E40AF" roughness={0.5} />
+            </mesh>
+          </group>
+
+          {/* SPU Pink Flag (Left) */}
+          <group position={[-0.65, 0, 0]}>
+            <mesh position={[0, 1.3, 0]}>
+              <cylinderGeometry args={[0.02, 0.03, 2.6, 8]} />
+              <meshStandardMaterial color="#E0E4EC" metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0.26, 2.35, 0]}>
+              <planeGeometry args={[0.5, 0.32]} />
+              <meshStandardMaterial color="#E89BC4" emissive="#E89BC4" emissiveIntensity={0.3} roughness={0.5} />
+            </mesh>
+          </group>
+
+          {/* University Blue Flag (Right) */}
+          <group position={[0.65, 0, 0]}>
+            <mesh position={[0, 1.3, 0]}>
+              <cylinderGeometry args={[0.02, 0.03, 2.6, 8]} />
+              <meshStandardMaterial color="#E0E4EC" metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0.26, 2.35, 0]}>
+              <planeGeometry args={[0.5, 0.32]} />
+              <meshStandardMaterial color="#2563EB" emissive="#2563EB" emissiveIntensity={0.2} roughness={0.5} />
+            </mesh>
+          </group>
+        </group>
+
+        {/* Double-Height Glass Entrance Lobby & Canopy */}
+        <mesh position={[0, 0.9, 1.95]}>
+          <boxGeometry args={[1.8, 1.4, 0.2]} />
+          <meshPhysicalMaterial color="#A4D8F0" transmission={0.5} roughness={0.1} clearcoat={1} />
+        </mesh>
+        <mesh position={[0, 1.65, 2.2]} castShadow>
+          <boxGeometry args={[2.2, 0.1, 0.8]} />
+          <meshStandardMaterial color="#20242E" metalness={0.7} roughness={0.3} />
+        </mesh>
+      </group>
     </group>
   )
 }
@@ -541,7 +630,7 @@ function ModernDataHub({
   )
 }
 
-/** 6. LESSON PLANNING ROOM (Building 5 - Academic Studio) */
+/** 6. LESSON PLANNING ROOM (Building 5 · Siam Boromrajakumari Hall) */
 function ModernPlanOffice({
   color,
   textures,
@@ -553,41 +642,43 @@ function ModernPlanOffice({
 }) {
   return (
     <group>
-      {/* Plinth */}
-      <mesh position={[0, 0.2, 0]} receiveShadow>
-        <boxGeometry args={[4.6, 0.4, 3.9]} />
-        <meshStandardMaterial color="#9197A4" roughness={0.7} />
+      {/* Foundation plinth */}
+      <mesh position={[0, 0.25, 0]} receiveShadow>
+        <boxGeometry args={[6.0, 0.5, 5.0]} />
+        <meshStandardMaterial color="#8E95A5" roughness={0.7} />
       </mesh>
 
-      {/* Modern offset stacked architectural volumes */}
-      <mesh position={[-0.2, 2.4, 0]} castShadow receiveShadow>
-        <boxGeometry args={[3.8, 4.4, 3.3]} />
+      {/* ── MAIN TOWER BODY (12-Story Academic High-Rise) ── */}
+      <mesh position={[0, 4.8, -0.3]} castShadow receiveShadow>
+        <boxGeometry args={[5.2, 8.6, 4.2]} />
         <meshStandardMaterial
-          color="#E6E9F0"
+          color="#EAEDF4"
           map={concrete ?? undefined}
           roughness={0.65}
-          metalness={0.1}
+          metalness={0.12}
         />
       </mesh>
 
-      {/* Upper cantilevered conference glass cube */}
-      <mesh position={[0.6, 4.2, 0.4]} castShadow receiveShadow>
-        <boxGeometry args={[2.4, 2.2, 2.4]} />
+      {/* Front High-Rise Window Facade */}
+      <mesh position={[0, 5.2, 1.82]} castShadow receiveShadow>
+        <planeGeometry args={[4.8, 6.8]} />
         <meshPhysicalMaterial
-          color="#223C56"
-          transmission={0.3}
-          roughness={0.1}
-          metalness={0.15}
-          clearcoat={1}
-          reflectivity={0.9}
+          color="#22364C"
+          map={textures.diffuse ?? undefined}
+          emissive="#FFDF8F"
+          emissiveMap={textures.emissive ?? undefined}
+          emissiveIntensity={0.85}
+          roughness={0.15}
+          metalness={0.2}
+          clearcoat={0.9}
         />
       </mesh>
 
-      {/* Glass facade with window textures */}
-      <mesh position={[-0.2, 2.4, 1.68]} castShadow receiveShadow>
-        <planeGeometry args={[3.4, 3.8]} />
+      {/* Rear High-Rise Window Facade */}
+      <mesh position={[0, 5.2, -2.42]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[4.8, 6.8]} />
         <meshPhysicalMaterial
-          color="#20364C"
+          color="#22364C"
           map={textures.diffuse ?? undefined}
           emissive="#FFDF8F"
           emissiveMap={textures.emissive ?? undefined}
@@ -598,36 +689,110 @@ function ModernPlanOffice({
         />
       </mesh>
 
-      {/* Vertical architectural color fins in Faculty/Plan Blue */}
-      {[-1.6, -1.0, -0.4, 0.2].map((fx, i) => (
-        <mesh key={i} position={[fx, 2.4, 1.8]} castShadow userData={{ glow: true }}>
-          <boxGeometry args={[0.08, 4.0, 0.26]} />
+      {/* Rooftop Parapet and Mechanical Plant Room */}
+      <mesh position={[0, 9.25, -0.3]} castShadow>
+        <boxGeometry args={[5.4, 0.4, 4.4]} />
+        <meshStandardMaterial color="#2B303C" roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 10.0, -0.3]} castShadow>
+        <boxGeometry args={[3.6, 1.2, 2.8]} />
+        <meshStandardMaterial color="#5A6272" roughness={0.6} />
+      </mesh>
+
+      {/* ── ICONIC 2-STORY REDDISH-TERRACOTTA BRICK ENTRANCE BASE ── */}
+      {/* As prominently featured in the real SPU photograph and official 3D map */}
+      <group position={[0, 0, 1.2]}>
+        {/* Main Red Terracotta Brick Structure */}
+        <mesh position={[0, 1.4, 0]} castShadow receiveShadow>
+          <boxGeometry args={[5.6, 2.8, 1.8]} />
           <meshStandardMaterial
-            color={color}
-            emissive={color}
-            emissiveIntensity={0.35}
-            metalness={0.4}
-            roughness={0.3}
+            color="#9C3A2C" // Authentic SPU reddish-terracotta brick tone
+            roughness={0.82}
+            metalness={0.08}
           />
         </mesh>
-      ))}
 
-      {/* Rooftop academic terrace */}
-      <mesh position={[-0.2, 4.65, 0]}>
-        <boxGeometry args={[3.9, 0.15, 3.4]} />
-        <meshStandardMaterial color="#323642" roughness={0.5} />
-      </mesh>
+        {/* Terracotta Brick Upper Cornice / Coffer Border */}
+        <mesh position={[0, 2.85, 0]} castShadow>
+          <boxGeometry args={[5.8, 0.25, 2.0]} />
+          <meshStandardMaterial color="#7D2C20" roughness={0.85} />
+        </mesh>
 
-      {/* Entrance */}
-      <mesh position={[0, 0.8, 1.72]}>
-        <boxGeometry args={[1.5, 1.4, 0.1]} />
-        <meshPhysicalMaterial
-          color="#9ED7EE"
-          transmission={0.4}
-          roughness={0.1}
-          clearcoat={1}
-        />
-      </mesh>
+        {/* Flanking Grand Brick Portal Atrium Windows (Left & Right) */}
+        {[-1.85, 1.85].map((wx) => (
+          <group key={wx} position={[wx, 1.5, 0.92]}>
+            {/* Recessed Atrium Glass */}
+            <mesh>
+              <planeGeometry args={[1.3, 2.1]} />
+              <meshPhysicalMaterial
+                color="#1B3850"
+                transmission={0.4}
+                roughness={0.1}
+                clearcoat={1}
+                reflectivity={0.9}
+              />
+            </mesh>
+            {/* Window Mullions */}
+            <mesh position={[0, 0, 0.02]}>
+              <boxGeometry args={[0.06, 2.1, 0.04]} />
+              <meshStandardMaterial color="#FFFFFF" metalness={0.5} />
+            </mesh>
+            <mesh position={[0, 0, 0.02]}>
+              <boxGeometry args={[1.3, 0.06, 0.04]} />
+              <meshStandardMaterial color="#FFFFFF" metalness={0.5} />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Center Recessed Grand Entrance Portal Arch */}
+        <mesh position={[0, 1.35, 0.4]} receiveShadow>
+          <boxGeometry args={[2.0, 2.4, 1.2]} />
+          <meshStandardMaterial color="#7D2C20" roughness={0.8} />
+        </mesh>
+
+        {/* Double-Height Glass Entrance Lobby */}
+        <mesh position={[0, 1.0, 0.94]}>
+          <planeGeometry args={[1.8, 1.8]} />
+          <meshPhysicalMaterial
+            color="#A8DCF2"
+            transmission={0.5}
+            roughness={0.1}
+            clearcoat={1}
+          />
+        </mesh>
+
+        {/* Illuminated Warm Entrance Lobby Light */}
+        <mesh position={[0, 0.9, 0.7]}>
+          <boxGeometry args={[1.6, 1.6, 0.2]} />
+          <meshStandardMaterial
+            color="#FFF4D6"
+            emissive="#FFE6A3"
+            emissiveIntensity={1.4}
+          />
+        </mesh>
+
+        {/* Terracotta Entrance Cantilever Canopy */}
+        <mesh position={[0, 2.1, 1.35]} castShadow>
+          <boxGeometry args={[2.4, 0.12, 0.9]} />
+          <meshStandardMaterial color="#2B303C" metalness={0.7} roughness={0.3} />
+        </mesh>
+
+        {/* Illuminated SPU Building 5 Badge */}
+        <group position={[0, 2.5, 0.93]} userData={{ glow: true }}>
+          <mesh>
+            <boxGeometry args={[1.6, 0.38, 0.06]} />
+            <meshStandardMaterial color="#1E2028" />
+          </mesh>
+          <mesh position={[0, 0, 0.04]}>
+            <planeGeometry args={[1.4, 0.26]} />
+            <meshStandardMaterial
+              color={color}
+              emissive={color}
+              emissiveIntensity={0.9}
+            />
+          </mesh>
+        </group>
+      </group>
     </group>
   )
 }
