@@ -196,6 +196,15 @@ export default function TeacherShell() {
               {t('resetDemo')}
             </button>
 
+            <Link
+              to="/campus"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:brightness-110 transition-all"
+              title="Return to 3D Campus"
+            >
+              <span>🎮</span>
+              <span className="hidden sm:inline">3D Campus</span>
+            </Link>
+
             <DarkModeToggle />
             <RoleSwitcher />
             <LanguageSwitcher />
