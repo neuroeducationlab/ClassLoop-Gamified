@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BookOpen, Brain, FileCheck, MessagesSquare, User } from 'lucide-react'
 import RoleSwitcher from '@/components/layout/RoleSwitcher'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
@@ -32,6 +32,14 @@ export default function StudentShell() {
             <span className="font-bold text-pink-600">ClassLoop</span>
           </span>
           <div className="flex items-center gap-1.5">
+            <Link
+              to="/campus"
+              className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm hover:brightness-110 transition-all"
+              title="Return to 3D Campus"
+            >
+              <span>🎮</span>
+              <span className="hidden sm:inline">3D</span>
+            </Link>
             <DarkModeToggle />
             <LanguageSwitcher />
             <RoleSwitcher />

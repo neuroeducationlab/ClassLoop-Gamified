@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { ContactShadows, OrbitControls } from '@react-three/drei'
 import { useApp, type AvatarHat } from '@/context/AppContext'
@@ -10,7 +11,7 @@ import { cn } from '@/lib/utils'
 
 /** Pick colour + hat + nickname with a spinning 3D preview, then enter the campus. */
 export default function CharacterCreate() {
-  const { currentStudent, avatar, setAvatar } = useApp()
+  const { currentStudent, avatar, setAvatar, lang } = useApp()
   const navigate = useNavigate()
   const [nickname, setNickname] = useState(avatar?.nickname ?? currentStudent.nickname)
   const [color, setColor] = useState(avatar?.color ?? AVATAR_COLORS[0])
@@ -19,18 +20,31 @@ export default function CharacterCreate() {
   const submit = (e: FormEvent) => {
     e.preventDefault()
     setAvatar({ color, hat, nickname: nickname.trim() || currentStudent.nickname })
-    navigate('/campus', { state: { arrival: true } })
+    // Return directly into 3D campus without re-triggering arrival flyover
+    navigate('/campus')
   }
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center p-6 font-campus text-white"
+      className="flex min-h-screen flex-col items-center justify-center p-6 font-campus text-white relative"
       style={{ backgroundColor: CAMPUS_PALETTE.sky }}
     >
-      <form onSubmit={submit} className="w-full max-w-sm space-y-5 text-center">
+      {/* Quick Back to Campus button */}
+      <button
+        type="button"
+        onClick={() => navigate('/campus')}
+        className="absolute top-6 left-6 flex items-center gap-2 rounded-full border border-white/30 bg-black/40 px-4 py-2 text-xs font-bold text-white backdrop-blur-md hover:bg-black/60 transition-all cursor-pointer shadow-lg"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>{lang === 'th' ? 'กลับสู่แคมปัส 3D' : 'Back to 3D Campus'}</span>
+      </button>
+
+      <form onSubmit={submit} className="w-full max-w-sm space-y-5 text-center mt-6">
         <div>
-          <h1 className="text-3xl font-bold">สร้างตัวละครของคุณ</h1>
-          <p className="mt-1 text-sm text-white/70">Create your character</p>
+          <h1 className="text-3xl font-bold">{lang === 'th' ? 'สร้างตัวละครของคุณ' : 'Customize Your Avatar'}</h1>
+          <p className="mt-1 text-sm text-white/70">
+            {lang === 'th' ? 'ปรับแต่งสี หมวก และฉายาในเกม' : 'Pick colours, hats, and your campus handle'}
+          </p>
         </div>
 
         <div className="mx-auto h-64 w-full overflow-hidden rounded-3xl bg-white/5">

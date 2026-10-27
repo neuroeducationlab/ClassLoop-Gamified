@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Lock } from 'lucide-react'
+import { Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
+import { ArrowLeft, Lock, Map as MapIcon } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { BUILDINGS, type BuildingId } from '@/data/buildings'
 import GateRoom from './interiors/GateRoom'
@@ -16,6 +16,7 @@ export default function BuildingInterior() {
   const { buildingId } = useParams()
   const { role, lang } = useApp()
   const navigate = useNavigate()
+  const location = useLocation()
   const building = BUILDINGS.find((b) => b.id === buildingId)
   if (!building) return <Navigate to="/campus" replace />
 
@@ -23,9 +24,13 @@ export default function BuildingInterior() {
   // data/plan embed the existing Dashboard/Studio, which are designed for the light canvas
   const wide = building.id === 'data' || building.id === 'plan'
   const blurb = role === 'teacher' ? building.teacherSees : building.studentSees
-  const back = () => navigate(role === 'teacher' ? '/map' : '/campus')
 
-  const backText = role === 'teacher'
+  // Check if teacher specifically came from the 2D map
+  const fromMap = (location.state as { from?: string } | null)?.from === '/map'
+  const backTarget = fromMap ? '/map' : '/campus'
+  const back = () => navigate(backTarget)
+
+  const backText = backTarget === '/map'
     ? (lang === 'th' ? 'กลับแผนที่ 2D' : 'Back to 2D Map')
     : (lang === 'th' ? 'กลับแคมปัส 3D' : 'Back to 3D Campus')
 
@@ -46,13 +51,25 @@ export default function BuildingInterior() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:18px_18px]" />
         <div className={`relative mx-auto px-4 pb-6 pt-4 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
           <div className="flex items-center justify-between">
-            <button
-              onClick={back}
-              className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-all hover:bg-white/25 cursor-pointer shadow-sm"
-              aria-label={backText}
-            >
-              <ArrowLeft className="h-4 w-4" /> {backText}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={back}
+                className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-all hover:bg-white/25 cursor-pointer shadow-sm"
+                aria-label={backText}
+              >
+                <ArrowLeft className="h-4 w-4" /> {backText}
+              </button>
+              {role === 'teacher' && !fromMap && (
+                <button
+                  onClick={() => navigate('/map')}
+                  className="hidden sm:flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/20 transition-all cursor-pointer"
+                  title={lang === 'th' ? 'สลับไปแผนที่ 2D' : 'Switch to 2D Map'}
+                >
+                  <MapIcon className="h-3.5 w-3.5" />
+                  <span>2D Map</span>
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
                 {role === 'teacher'

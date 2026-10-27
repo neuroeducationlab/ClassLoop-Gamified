@@ -548,7 +548,11 @@ export default function Campus3D() {
           {teacherMenuOpen && (
             <div className="space-y-1.5">
               <button
-                onClick={() => navigate('/campus/data')}
+                onClick={() => {
+                  const b = BUILDINGS.find((bld) => bld.id === 'data')
+                  if (b) lastSpot = doorPoint(b)
+                  navigate('/campus/data')
+                }}
                 className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
               >
                 <span className="flex items-center gap-2">
@@ -562,7 +566,11 @@ export default function Campus3D() {
               </button>
 
               <button
-                onClick={() => navigate('/campus/plan')}
+                onClick={() => {
+                  const b = BUILDINGS.find((bld) => bld.id === 'plan')
+                  if (b) lastSpot = doorPoint(b)
+                  navigate('/campus/plan')
+                }}
                 className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
               >
                 <span className="flex items-center gap-2">
@@ -576,7 +584,11 @@ export default function Campus3D() {
               </button>
 
               <button
-                onClick={() => navigate('/campus/dorm')}
+                onClick={() => {
+                  const b = BUILDINGS.find((bld) => bld.id === 'dorm')
+                  if (b) lastSpot = doorPoint(b)
+                  navigate('/campus/dorm')
+                }}
                 className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
               >
                 <span className="flex items-center gap-2">
