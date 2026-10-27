@@ -24,10 +24,10 @@ export default function BuildingInterior() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <header className="text-white" style={{ backgroundColor: building.color }}>
+      <header className="font-campus text-white" style={{ backgroundColor: building.color }}>
         <div className={`mx-auto flex items-center gap-3 px-4 py-4 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
           <button
-            onClick={() => navigate(role === 'teacher' ? '/teacher' : '/campus')}
+            onClick={() => navigate(role === 'teacher' ? '/map' : '/campus')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black/15 transition-colors hover:bg-black/25"
             aria-label="กลับแคมปัส · Back to campus"
           >
@@ -43,7 +43,7 @@ export default function BuildingInterior() {
         </div>
       </header>
 
-      <main className={`mx-auto animate-page-fade p-4 pb-16 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
+      <main className={`mx-auto animate-page-fade p-4 pb-16 ${wide ? 'max-w-5xl' : 'max-w-2xl font-campus'}`}>
         {canEnter ? (
           <Room id={building.id} />
         ) : (

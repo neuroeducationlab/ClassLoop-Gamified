@@ -3,9 +3,10 @@
  *
  * Only 6 of SPU's 12 buildings — more than this is too many to read in a
  * 6-minute talk. Interiors are plain 2D UI; only the campus itself is 3D.
- * `position` is (x, z) on the ground plane, laid out around a central plaza at
- * PLAZA_CENTER with the gate at the front (+z, nearest the camera). It is a
- * stylised layout, not survey-accurate to the SPU map.
+ * `position` is (x, z) on the ground plane, traced from the official SPU
+ * campus map (viewed from the map's bottom edge: -z is the far side with
+ * bldgs 9/11, the MRT viaduct runs along the left/front edge). Stylised —
+ * spacing is widened so labels and clicks never overlap on video.
  */
 
 export type BuildingId = 'entry' | 'faculty' | 'arena' | 'dorm' | 'data' | 'plan'
@@ -34,7 +35,21 @@ export const CAMPUS_PALETTE = {
   spuPink: '#E89BC4',
 } as const
 
-export const PLAZA_CENTER: [x: number, z: number] = [0, 1]
+/** The central crossroads by the car parks, where every path meets. */
+export const PLAZA_CENTER: [x: number, z: number] = [1, 0]
+
+/** MRT viaduct along the campus edge, from its far end to its near end. */
+export const MRT_LINE: { from: [x: number, z: number]; to: [x: number, z: number] } = {
+  from: [-19, -6],
+  to: [3, 18],
+}
+
+/** Car parks and pond from the map — scenery shared by the 3D campus and the teacher map. */
+export const CAR_PARKS: { at: [x: number, z: number]; size: [w: number, d: number] }[] = [
+  { at: [-3.6, -2.4], size: [4.4, 3] },
+  { at: [6, 2], size: [4.4, 3] },
+]
+export const POND: { at: [x: number, z: number]; r: number } = { at: [6.5, 7.5], r: 2.8 }
 
 export const BUILDINGS: Building[] = [
   {
@@ -46,40 +61,42 @@ export const BUILDINGS: Building[] = [
     shape: 'gate',
     studentSees: 'login + pick role + character',
     teacherSees: null,
-    position: [0, 11],
+    position: [-10, -1],
   },
   {
     id: 'faculty',
     name: { th: 'อาคารคณะ', en: 'Faculty hall' },
     emoji: '🏫',
-    spuRef: 'bldg 1/5/9/11',
+    spuRef: 'bldg 1/11',
     color: '#7C9BE8',
     shape: 'hall',
     studentSees: 'lessons, pre-class video, quiz, graded test',
     teacherSees: null,
-    position: [-9, 2],
+    position: [-6, -8.5],
   },
   {
     id: 'arena',
     name: { th: 'อารีน่า', en: 'Arena' },
     emoji: '🏆',
-    spuRef: 'activity plaza',
+    // TODO(team): confirm where the activity plaza is — placed on the lawn by the pond
+    spuRef: 'lawn by the pond',
     color: '#E89BC4',
     shape: 'arena',
     studentSees: 'word/quiz games, leaderboard, points',
     teacherSees: null,
-    position: [9, 2],
+    position: [0, 6.5],
   },
   {
     id: 'dorm',
     name: { th: 'หอใจ', en: 'Heart dorm' },
     emoji: '💬',
-    spuRef: 'dormitory',
+    // TODO(team): confirm which building is the dorm — bldg 6 is a guess
+    spuRef: 'bldg 6',
     color: '#4FB0A5',
     shape: 'house',
     studentSees: 'talk to teacher, name hidden (anonymous)',
     teacherSees: 'read feedback, names hidden',
-    position: [-7, -8],
+    position: [11.5, -3],
   },
   {
     id: 'data',
@@ -91,17 +108,18 @@ export const BUILDINGS: Building[] = [
     shape: 'hub',
     studentSees: null,
     teacherSees: 'student stats, charts, research store',
-    position: [0, -10],
+    position: [10, -10],
   },
   {
     id: 'plan',
     name: { th: 'ห้องวางแผนการสอน', en: 'Lesson planning room' },
     emoji: '🗺️',
-    spuRef: 'faculty/office',
+    // TODO(team): confirm — guessed bldg 5, in front of bldg 9 on the map
+    spuRef: 'bldg 5',
     color: '#7C9BE8',
     shape: 'office',
     studentSees: null,
     teacherSees: 'drop in syllabus → AI suggests activities → teacher picks',
-    position: [7, -8],
+    position: [2, -6.5],
   },
 ]

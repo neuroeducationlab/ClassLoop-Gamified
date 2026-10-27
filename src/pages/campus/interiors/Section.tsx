@@ -14,7 +14,7 @@ export default function Section({ title, sub, children }: { title: string; sub?:
 /** Small "+N XP" chip shown when a student earns points. */
 export function XPChip({ amount }: { amount: number }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 animate-fadeIn">
+    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 animate-in zoom-in-50 fade-in duration-300">
       +{amount} XP
     </span>
   )

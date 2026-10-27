@@ -24,7 +24,7 @@ export default function CharacterCreate() {
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center p-6 text-white"
+      className="flex min-h-screen flex-col items-center justify-center p-6 font-campus text-white"
       style={{ backgroundColor: CAMPUS_PALETTE.sky }}
     >
       <form onSubmit={submit} className="w-full max-w-sm space-y-5 text-center">

@@ -7,13 +7,19 @@ import { useApp, type Avatar } from '@/context/AppContext'
 import { BUILDINGS, CAMPUS_PALETTE, PLAZA_CENTER, type Building as BuildingConfig, type BuildingId } from '@/data/buildings'
 import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
-import { doorPoint, labelHeight } from './geometry'
+import { doorPoint, facingPlaza, labelHeight } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
 
 const WALK_SPEED = 5 // units / second
 const CAMERA_OFFSET = new Vector3(0, 16, 17)
-/** Just inside the gate, so the gate arch doesn't hide the avatar from the camera. */
-const GATE_SPAWN: [number, number] = [0, 7]
+const GATE = BUILDINGS.find((b) => b.id === 'entry')!
+/** Step out of MRT Exit 2 onto campus. */
+const GATE_SPAWN = doorPoint(GATE)
+
+/** Opening shot: start high over the whole campus, then swoop down to the avatar. */
+const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
+const INTRO_SECONDS = 2.4
+const ENTER_DELAY_MS = 550
 
 /**
  * The camera looks halfway between the avatar and the plaza: the avatar stays
@@ -29,6 +35,8 @@ function lookTarget(x: number, z: number, out: Vector3) {
  * Module scope on purpose: it is view memory, not app state.
  */
 let lastSpot: [number, number] | null = null
+/** The intro swoop plays once per visit, not every time you leave a building. */
+let introPlayed = false
 
 /** Screen-space label elements, keyed by building id or 'me' for the avatar. */
 type LabelMap = Map<string, HTMLDivElement>
@@ -40,6 +48,7 @@ export default function Campus3D() {
   const navigate = useNavigate()
   const [hovered, setHovered] = useState<BuildingId | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [entering, setEntering] = useState<BuildingConfig | null>(null)
   const labels = useRef<LabelMap>(new Map())
   const labelRef = (key: string) => (el: HTMLDivElement | null) => {
     if (el) labels.current.set(key, el)
@@ -64,7 +73,9 @@ export default function Campus3D() {
         setToast(`${b.emoji} ${b.name.th} เป็นพื้นที่ของอาจารย์ · Teachers only`)
         return
       }
-      navigate(`/campus/${b.id}`)
+      // door transition: flood the screen with the building's colour, then go in
+      setEntering(b)
+      setTimeout(() => navigate(`/campus/${b.id}`), ENTER_DELAY_MS)
     },
     [navigate],
   )
@@ -73,7 +84,7 @@ export default function Campus3D() {
   const progress = studentXP % 100
 
   return (
-    <div className="fixed inset-0 select-none" style={{ backgroundColor: CAMPUS_PALETTE.sky }}>
+    <div className="fixed inset-0 select-none font-campus" style={{ backgroundColor: CAMPUS_PALETTE.sky }}>
       {/* flat = no tone mapping, so the brief's palette renders as the actual hex colours */}
       <Canvas flat shadows="percentage" dpr={[1, 1.75]} camera={{ fov: 45, position: [0, 20, 22] }}>
         <color attach="background" args={[CAMPUS_PALETTE.sky]} />
@@ -168,6 +179,16 @@ export default function Campus3D() {
           คลิกพื้นเพื่อเดิน · คลิกอาคารเพื่อเข้า — Click to walk, click a building to enter
         </p>
       </div>
+
+      {entering && (
+        <div
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 text-white animate-in fade-in duration-500"
+          style={{ backgroundColor: entering.color }}
+        >
+          <span className="text-7xl animate-in zoom-in-50 duration-500">{entering.emoji}</span>
+          <p className="text-2xl font-bold animate-in slide-in-from-bottom-4 duration-500">{entering.name.th}</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -197,12 +218,15 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
   const waypoints = useRef<[number, number][]>([])
   const destination = useRef<BuildingConfig | null>(null)
   const spawn = lastSpot ?? GATE_SPAWN
+  const intro = useRef(introPlayed ? 1 : 0)
 
-  // start the camera already framing the avatar, no swoop on load
+  // place the camera before the first frame: high up for the intro, else already following
   useEffect(() => {
     const t = lookTarget(spawn[0], spawn[1], new Vector3())
-    camera.position.copy(t).add(CAMERA_OFFSET)
-    camera.lookAt(t)
+    if (intro.current < 1) camera.position.copy(INTRO_FROM)
+    else camera.position.copy(t).add(CAMERA_OFFSET)
+    camera.lookAt(intro.current < 1 ? new Vector3(PLAZA_CENTER[0], 0, PLAZA_CENTER[1]) : t)
+    introPlayed = true
   }, [camera, spawn])
 
   const walkTo = (target: [number, number], building: BuildingConfig | null) => {
@@ -235,6 +259,8 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
   }
 
   const look = new Vector3()
+  const follow = new Vector3()
+  const lookAt = new Vector3()
   const proj = new Vector3()
   /** Pin a DOM label over a world point; hide it when the point is behind the camera. */
   const place = (key: string, x: number, y: number, z: number) => {
@@ -283,13 +309,23 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
     const m = markerRef.current
     if (m?.visible) m.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 6) * 0.12)
 
-    // camera follows with a soft lag
-    const k = 1 - Math.exp(-3 * dt)
     lookTarget(a.position.x, a.position.z, look)
-    camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * k
-    camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * k
-    camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * k
-    camera.lookAt(look)
+    if (intro.current < 1) {
+      // intro swoop: ease from the overview shot into the follow position
+      intro.current = Math.min(1, intro.current + dt / INTRO_SECONDS)
+      const e = 1 - Math.pow(1 - intro.current, 3)
+      follow.copy(look).add(CAMERA_OFFSET)
+      camera.position.lerpVectors(INTRO_FROM, follow, e)
+      lookAt.set(PLAZA_CENTER[0], 0, PLAZA_CENTER[1]).lerp(look, e)
+      camera.lookAt(lookAt)
+    } else {
+      // camera follows with a soft lag
+      const k = 1 - Math.exp(-3 * dt)
+      camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * k
+      camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * k
+      camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * k
+      camera.lookAt(look)
+    }
 
     // labels last, so they use this frame's camera
     for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
@@ -314,7 +350,7 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
         <meshBasicMaterial color="#FFFFFF" transparent opacity={0.85} />
       </mesh>
 
-      <group ref={avatarRef} position={[spawn[0], 0, spawn[1]]} rotation={[0, Math.PI, 0]}>
+      <group ref={avatarRef} position={[spawn[0], 0, spawn[1]]} rotation={[0, facingPlaza(spawn), 0]}>
         <Avatar3D color={me.color} hat={me.hat} />
       </group>
     </>

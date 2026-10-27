@@ -75,11 +75,11 @@ Config lives in `src/data/buildings.ts`. Inside each building is plain 2D UI, no
 | id | Building | SPU ref | Student sees | Teacher sees |
 |---|---|---|---|---|
 | entry | Gate 🚪 | MRT Exit 2 | login + pick role + character | — |
-| faculty | Faculty hall 🏫 | bldg 1/5/9/11 | lessons, pre-class video, quiz, graded test | — |
-| arena | Arena 🏆 | activity plaza | word/quiz games, leaderboard, points | — |
-| dorm | Heart dorm 💬 | dormitory | talk to teacher, anonymous | read feedback, names hidden |
+| faculty | Faculty hall 🏫 | bldg 1/11 | lessons, pre-class video, quiz, graded test | — |
+| arena | Arena 🏆 | lawn by the pond (to confirm) | word/quiz games, leaderboard, points | — |
+| dorm | Heart dorm 💬 | bldg 6 (to confirm) | talk to teacher, anonymous | read feedback, names hidden |
 | data | Data & research hub 📊 | bldg 9 (to confirm) | — | student stats, charts, research store |
-| plan | Lesson planning room 🗺️ | faculty/office | — | drop in syllabus → AI suggests activities → teacher picks |
+| plan | Lesson planning room 🗺️ | bldg 5 (to confirm) | — | drop in syllabus → AI suggests activities → teacher picks |
 
 Palette: sky `#3A3D7A`, grass `#7FB069`, path `#F2C879`, SPU pink `#E89BC4`, dorm teal `#4FB0A5`, data orange `#F2994A`, faculty blue `#7C9BE8`, entry red `#F25F5C`. Fonts: Fredoka (UI) + Sarabun (Thai).
 
@@ -92,7 +92,7 @@ Do these in order and check each before the next.
 2. **Character create (day 1–2).** Colour + hat + nickname, spinning 3D preview (OrbitControls + capsule+sphere character). Save to Context. ✅ done
 3. **3D campus — the heart (day 2–4).** Ground + 6 low-poly buildings + warm lighting; click-to-walk avatar; hover → glow + label; click → open its 2D view. Check: 60fps on desktop. ✅ done
 4. **Building interiors — 2D (day 4–5).** faculty + arena (student), data + plan (teacher, reuse existing charts), dorm (both, anonymous feedback). ✅ done (teacher rooms reachable at /campus/data, /campus/plan, /campus/dorm until the phase 5 map)
-5. **Teacher 2D map + polish (day 5–6).** Top-down map; transitions; colour/light/label polish for filming.
+5. **Teacher 2D map + polish (day 5–6).** Top-down map; transitions; colour/light/label polish for filming. ✅ done — teacher login → `/map`; layout traced from the SPU campus map (MRT viaduct + train, car parks, pond); intro camera swoop, door transition, Fredoka + Sarabun on campus pages. Animation style still to match the team's reference.
 6. **Optional.** Real working buttons, mobile responsive, QR-scan access.
 
 Ready to film when: login → role → (student: create) → campus works with no errors; 3D campus at ≥60fps; all 6 buildings open with film-ready content; teacher map shows data + plan; dorm shows anonymous feedback clearly; no white screens on the filmed path.
