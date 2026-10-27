@@ -2,12 +2,12 @@ import { PLAZA_CENTER, type Building, type BuildingShape } from '@/data/building
 
 /** How far in front of a building's centre its door sits, toward the plaza. */
 const DOOR_DISTANCE: Record<BuildingShape, number> = {
-  gate: 1.2,
-  hall: 3,
-  arena: 3.3,
-  house: 2.6,
-  hub: 2.9,
-  office: 2.7,
+  gate: 1.4,
+  hall: 3.2,
+  arena: 3.5,
+  house: 2.8,
+  hub: 3.0,
+  office: 2.8,
 }
 
 /** Rotation that turns a building's front (+z) to face the plaza. */
@@ -22,7 +22,20 @@ export function doorPoint(b: Building): [number, number] {
   return [b.position[0] + Math.sin(angle) * d, b.position[1] + Math.cos(angle) * d]
 }
 
-/** Height (world units) at which a building's floating name label sits. */
+/** Height (world units) at which a building's floating name label sits above its roof. */
 export function labelHeight(shape: BuildingShape) {
-  return shape === 'hall' ? 6.2 : shape === 'gate' ? 4.4 : 4.6
+  switch (shape) {
+    case 'hall':
+      return 9.4
+    case 'house':
+      return 7.2
+    case 'hub':
+      return 7.0
+    case 'office':
+      return 6.2
+    case 'gate':
+      return 5.2
+    case 'arena':
+      return 4.6
+  }
 }

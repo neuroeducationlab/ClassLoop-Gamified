@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Sky, Environment, Lightformer } from '@react-three/drei'
+import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, type Group, type Mesh } from 'three'
 import { Shirt, LayoutGrid } from 'lucide-react'
 import { useApp, type Avatar } from '@/context/AppContext'
 import { BUILDINGS, CAMPUS_PALETTE, PLAZA_CENTER, type Building as BuildingConfig, type BuildingId } from '@/data/buildings'
 import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
+import ContextBuildings from './components/ContextBuildings'
 import { doorPoint, facingPlaza, labelHeight } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
 
@@ -32,7 +35,6 @@ function lookTarget(x: number, z: number, out: Vector3) {
 /**
  * Where the avatar stood when it last went into a building, so coming back
  * out of an interior drops you at that door rather than back at the gate.
- * Module scope on purpose: it is view memory, not app state.
  */
 let lastSpot: [number, number] | null = null
 /** The intro swoop plays once per visit, not every time you leave a building. */
@@ -54,6 +56,15 @@ export default function Campus3D() {
     if (el) labels.current.set(key, el)
     else labels.current.delete(key)
   }
+
+  // Detect mobile device to disable postprocessing for 60fps performance
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    return (
+      window.innerWidth < 768 ||
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    )
+  }, [])
 
   // the campus is a student surface — mirror StudentShell so direct URLs agree
   useEffect(() => setRole('student'), [setRole])
@@ -84,24 +95,80 @@ export default function Campus3D() {
   const progress = studentXP % 100
 
   return (
-    <div className="fixed inset-0 select-none font-campus" style={{ backgroundColor: CAMPUS_PALETTE.sky }}>
-      {/* flat = no tone mapping, so the brief's palette renders as the actual hex colours */}
-      <Canvas flat shadows="percentage" dpr={[1, 1.75]} camera={{ fov: 45, position: [0, 20, 22] }}>
-        <color attach="background" args={[CAMPUS_PALETTE.sky]} />
-        <fog attach="fog" args={[CAMPUS_PALETTE.sky, 40, 70]} />
-        <hemisphereLight args={['#FFF1DC', '#6E7F4A', 1.6]} />
-        <directionalLight
-          position={[12, 20, 10]}
-          intensity={1.5}
-          color="#FFD9A0"
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-          shadow-camera-left={-26}
-          shadow-camera-right={26}
-          shadow-camera-top={26}
-          shadow-camera-bottom={-26}
+    <div className="fixed inset-0 select-none font-campus" style={{ backgroundColor: '#D4B896' }}>
+      <Canvas
+        shadows="percentage"
+        dpr={isMobile ? [1, 1.25] : [1, 1.75]}
+        camera={{ fov: 45, position: [0, 20, 22] }}
+      >
+        {/* Golden Hour Atmosphere & Sky */}
+        <Sky
+          distance={450000}
+          sunPosition={[18, 8, 22]}
+          inclination={0.2}
+          azimuth={0.25}
+          turbidity={8}
+          rayleigh={2.4}
+          mieCoefficient={0.005}
+          mieDirectionalG={0.8}
         />
+        <fog attach="fog" args={['#ECCDA5', 48, 90]} />
+
+        {/* Ambient & Golden Hour Directional Sunlight */}
+        <hemisphereLight args={['#FFF2DF', '#4C586B', 1.2]} />
+        <directionalLight
+          position={[18, 22, 14]}
+          intensity={2.2}
+          color="#FFD6A4"
+          castShadow
+          shadow-mapSize={isMobile ? [512, 512] : [1024, 1024]}
+          shadow-camera-left={-28}
+          shadow-camera-right={28}
+          shadow-camera-top={28}
+          shadow-camera-bottom={-28}
+        />
+
+        {/* Environment with procedural Lightformers for PBR glass & metal reflections */}
+        <Environment resolution={256}>
+          <Lightformer
+            form="rect"
+            intensity={3.5}
+            color="#FFA84D"
+            position={[25, 12, 22]}
+            scale={[28, 14, 1]}
+            target={[0, 0, 0]}
+          />
+          <Lightformer
+            form="rect"
+            intensity={1.2}
+            color="#6B95D1"
+            position={[-25, 18, -22]}
+            scale={[32, 16, 1]}
+          />
+          <Lightformer
+            form="ring"
+            intensity={0.9}
+            color="#FFF4D6"
+            position={[0, 26, 0]}
+            scale={[30, 30, 1]}
+          />
+        </Environment>
+
         <CampusScene me={me} hovered={hovered} onHover={setHovered} onArrive={arrive} labels={labels} />
+
+        {/* Postprocessing effects disabled on mobile for buttery smooth 60fps */}
+        {!isMobile && (
+          <EffectComposer multisampling={4}>
+            <Bloom
+              luminanceThreshold={0.72}
+              luminanceSmoothing={0.3}
+              intensity={0.85}
+              mipmapBlur
+            />
+            <N8AO aoRadius={1.5} distanceFalloff={0.2} intensity={1.8} />
+            <Vignette offset={0.28} darkness={0.62} />
+          </EffectComposer>
+        )}
       </Canvas>
 
       {/*
@@ -143,8 +210,8 @@ export default function Campus3D() {
 
       {/* HUD */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-black/30 px-4 py-3 text-white backdrop-blur">
-          <span className="h-9 w-9 rounded-full border-2 border-white" style={{ backgroundColor: me.color }} />
+        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-black/40 px-4 py-3 text-white backdrop-blur-md border border-white/10 shadow-lg">
+          <span className="h-9 w-9 rounded-full border-2 border-white shadow" style={{ backgroundColor: me.color }} />
           <div className="min-w-[9rem]">
             <p className="text-sm font-bold leading-tight">{me.nickname}</p>
             <p className="text-[11px] text-white/80">
@@ -158,13 +225,13 @@ export default function Campus3D() {
         <div className="pointer-events-auto flex gap-2">
           <Link
             to="/create"
-            className="flex items-center gap-1.5 rounded-xl bg-black/30 px-3 py-2 text-xs font-semibold text-white backdrop-blur hover:bg-black/40"
+            className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
           >
             <Shirt className="h-4 w-4" /> แต่งตัว
           </Link>
           <Link
             to="/student"
-            className="flex items-center gap-1.5 rounded-xl bg-black/30 px-3 py-2 text-xs font-semibold text-white backdrop-blur hover:bg-black/40"
+            className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
           >
             <LayoutGrid className="h-4 w-4" /> หน้าเดิม
           </Link>
@@ -175,7 +242,7 @@ export default function Campus3D() {
         {toast && (
           <p className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-lg animate-fadeIn">{toast}</p>
         )}
-        <p className="rounded-full bg-black/30 px-4 py-1.5 text-xs text-white/90 backdrop-blur">
+        <p className="rounded-full bg-black/40 px-4 py-1.5 text-xs text-white/95 backdrop-blur-md border border-white/10 shadow">
           คลิกพื้นเพื่อเดิน · คลิกอาคารเพื่อเข้า — Click to walk, click a building to enter
         </p>
       </div>
@@ -193,7 +260,7 @@ export default function Campus3D() {
   )
 }
 
-/* ------------------------------------------------------------------ scene -- */
+/* ---------------------------------------------------------------- scene -- */
 
 type SceneProps = {
   me: Avatar
@@ -272,6 +339,7 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
     el.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`
     el.style.visibility = proj.z < 1 ? 'visible' : 'hidden'
   }
+
   useFrame((state, dt) => {
     const a = avatarRef.current
     if (!a) return
@@ -335,6 +403,11 @@ function CampusScene({ me, hovered, onHover, onArrive, labels }: SceneProps) {
   return (
     <>
       <Ground onWalk={walkGround} />
+
+      {/* Context towers for real SPU campus buildings 2, 3, 4, 7, 8, 10, 12 */}
+      <ContextBuildings />
+
+      {/* The 6 interactive demo buildings */}
       {BUILDINGS.map((b) => (
         <Building
           key={b.id}

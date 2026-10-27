@@ -67,7 +67,7 @@ Demo logins (also printed on the login screen): `student@spu.ac.th` / `spu1234`,
 The user picked a realistic, textured look in a **modern-university urban style, no trees**. It must read as the real SPU
 (MRT, real layout), be grand, have "wow" effects, and **work on mobile**. Ship each item on its own: commit, push, tick it here.
 
-- [ ] 1. Urban realism: remove trees; procedural CanvasTextures (paving, asphalt, glass window grid); buildings
+- [x] 1. Urban realism: remove trees; procedural CanvasTextures (paving, asphalt, glass window grid); buildings
       become modern glass/concrete towers with PBR (`meshPhysicalMaterial`) plus accent-colour fins/signs; add context
       towers for SPU bldgs 2/3/4/7/8/10/12; lit MRT train + Exit 2 canopy; roads, lamps, parked cars,
       reflective pond; drei `Sky` (golden hour) + `Environment` from `Lightformer`s; `@react-three/postprocessing`
