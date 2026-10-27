@@ -42,6 +42,8 @@ export type Station = {
   at: [x: number, z: number]
   roles: Role[]
   content: ContentKey
+  /** Size of the prop (1 = full size), e.g. a wall of smaller monitors. */
+  scale?: number
 }
 
 /** Set dressing that makes the room read as this particular building. */
@@ -286,7 +288,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
     ],
   },
-  // the staff room: every teacher command, one screen each along the back wall
+  // the staff room: every teacher command, a wall of six monitors along the back
   lounge: {
     dressing: 'staff',
     size: [15, 11],
@@ -297,9 +299,10 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       label: c.label,
       does: c.does,
       kind: 'screen' as const,
-      at: [-5.5 + i * 2.2, -4.7] as [number, number],
+      at: [-5.9 + i * 2.36, -4.9] as [number, number],
       roles: teacher,
       content: c.content,
+      scale: 0.58,
     })),
   },
 }
