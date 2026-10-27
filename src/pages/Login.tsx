@@ -78,13 +78,19 @@ function BirdEyeCameraRig({ isDiving, onLanded }: { isDiving: boolean; onLanded:
       return
     }
 
-    // Iconic SPU Blueprint Isometric Angle (matches official SPU map & 4 Times-of-Day Carousel)
+    // High 3D Game Camera: Dynamic cinematic sweeping arc around SPU campus
     const time = state.clock.elapsedTime
-    const heroX = -15.5 + Math.sin(time * 0.22) * 1.6
-    const heroY = 22.0 + Math.cos(time * 0.18) * 0.9
-    const heroZ = 26.5 + Math.cos(time * 0.22) * 1.4
-    camera.position.set(heroX, heroY, heroZ)
-    camera.lookAt(0, 1.8, -0.5)
+    // Sweep gracefully through the iconic diagonal blueprint angle with rich parallax
+    const sweepAngle = -0.72 + Math.sin(time * 0.12) * 0.38
+    const radius = 36.0 + Math.cos(time * 0.15) * 4.0
+    const altitude = 25.0 + Math.sin(time * 0.18) * 3.5
+
+    const camX = Math.sin(sweepAngle) * radius
+    const camZ = Math.cos(sweepAngle) * radius
+    const camY = altitude
+
+    camera.position.set(camX, camY, camZ)
+    camera.lookAt(target)
   })
 
   return null
@@ -102,7 +108,7 @@ export default function Login() {
   const [isDiving, setIsDiving] = useState(false)
   const [lowPower] = useState(isLowPower)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
-  const [viewMode, setViewMode] = useState<'cinematic' | '3d'>('cinematic')
+  const [viewMode, setViewMode] = useState<'3d' | 'cinematic'>('3d')
   const targetDestination = useRef<string>('/campus')
 
   const cycleTimeOfDay = () => {
@@ -115,7 +121,7 @@ export default function Login() {
   }
 
   const handleLanded = useCallback(() => {
-    navigate(targetDestination.current)
+    navigate(targetDestination.current, { state: { arrival: true } })
   }, [navigate])
 
   // Handle 4DX swoop landing completion for cinematic image mode

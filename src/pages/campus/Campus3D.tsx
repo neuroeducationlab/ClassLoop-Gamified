@@ -41,7 +41,7 @@ const GATE_SPAWN = doorPoint(GATE)
 /** Opening shot: start high over the whole campus, swoop down to avatar. */
 const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
 const INTRO_SECONDS = 2.4
-const ENTER_DELAY_MS = 550
+const ENTER_DELAY_MS = 650
 
 // ── Phase 6 Step 3 — Arrival animation ─────────────────────────────────────
 const ARRIVAL_FROM = new Vector3(-24, 26, -10)
@@ -118,9 +118,9 @@ export default function Campus3D() {
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
   const [teacherMenuOpen, setTeacherMenuOpen] = useState<boolean>(true)
 
-  // ── Language & view mode toggles (default English, default First-Person) ───
+  // ── Language & view mode toggles (default English, default Third-Person 3D RPG) ───
   const [lang, setLang] = useState<Lang>('en')
-  const [fpMode, setFpMode] = useState<boolean>(true)
+  const [fpMode, setFpMode] = useState<boolean>(false)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
 
   const cycleTimeOfDay = () => {
@@ -132,7 +132,7 @@ export default function Campus3D() {
     })
   }
 
-  const fpModeRef = useRef<boolean>(true)
+  const fpModeRef = useRef<boolean>(false)
   useEffect(() => {
     fpModeRef.current = fpMode
   }, [fpMode])
@@ -245,6 +245,7 @@ export default function Campus3D() {
           walkGroundRef={walkGroundRef}
           onNearDoor={setNearDoor}
           fpModeRef={fpModeRef}
+          entering={entering}
         />
 
         {!isMobile && (
@@ -589,6 +590,7 @@ type SceneProps = {
   walkGroundRef: RefObject<(x: number, z: number) => void>
   onNearDoor: (b: BuildingConfig | null) => void
   fpModeRef: RefObject<boolean>
+  entering: BuildingConfig | null
 }
 
 function passesNear(a: [number, number], b: [number, number], p: [number, number], r: number) {
@@ -612,6 +614,7 @@ function CampusScene({
   walkGroundRef,
   onNearDoor,
   fpModeRef,
+  entering,
 }: SceneProps) {
   const { camera, size, scene } = useThree()
   const avatarRef = useRef<Group>(null)
@@ -952,6 +955,17 @@ function CampusScene({
     }
 
     // ── Camera ──────────────────────────────────────────────────────
+    if (entering) {
+      // 3D Door Swoop Dive: Camera glides gracefully toward building entrance
+      const door = doorPoint(entering)
+      const targetCamPos = new Vector3(door[0] + 0.6, 2.0, door[1] + 2.8)
+      const targetLook = new Vector3(door[0], 1.8, door[1])
+      camera.position.lerp(targetCamPos, Math.min(1, dt * 5))
+      camera.lookAt(targetLook)
+      for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+      return
+    }
+
     if (isFP) {
       // First-person: camera is at eye level, looking in mouse heading direction
       camera.position.set(a.position.x, a.position.y + FP_EYE_HEIGHT, a.position.z)
@@ -970,8 +984,11 @@ function CampusScene({
         camera.lookAt(lookAt)
       } else {
         const kk = 1 - Math.exp(-3 * dt)
-        camera.position.x += (look.x + CAMERA_OFFSET.x - camera.position.x) * kk
-        camera.position.y += (look.y + CAMERA_OFFSET.y - camera.position.y) * kk
+        const t = state.clock.elapsedTime
+        const floatY = Math.sin(t * 1.5) * 0.14
+        const floatX = Math.cos(t * 0.8) * 0.1
+        camera.position.x += (look.x + CAMERA_OFFSET.x + floatX - camera.position.x) * kk
+        camera.position.y += (look.y + CAMERA_OFFSET.y + floatY - camera.position.y) * kk
         camera.position.z += (look.z + CAMERA_OFFSET.z - camera.position.z) * kk
         camera.lookAt(look)
       }

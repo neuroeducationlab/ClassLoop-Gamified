@@ -23,6 +23,7 @@ export default function Building({ building, hovered, onHover, onSelect }: Props
     if (!g) return
     const s = 1 + glow.current * 0.04
     g.scale.set(s, s, s)
+    g.position.y = glow.current * 0.35
     g.traverse((o) => {
       const mat = (o as { material?: { emissive?: Color; emissiveIntensity?: number } }).material
       if (mat?.emissive && o.userData.glow) {
