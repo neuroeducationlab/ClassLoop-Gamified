@@ -28,6 +28,7 @@ import Ground, { CAMPUS_RADIUS } from './components/Ground'
 import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
 import TouchJoystick from './components/TouchJoystick'
+import TeacherCommandDeck from './components/TeacherCommandDeck'
 import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './components/SPUUniverse'
 import LeaderboardWidget from './components/LeaderboardWidget'
 import MissionTrackerWidget from './components/MissionTrackerWidget'
@@ -165,7 +166,6 @@ export default function Campus3D() {
   const [hovered, setHovered] = useState<BuildingId | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [entering, setEntering] = useState<BuildingConfig | null>(null)
-  const [teacherMenuOpen, setTeacherMenuOpen] = useState<boolean>(true)
 
   // ── Student Gamification Modals & Widgets State ───────────────────────────
   const [showBrainGym, setShowBrainGym] = useState<boolean>(false)
@@ -560,82 +560,8 @@ export default function Campus3D() {
         </div>
       </div>
 
-      {/* ── Teacher Quick-Access Navigation Bar (Easy for instructors, 0 confusion) ── */}
-      {isTeacher && !isArriving && (
-        <div className="pointer-events-auto absolute top-20 left-4 z-20 w-72 rounded-2xl border border-white/20 bg-black/70 p-3.5 text-white backdrop-blur-xl shadow-2xl transition-all">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2.5">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm">⚡</span>
-              <p className="text-xs font-bold">{t.quickNav}</p>
-            </div>
-            <button
-              onClick={() => setTeacherMenuOpen(!teacherMenuOpen)}
-              className="text-[11px] text-white/60 hover:text-white transition-colors"
-            >
-              {teacherMenuOpen ? t.collapse : t.expand}
-            </button>
-          </div>
-
-          {teacherMenuOpen && (
-            <div className="space-y-1.5">
-              <button
-                onClick={() => {
-                  const b = BUILDINGS.find((bld) => bld.id === 'data')
-                  if (b) lastSpot = doorPoint(b)
-                  navigate('/campus/data')
-                }}
-                className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="text-base">📊</span>
-                  <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.dataNav}</p>
-                    <p className="text-[10px] text-white/60">{t.dataSub}</p>
-                  </div>
-                </span>
-                <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  const b = BUILDINGS.find((bld) => bld.id === 'plan')
-                  if (b) lastSpot = doorPoint(b)
-                  navigate('/campus/plan')
-                }}
-                className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="text-base">📝</span>
-                  <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.planNav}</p>
-                    <p className="text-[10px] text-white/60">{t.planSub}</p>
-                  </div>
-                </span>
-                <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  const b = BUILDINGS.find((bld) => bld.id === 'dorm')
-                  if (b) lastSpot = doorPoint(b)
-                  navigate('/campus/dorm')
-                }}
-                className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20 transition-all text-left group cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="text-base">💬</span>
-                  <div>
-                    <p className="font-bold text-white group-hover:text-pink-300 transition-colors">{t.dormNav}</p>
-                    <p className="text-[10px] text-white/60">{t.dormSub}</p>
-                  </div>
-                </span>
-                <span className="text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all text-xs">→</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* ── Teacher Command Deck: RPG command box with hologram previews; hover lights up the building ── */}
+      {isTeacher && !isArriving && <TeacherCommandDeck onHoverBuilding={setHovered} />}
 
       {/* ── Bottom HUD ── */}
       {/* on phones the joystick + minimap fill the bottom corners, so the prompt sits above them */}

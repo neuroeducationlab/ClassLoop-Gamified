@@ -39,24 +39,36 @@ Demo logins (also printed on the login screen): `student@spu.ac.th` / `spu1234`,
 | `/login` | existing role select + login (student → `/create`, teacher → `/map`) |
 | `/create` | character creator (colour, hat, nickname, 3D preview) |
 | `/campus` | student 3D campus (click to walk, click building to enter) |
-| `/campus/:id` | 2D interior: `entry` `faculty` `arena` `dorm` `data` `plan` |
+| `/` | landing: orbit → Enter Campus → cloud layer + role cards → dive through the clouds → `/campus` (first person) |
+| `/campus/:id` | 3D room with stations (`?station=<id>` opens one): `entry` `faculty` `library` `arena` `union` `dorm` `plan` `data` `lounge` |
 | `/map` | teacher 2D top-down map |
 | `/student/*`, `/teacher/*` | original app, untouched |
 
 ## File map
 
-- `src/data/buildings.ts`: the 6 buildings (positions traced from the SPU map), palette, MRT line, car parks, pond.
+- `src/data/buildings.ts`: the 9 buildings (positions traced from the SPU map), palette, avenues, MRT line, car parks, pond.
+- `src/data/interiors.ts`: what is inside each building: room size + dressing, and its stations (kind, position, roles,
+  which feature they open). `src/data/teacherCommands.ts`: the six teacher commands (Command Deck + Staff Lounge).
 - `src/pages/campus/Campus3D.tsx`: scene, camera follow, intro swoop, door transition, HUD, projected labels.
 - `src/pages/campus/components/`: `Building.tsx` (shapes + hover glow), `Ground.tsx` (paths, viaduct + train, car parks, pond), `Avatar3D.tsx`.
 - `src/pages/campus/geometry.ts`: `doorPoint`, `facingPlaza`, `labelHeight`.
-- `src/pages/campus/BuildingInterior.tsx` + `interiors/*`: 2D rooms; data/plan reuse the existing Dashboard/Studio.
+- `src/pages/campus/BuildingInterior.tsx`: hosts a building's 3D room, its station menu, the lock card, the hologram panel.
+- `src/pages/campus/interior/`: `InteriorScene.tsx` (room shell, station props, camera glides, projected name tags),
+  `RoomDressing.tsx` (per-room set pieces), `HoloPanel.tsx`, `contentRegistry.tsx` (feature key → lazy component).
+- `src/pages/campus/interiors/*`: the campus room contents (GateRoom, FacultyHall, Arena, HeartDorm) shown on panels.
+- `src/pages/campus/components/CommandMenu.tsx` (RPG command box), `HoloPreview.tsx` (live shrunken page preview),
+  `TeacherCommandDeck.tsx` (the teacher's menu on the campus).
 - `src/pages/campus/CampusMap2D.tsx`: teacher map (SVG).
 - `src/pages/create/CharacterCreate.tsx`.
 
 ## Decisions already made (don't undo)
 
-- **No drei `<Html>`** for labels: it dropped a label at random under React 19, in production too. Labels are plain
-  DOM, positioned each frame by projecting 3D points (`place()` in `Campus3D.tsx`).
+- **No drei `<Html>`** anywhere: it dropped a label at random under React 19, and (28 Oct) the NPC nametags' `<Html>`
+  threw "Failed to execute 'removeChild'" every time you left the campus. Labels are plain DOM projected each frame
+  (`place()` in `Campus3D.tsx`, `LabelProjector` in `InteriorScene.tsx`) or canvas textures on a drei `<Billboard>`.
+- The campus starts in **first person** (the user's choice, 28 Oct). The landing dive ends exactly on that pose, so
+  a third-person default brings back the "lands, then spins again" double move.
+- Never edit `src/pages/student/*` or `src/pages/teacher/*`; rooms and previews render those pages as they are.
 - No model, texture or HDR files. Everything is procedural so nothing can 404 on stage.
 - three.js is lazy-loaded (campus routes only); the original app's bundle is unaffected.
 - Leaderboard classmates' XP is deterministic and capped near the demo student's XP, so the rank climbs on camera.
@@ -86,13 +98,38 @@ The user picked a realistic, textured look in a **modern-university urban style,
 - [x] 7. Extra wow: holographic SPU logo, light-trail cars, 4-time-of-day sky (morning, midday, sunset, night stars) + thin drifting clouds.
 - [x] 8. SPU Universe Login & Art: 3D bird's-eye login screen with 4DX swoop landing, academic crosshair-free camera, and high-res SPU Universe diorama backgrounds (`public/spu/{morning,midday,sunset,night}.jpg`).
 
+## Phase 7: inside matches outside (28 Oct, user-approved)
+
+Every feature has a home building. Walking in lands in a 3D room in that building's colours; stations open the
+feature on a hologram panel. Teachers mostly don't walk: the **Command Deck** (top-left on the campus) lists every
+tool as RPG text boxes; hovering one projects a live preview of the real page and lights up its building.
+
+| Building | Student stations | Teacher stations |
+|---|---|---|
+| Gate · MRT Exit 2 | Today's plan, wardrobe | (locked) |
+| Library (new) | Review desk, syllabus shelf | (locked) |
+| Faculty Hall | Lecture screen, quest board | Live class console |
+| Arena | Battle screen (Brain Gym, Boss Rush, leaderboard), challenge kiosk | (locked) |
+| Student Union (new) | Community board, profile kiosk | (locked) |
+| Wellness Lounge (dorm) | Anonymous corner | Anonymous corner, student voice |
+| Planning Studio | (locked) | Lesson design desk, exam builder |
+| Data Center | (locked) | Analytics wall, roster files |
+| Staff Lounge (new) | (locked: "Staff only") | All six commands as a wall of monitors |
+
+Work split: **Claude** owns `data/interiors.ts`, `data/teacherCommands.ts`, `interior/*`, `BuildingInterior.tsx`,
+the Command Deck. **Antigravity** owns exteriors (`Building.tsx`: proper shapes for Library / Union / Staff Lounge,
+which reuse `hall` / `hub` / `office` for now), NPCs, and the games inside room contents (`interiors/*`). To split a
+room's content into more stations, export the section as its own component, add a `ContentKey` in
+`contentRegistry.tsx` and a station in `interiors.ts`.
+
 ## Verify before each push
 
-`npm run build && npm run lint`, then click through: student login → create → campus → enter faculty/arena/dorm →
-back; teacher login → map → dorm/data/plan. Also check `/student` and `/teacher/dashboard` still work.
+`npm run build && npm run lint`, then click through: landing → Student → campus → enter each building → open a
+station → Esc → back; landing → Faculty → hover every Command Deck item → open one; `/campus/lounge` as a student shows
+the lock. Watch the console: the target is **0 page errors**. Also check `/student` and `/teacher/dashboard` still work.
 A headless browser renders without a GPU (~11 fps), so check **60 fps on the real filming laptop**.
 
 ## Deploy
 
-Not set up yet. In Vercel: Add New → Project → `ClassLoop-Gamified` → Deploy (`vercel.json` already handles SPA routes).
-Production builds `main` (the untouched copy); the campus is the **preview** deployment of `feat/3d-campus`.
+Vercel project `classloop-gamified` builds **`main` → https://classloop-gamified.vercel.app** (add `?hq` on the
+filming laptop). Several agents push here (Antigravity, Claude sessions): always fetch + merge first, never force.

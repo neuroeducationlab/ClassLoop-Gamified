@@ -12,6 +12,14 @@ const isTeacherRoom = (b: Building) => b.teacherSees !== null
  * calm top-down map. Teachers are caretakers, not players — no walking, just
  * the three rooms they use, each with a live number and one big click target.
  */
+const TEACHER_ROOM_SUBS: Record<string, { th: string; en: string }> = {
+  faculty: { th: 'สอนสดในห้องเรียน & ควิซสด', en: 'Live class & real-time console' },
+  plan: { th: 'ออกแบบแผนการสอน & กิจกรรม AI', en: 'Lesson planning & activities' },
+  data: { th: 'สถิติผู้เรียน & Gap Analysis', en: 'Student analytics & gap analysis' },
+  dorm: { th: 'เสียงสะท้อนนักศึกษา (นิรนาม)', en: 'Student voice & anonymous Q&A' },
+  lounge: { th: 'ศูนย์รวมเครื่องมือครูทั้งหมด', en: 'Every teaching tool & monitor wall' },
+}
+
 export default function CampusMap2D() {
   const { setRole, teacherName, posts, topics, gapAnalysis, students, lang } = useApp()
   const navigate = useNavigate()
@@ -91,7 +99,7 @@ export default function CampusMap2D() {
               <span className="min-w-0 flex-1">
                 <span className="block font-bold text-ink">{b.name[lang]}</span>
                 <span className="block text-xs text-grey-600">
-                  {lang === 'th' ? b.teacherSees : (b.id === 'data' ? 'Student Analytics & Gap' : b.id === 'plan' ? 'Lesson Plan & Activities' : 'Student Voice & Q&A')}
+                  {TEACHER_ROOM_SUBS[b.id]?.[lang] ?? (lang === 'th' ? b.teacherSees : 'Academic Tool')}
                 </span>
                 {stats[b.id] && <span className="mt-1 block text-xs font-semibold text-pink-600">{stats[b.id]}</span>}
               </span>

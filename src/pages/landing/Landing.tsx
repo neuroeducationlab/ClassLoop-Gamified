@@ -11,6 +11,7 @@ import Building from '@/pages/campus/components/Building'
 import ContextBuildings from '@/pages/campus/components/ContextBuildings'
 import Ground from '@/pages/campus/components/Ground'
 import { HolographicSPULogo, MovingTraffic } from '@/pages/campus/components/SPUUniverse'
+import { smootherstep, smoothstep } from '@/pages/campus/ease'
 import { landingSpot } from '@/pages/campus/geometry'
 import { isLowPower } from '@/pages/campus/lowPower'
 import CloudLayer, { CLOUD_BOTTOM, CLOUD_TOP } from './CloudLayer'
@@ -48,9 +49,6 @@ const noop = () => {}
 /** orbit → (Start) approach half-way → choose a role → dive into the campus. */
 type Phase = 'orbit' | 'approach' | 'choose' | 'dive'
 
-const smoothstep = (t: number) => t * t * (3 - 2 * t)
-/** Zero velocity *and* acceleration at both ends: no jolt when a move starts or stops. */
-const smootherstep = (t: number) => t * t * t * (t * (t * 6 - 15) + 10)
 
 /** easeOutBack: overshoots a little, so towers "land" with a bounce. */
 function easeOutBack(t: number) {
