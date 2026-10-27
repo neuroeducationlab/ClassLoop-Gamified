@@ -1,7 +1,7 @@
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
-import type { Group } from 'three'
+import { useMemo, useRef } from 'react'
+import { useFrame, type ThreeEvent } from '@react-three/fiber'
+import { Billboard } from '@react-three/drei'
+import { CanvasTexture, SRGBColorSpace, type Group } from 'three'
 import Avatar3D from './Avatar3D'
 import type { AvatarAura, AvatarHat, AvatarOutfit } from '@/context/AppContext'
 
@@ -260,6 +260,13 @@ function SingleNPC({
   onTalk: (npc: CampusNPC) => void
 }) {
   const groupRef = useRef<Group>(null)
+  const tag = useMemo(() => nametagTexture(npc, lang), [npc, lang])
+  const talk = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation()
+    onTalk(npc)
+  }
+  const pointer = () => void (document.body.style.cursor = 'pointer')
+  const unpointer = () => void (document.body.style.cursor = '')
 
   useFrame((state) => {
     if (!groupRef.current) return
@@ -281,39 +288,75 @@ function SingleNPC({
         aura={npc.aura}
       />
 
-      {/* Floating Hologram Nametag & Quest Indicator */}
-      <Html
-        position={[0, 2.15, 0]}
-        center
-        distanceFactor={22}
-        className="pointer-events-auto select-none"
-      >
-        <button
-          onClick={() => onTalk(npc)}
-          className="group flex flex-col items-center cursor-pointer transition-all hover:scale-110 active:scale-95"
-        >
-          {/* Animated Quest Icon Badge */}
-          <span className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-400/60 bg-amber-500/30 text-sm shadow-[0_0_12px_rgba(251,191,36,0.5)] backdrop-blur-md animate-bounce">
-            {npc.questIcon}
-          </span>
-
-          {/* Holographic Nametag Pill */}
-          <div className="mt-1 flex items-center gap-1.5 rounded-full border border-white/20 bg-black/75 px-3 py-0.5 text-white backdrop-blur-md shadow-lg">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] font-extrabold tracking-wide text-white group-hover:text-pink-300 transition-colors">
-              {lang === 'th' ? npc.name : npc.nameEn}
-            </span>
-            <span className="text-[9px] font-semibold text-white/60">
-              · {lang === 'th' ? npc.faculty : npc.facultyEn}
-            </span>
-          </div>
-
-          {/* Quick interaction hint */}
-          <span className="mt-0.5 text-[9px] font-bold text-amber-300 drop-shadow">
-            [E] {lang === 'th' ? 'คุย' : 'Talk'}
-          </span>
-        </button>
-      </Html>
+      {/* Floating hologram nametag & quest badge. Drawn on a canvas billboard, not drei <Html>:
+          Html's separate React root throws "removeChild" errors under React 19 when the campus unmounts (see HANDOFF). */}
+      <Billboard position={[0, 2.45, 0]}>
+        <mesh onClick={talk} onPointerOver={pointer} onPointerOut={unpointer}>
+          <planeGeometry args={[2.4, 1.05]} />
+          <meshBasicMaterial map={tag} transparent depthWrite={false} toneMapped={false} />
+        </mesh>
+      </Billboard>
     </group>
   )
+}
+
+const tagCache = new Map<string, CanvasTexture>()
+
+/** The NPC's quest badge, name pill and "[E] Talk" hint, drawn once per language. */
+function nametagTexture(npc: CampusNPC, lang: 'th' | 'en') {
+  const key = `${npc.id}-${lang}`
+  const hit = tagCache.get(key)
+  if (hit) return hit
+  const c = document.createElement('canvas')
+  c.width = 512
+  c.height = 224
+  const g = c.getContext('2d')!
+  g.textAlign = 'center'
+  g.textBaseline = 'middle'
+  // quest badge
+  g.fillStyle = 'rgba(245,158,11,0.35)'
+  g.strokeStyle = 'rgba(251,191,36,0.85)'
+  g.lineWidth = 4
+  g.beginPath()
+  g.arc(256, 40, 32, 0, Math.PI * 2)
+  g.fill()
+  g.stroke()
+  g.font = '34px sans-serif'
+  g.fillText(npc.questIcon, 256, 42)
+  // name pill
+  const name = lang === 'th' ? npc.name : npc.nameEn
+  const faculty = lang === 'th' ? npc.faculty : npc.facultyEn
+  g.font = 'bold 34px sans-serif'
+  const nameW = g.measureText(name).width
+  g.font = '600 24px sans-serif'
+  const facW = g.measureText(` · ${faculty}`).width
+  const pillW = Math.min(500, nameW + facW + 80)
+  const x0 = 256 - pillW / 2
+  g.fillStyle = 'rgba(0,0,0,0.78)'
+  g.strokeStyle = 'rgba(255,255,255,0.25)'
+  g.lineWidth = 2
+  g.beginPath()
+  g.roundRect(x0, 88, pillW, 60, 30)
+  g.fill()
+  g.stroke()
+  g.fillStyle = '#34D399'
+  g.beginPath()
+  g.arc(x0 + 30, 118, 7, 0, Math.PI * 2)
+  g.fill()
+  g.textAlign = 'left'
+  g.fillStyle = '#FFFFFF'
+  g.font = 'bold 34px sans-serif'
+  g.fillText(name, x0 + 48, 119, 300)
+  g.fillStyle = 'rgba(255,255,255,0.6)'
+  g.font = '600 24px sans-serif'
+  g.fillText(` · ${faculty}`, x0 + 48 + Math.min(nameW, 300), 120, 180)
+  // hint
+  g.textAlign = 'center'
+  g.fillStyle = '#FCD34D'
+  g.font = 'bold 24px sans-serif'
+  g.fillText(`[E] ${lang === 'th' ? 'คุย' : 'Talk'}`, 256, 182)
+  const tex = new CanvasTexture(c)
+  tex.colorSpace = SRGBColorSpace
+  tagCache.set(key, tex)
+  return tex
 }
