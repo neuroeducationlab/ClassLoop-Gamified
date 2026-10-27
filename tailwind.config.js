@@ -8,6 +8,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Noto Sans Thai', 'Inter', 'sans-serif'],
+        // 3D campus + its rooms only (CAMPUS_BRIEF.md): Fredoka for Latin, Sarabun for Thai
+        campus: ['Fredoka', 'Sarabun', 'sans-serif'],
       },
       colors: {
         // Brand stops from the spec (50/300/500/600 pink, 300/600 grey);

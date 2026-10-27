@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppNavigationBridge, AppProvider } from '@/context/AppContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -18,6 +19,14 @@ import Profile from '@/pages/student/Profile'
 import Review from '@/pages/student/Review'
 import Assignments from '@/pages/student/Assignments'
 
+// The campus pulls in three.js (~700 kB) — load it only when a student goes there.
+const CharacterCreate = lazy(() => import('@/pages/create/CharacterCreate'))
+const Campus3D = lazy(() => import('@/pages/campus/Campus3D'))
+const BuildingInterior = lazy(() => import('@/pages/campus/BuildingInterior'))
+const CampusMap2D = lazy(() => import('@/pages/campus/CampusMap2D'))
+
+const campusFallback = <div className="min-h-screen bg-[#3A3D7A]" />
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -28,6 +37,13 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/create" element={<Suspense fallback={campusFallback}><CharacterCreate /></Suspense>} />
+            <Route path="/campus" element={<Suspense fallback={campusFallback}><Campus3D /></Suspense>} />
+            <Route path="/map" element={<Suspense fallback={campusFallback}><CampusMap2D /></Suspense>} />
+            <Route
+              path="/campus/:buildingId"
+              element={<Suspense fallback={campusFallback}><BuildingInterior /></Suspense>}
+            />
 
             <Route path="/teacher" element={<TeacherShell />}>
               <Route index element={<Studio />} />
