@@ -220,15 +220,17 @@ export default function Campus3D() {
         <div className="pointer-events-auto flex gap-2">
           <Link
             to="/create"
+            aria-label="แต่งตัว · Edit character"
             className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
           >
-            <Shirt className="h-4 w-4" /> แต่งตัว
+            <Shirt className="h-4 w-4" /> <span className="hidden sm:inline">แต่งตัว</span>
           </Link>
           <Link
             to="/student"
+            aria-label="หน้าเดิม · Classic view"
             className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
           >
-            <LayoutGrid className="h-4 w-4" /> หน้าเดิม
+            <LayoutGrid className="h-4 w-4" /> <span className="hidden sm:inline">หน้าเดิม</span>
           </Link>
         </div>
       </div>
@@ -238,7 +240,7 @@ export default function Campus3D() {
           <p className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-lg animate-fadeIn">{toast}</p>
         )}
         <p className="rounded-full bg-black/40 px-4 py-1.5 text-xs text-white/95 backdrop-blur-md border border-white/10 shadow">
-          คลิกพื้นเพื่อเดิน · คลิกอาคารเพื่อเข้า — Click to walk, click a building to enter
+          คลิกพื้นเพื่อเดิน · คลิกอาคารเพื่อเข้า<span className="hidden sm:inline"> — Click to walk, click a building to enter</span>
         </p>
       </div>
 

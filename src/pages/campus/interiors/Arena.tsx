@@ -64,10 +64,11 @@ export default function Arena() {
 
 function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-grey-300/60 bg-paper p-3 text-center shadow-sm">
+    // glass tile — sits directly on the room's dark gradient, above the white cards
+    <div className="rounded-2xl border border-white/20 bg-white/10 p-3 text-center text-white shadow-lg backdrop-blur">
       <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-pink-100 text-pink-600">{icon}</div>
-      <p className="mt-1.5 text-lg font-extrabold text-ink">{value}</p>
-      <p className="text-[11px] text-grey-600">{label}</p>
+      <p className="mt-1.5 text-lg font-extrabold">{value}</p>
+      <p className="text-[11px] text-white/70">{label}</p>
     </div>
   )
 }

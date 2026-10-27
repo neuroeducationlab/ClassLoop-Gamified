@@ -20,35 +20,55 @@ export default function BuildingInterior() {
   if (!building) return <Navigate to="/campus" replace />
 
   const canEnter = role === 'teacher' ? building.teacherSees !== null : building.studentSees !== null
+  // data/plan embed the existing Dashboard/Studio, which are designed for the light canvas
   const wide = building.id === 'data' || building.id === 'plan'
+  const blurb = role === 'teacher' ? building.teacherSees : building.studentSees
+  const back = () => navigate(role === 'teacher' ? '/map' : '/campus')
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="font-campus text-white" style={{ backgroundColor: building.color }}>
-        <div className={`mx-auto flex items-center gap-3 px-4 py-4 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
+    <div
+      className="min-h-screen bg-canvas"
+      style={
+        wide
+          ? undefined
+          : { background: `linear-gradient(165deg, ${building.color} 0%, #2B2D55 42%, #16182E 100%)` }
+      }
+    >
+      {/* hero band: accent gradient + dot grid, like a modern campus wayfinding sign */}
+      <header
+        className="relative overflow-hidden font-campus text-white"
+        style={wide ? { background: `linear-gradient(120deg, ${building.color}, #2B2D55)` } : undefined}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:18px_18px]" />
+        <div className={`relative mx-auto px-4 pb-6 pt-4 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
           <button
-            onClick={() => navigate(role === 'teacher' ? '/map' : '/campus')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black/15 transition-colors hover:bg-black/25"
+            onClick={back}
+            className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/25"
             aria-label="กลับแคมปัส · Back to campus"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" /> {role === 'teacher' ? 'กลับแผนที่' : 'กลับแคมปัส'}
           </button>
-          <span className="text-4xl" aria-hidden>
-            {building.emoji}
-          </span>
-          <div>
-            <h1 className="text-xl font-bold leading-tight">{building.name.th}</h1>
-            <p className="text-sm opacity-85">{building.name.en}</p>
+          <div className="mt-5 flex items-center gap-4">
+            <span
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-4xl shadow-lg backdrop-blur animate-in zoom-in-75 duration-500"
+              aria-hidden
+            >
+              {building.emoji}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                SPU · {building.spuRef}
+              </p>
+              <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{building.name.th}</h1>
+              <p className="text-sm text-white/80">{building.name.en}</p>
+            </div>
           </div>
+          {blurb && !wide && <p className="mt-3 text-sm text-white/75">{blurb}</p>}
         </div>
       </header>
 
       <main className={`mx-auto animate-page-fade p-4 pb-16 ${wide ? 'max-w-5xl' : 'max-w-2xl font-campus'}`}>
-        {canEnter ? (
-          <Room id={building.id} />
-        ) : (
-          <Locked />
-        )}
+        {canEnter ? <Room id={building.id} /> : <Locked />}
       </main>
     </div>
   )
