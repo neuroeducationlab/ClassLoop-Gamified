@@ -104,7 +104,7 @@ export const BUILDINGS: Building[] = [
     color: '#F25F5C',
     shape: 'gate',
     studentSees: 'login + pick role + character',
-    teacherSees: null,
+    teacherSees: 'campus gateway + settings & role switch',
     position: [-22.0, -1.0],
   },
   {
@@ -134,7 +134,7 @@ export const BUILDINGS: Building[] = [
     color: '#E89BC4',
     shape: 'arena',
     studentSees: 'word/quiz games, leaderboard, points',
-    teacherSees: null,
+    teacherSees: 'leaderboard, class performance & team challenges',
     position: [0, 21.0],
   },
   {
@@ -194,7 +194,7 @@ export const BUILDINGS: Building[] = [
     color: '#5B8DEF',
     shape: 'library',
     studentSees: 'review centre, course syllabus',
-    teacherSees: null,
+    teacherSees: 'course syllabus, review centre & learning objectives',
     position: [-8.0, 11.0],
   },
   {
@@ -209,7 +209,7 @@ export const BUILDINGS: Building[] = [
     color: '#9B6BFF',
     shape: 'union',
     studentSees: 'community board, profile',
-    teacherSees: null,
+    teacherSees: 'student community discussions & achievements',
     position: [8.0, 19.0],
   },
   {

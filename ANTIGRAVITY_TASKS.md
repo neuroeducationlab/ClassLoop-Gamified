@@ -74,4 +74,9 @@ props in the rooms.
   - Added real-time 3D Three.js Hologram Chamber widget displaying rotating polyhedral core, astrolabe rings, and particle emitters dynamically themed to active mystery personas.
   - Implemented full Discord desktop architecture: Server & Channel sidebar on left (`#all-inquiries`, `#urgent-sos`, `#deep-inquiry`, `#creative-spark`, `#oracle-advice`), Discord forum stream in center with search bar and flame upvotes, and online Guild Master & active mystery scholars roster on right.
   - Updated `HoloPanel.tsx` dark glass surface dialog to `max-w-6xl xl:max-w-7xl` so PC screens enjoy proper desktop room ergonomics.
+- **Teacher Command Deck & Full Feature Unlocking**:
+  - Upgraded `TeacherCommandDeck.tsx` into a high-visibility RPG console with a prominent shortcut button to the Original Teacher Dashboard (`/teacher/dashboard`).
+  - Vertically stacked, scrollable command cards with real-time actionable badges ("เห็นสิ่งที่ต้องทำ": e.g., "⚠️ 5 คนยังไม่ส่งงาน", "✨ สัปดาห์ที่ 2: Hofstede", "🟢 พร้อมเปิดคลาส").
+  - Hovering any command smoothly triggers the high-definition `HoloPreview` projecting live snapshots of all web app features (Studio, Dashboard, Exams, Live, Roster, Community, Lounge, Library, Arena).
+  - Unlocked all campus buildings for teachers in `buildings.ts` and `interiors.ts` (`roles: both` on entry, library, arena, union), eliminating all locked screens for faculty.
 
