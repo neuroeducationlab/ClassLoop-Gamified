@@ -370,21 +370,20 @@ export default function Landing() {
       >
         {/* soft dark halo so the copy stays legible over the towers */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[420px] w-[min(760px,120vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(20,18,40,0.55),transparent_70%)]" />
-        <p className="rounded-full border border-white/40 bg-white/10 px-4 py-1 text-xs font-semibold tracking-[0.2em] backdrop-blur">
-          CLASSLOOP · 3D LEARNING CAMPUS
+        <p className="rounded-full border border-white/40 bg-white/10 px-5 py-1 text-xs font-semibold tracking-[0.25em] backdrop-blur">
+          Analyse &nbsp;·&nbsp; Learn &nbsp;·&nbsp; Connect
         </p>
         <h1 className="text-5xl font-bold leading-[1.05] drop-shadow-[0_4px_24px_rgba(0,0,0,0.45)] sm:text-7xl">
           ClassLoop <span className="text-[#F2C879]">Campus</span>
         </h1>
-        <p className="max-w-md text-base text-white/90 drop-shadow sm:text-lg">
-          Step into a campus that learns with you
+        <p className="max-w-xl text-base text-white/90 drop-shadow sm:text-lg font-medium">
+          Learning Management System & Educational Gamification
         </p>
         <button
           onClick={start}
-          className="group mt-3 flex w-full max-w-xs items-center justify-between gap-6 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-8 py-4 text-lg font-bold text-[#2B2D55] shadow-[0_0_40px_rgba(242,200,121,0.65)] transition-transform hover:scale-[1.03] active:scale-95 sm:w-auto"
+          className="group mt-3 flex items-center justify-center rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-12 py-3.5 text-lg font-extrabold tracking-wider text-[#2B2D55] shadow-[0_0_40px_rgba(242,200,121,0.65)] transition-all hover:scale-[1.05] active:scale-95 cursor-pointer"
         >
-          Enter Campus
-          <ArrowUpRight className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          ENTER
         </button>
       </div>
 
@@ -393,7 +392,7 @@ export default function Landing() {
           showTitle && phase === 'orbit' ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        ClassLoop Campus · SPU Edition — Sripatum University
+        ClassLoop Campus · SPU Edition — The Winner from LearnHackathon
       </p>
 
       {/* role cards: always mounted, faded with a transition (a keyframe animation can stall on a busy GPU) */}
