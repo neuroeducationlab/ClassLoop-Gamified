@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Lock, Map as MapIcon, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, Lock, Volume2, VolumeX } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { BUILDINGS, type Building } from '@/data/buildings'
 import { INTERIORS, stationsFor } from '@/data/interiors'
@@ -136,16 +136,6 @@ function Room({ building }: { building: Building }) {
           >
             <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">{backText}</span>
           </button>
-          {role === 'teacher' && !fromMap && (
-            <button
-              onClick={() => navigate('/map')}
-              className="hidden items-center gap-1 rounded-full border border-white/20 bg-black/30 px-3 py-2 text-xs font-medium text-white/85 backdrop-blur transition-all hover:bg-black/50 sm:flex"
-              title={lang === 'th' ? 'สลับไปแผนที่ 2D' : 'Switch to 2D Map'}
-            >
-              <MapIcon className="h-3.5 w-3.5" />
-              <span>2D Map</span>
-            </button>
-          )}
           <div className="flex items-center gap-2.5 rounded-2xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur">
             <span className="text-2xl" aria-hidden>
               {building.emoji}
@@ -167,7 +157,7 @@ function Room({ building }: { building: Building }) {
             {muted ? <VolumeX className="h-4 w-4 text-rose-300" /> : <Volume2 className="h-4 w-4 text-emerald-300" />}
           </button>
           <span className="rounded-full border border-white/25 bg-black/40 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
-            {role === 'teacher' ? (lang === 'th' ? '🧑‍🏫 โหมดอาจารย์' : '🧑‍🏫 Faculty Mode') : lang === 'th' ? '🧑‍🎓 โหมดนักศึกษา' : '🧑‍🎓 Student Mode'}
+            {role === 'teacher' ? (lang === 'th' ? 'โหมดอาจารย์' : 'Faculty Mode') : lang === 'th' ? 'โหมดนักศึกษา' : 'Student Mode'}
           </span>
         </div>
       </header>
@@ -195,11 +185,11 @@ function Locked({ staffOnly }: { staffOnly: boolean }) {
   const { role, lang, setRole } = useApp()
   const title = staffOnly
     ? lang === 'th'
-      ? '🔒 เฉพาะอาจารย์ · Staff only'
-      : '🔒 Staff only'
+      ? 'เฉพาะอาจารย์ · Staff only'
+      : 'Staff only'
     : lang === 'th'
-      ? '🔒 ห้องนี้สำหรับนักศึกษา'
-      : '🔒 A student space'
+      ? 'ห้องนี้สำหรับนักศึกษา'
+      : 'A student space'
   const body = staffOnly
     ? lang === 'th'
       ? 'ห้องนี้เป็นพื้นที่ทำงานของอาจารย์ นักศึกษามองเห็นได้แต่เข้าใช้ไม่ได้'
@@ -218,7 +208,7 @@ function Locked({ staffOnly }: { staffOnly: boolean }) {
         onClick={() => setRole(role === 'student' ? 'teacher' : 'student')}
         className="mt-1 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-pink-500/30 transition-all hover:brightness-110"
       >
-        {lang === 'th' ? '⚡ สลับบทบาทเพื่อทดสอบ (Switch Demo Role)' : '⚡ Switch Role for Demo'}
+        {lang === 'th' ? 'สลับบทบาทเพื่อทดสอบ (Switch Demo Role)' : 'Switch Role for Demo'}
       </button>
     </div>
   )

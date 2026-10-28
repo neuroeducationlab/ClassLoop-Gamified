@@ -128,7 +128,7 @@ export default function NPCDialogModal({
               <Sparkles className="h-4 w-4 text-amber-400" />
               <span>
                 {lang === 'th' ? 'ภารกิจสำเร็จ! ได้รับ' : 'Quest Reward Claimed!'}
-                {rewardClaimed.xp && ` ✨ +${rewardClaimed.xp} XP`}
+                {rewardClaimed.xp && ` +${rewardClaimed.xp} XP`}
                 {rewardClaimed.coins && ` 🪙 +${rewardClaimed.coins} Coins`}
               </span>
             </div>

@@ -163,7 +163,7 @@ export default function Arena() {
           )}
         >
           <Swords className="h-4 w-4" />
-          <span>{lang === 'th' ? '⚡ ลานฝึกคำศัพท์ (Flashcards)' : '⚡ Flashcard Arena'}</span>
+          <span>{lang === 'th' ? 'ลานฝึกคำศัพท์ (Flashcards)' : 'Flashcard Arena'}</span>
         </button>
         <button
           onClick={() => setActiveTab('boss')}
@@ -175,7 +175,7 @@ export default function Arena() {
           )}
         >
           <ShieldAlert className="h-4 w-4 text-amber-300 animate-pulse" />
-          <span>{lang === 'th' ? '👹 บอสข้อสอบปลายภาค (Boss Rush)' : '👹 Boss Rush Exam'}</span>
+          <span>{lang === 'th' ? 'บอสข้อสอบปลายภาค (Boss Rush)' : 'Boss Rush Exam'}</span>
         </button>
       </div>
 

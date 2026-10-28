@@ -207,7 +207,7 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
             {answered && (
               <div className="rounded-xl bg-cyan-950/30 border border-cyan-500/30 p-3 mb-4 text-xs animate-in fade-in">
                 <p className="font-bold text-cyan-300 mb-0.5">
-                  {lang === 'th' ? '💡 คำอธิบายความรู้:' : '💡 Explanation:'}
+                  {lang === 'th' ? 'คำอธิบายความรู้:' : 'Explanation:'}
                 </p>
                 <p className="text-white/80 leading-relaxed">{currentExplanation}</p>
               </div>
