@@ -214,7 +214,7 @@ export default function Studio() {
     name: '',
     format: 'debate' as ActivityFormat,
     durationMin: 15,
-    steps: ['นักศึกษาแบ่งกลุ่มย่อยแลกเปลี่ยนความคิดเห็น', 'ร่วมกันสรุปประเด็นสำคัญและนำเสนอ'],
+    steps: ['Students form mixed-discipline pairs', 'Debate key perspectives and synthesize conclusions'],
     whyItWorks: '',
     materialsNeeded: '',
   })
@@ -237,7 +237,7 @@ export default function Studio() {
 
   const handleCreateActivity = () => {
     if (!newActivityForm.name.trim()) {
-      showToast('กรุณาระบุชื่อกิจกรรม')
+      showToast(lang === 'th' ? 'กรุณาระบุชื่อกิจกรรม' : 'Please provide an activity name')
       return
     }
     const cleanSteps = newActivityForm.steps.filter((s) => s.trim().length > 0)
@@ -245,8 +245,8 @@ export default function Studio() {
       name: newActivityForm.name.trim(),
       format: newActivityForm.format,
       durationMin: newActivityForm.durationMin || 15,
-      steps: cleanSteps.length > 0 ? cleanSteps : ['ดำเนินกิจกรรมร่วมกันในห้องเรียน'],
-      whyItWorks: newActivityForm.whyItWorks.trim() || 'กิจกรรมออกแบบเฉพาะโดยอาจารย์ผู้สอนเพื่อเสริมทักษะเชิงลึก',
+      steps: cleanSteps.length > 0 ? cleanSteps : [lang === 'th' ? 'ดำเนินกิจกรรมร่วมกันในห้องเรียน' : 'Collaborate on class activity'],
+      whyItWorks: newActivityForm.whyItWorks.trim() || (lang === 'th' ? 'กิจกรรมออกแบบเฉพาะโดยอาจารย์ผู้สอน' : 'Custom activity designed by instructor for active learning'),
       materialsNeeded: newActivityForm.materialsNeeded.trim(),
     })
     setIsAddingActivity(false)
@@ -254,16 +254,16 @@ export default function Studio() {
       name: '',
       format: 'debate',
       durationMin: 15,
-      steps: ['นักศึกษาแบ่งกลุ่มย่อยแลกเปลี่ยนความคิดเห็น', 'ร่วมกันสรุปประเด็นสำคัญและนำเสนอ'],
+      steps: ['Students form mixed-discipline pairs', 'Debate key perspectives and synthesize conclusions'],
       whyItWorks: '',
       materialsNeeded: '',
     })
-    showToast('เพิ่มกิจกรรมใหม่เรียบร้อยแล้ว!')
+    showToast(lang === 'th' ? 'เพิ่มกิจกรรมใหม่เรียบร้อยแล้ว!' : 'New activity created successfully!')
   }
 
   const handleCreateFlashcard = () => {
     if (!newFlashcardForm.front.trim() || !newFlashcardForm.back.trim()) {
-      showToast('กรุณากรอกข้อมูลด้านหน้าและด้านหลังแฟลชการ์ด')
+      showToast(lang === 'th' ? 'กรุณากรอกข้อมูลด้านหน้าและด้านหลังแฟลชการ์ด' : 'Please fill in both front and back of the flashcard')
       return
     }
     addFlashcard({
@@ -273,16 +273,16 @@ export default function Studio() {
     })
     setIsAddingFlashcard(false)
     setNewFlashcardForm({ front: '', back: '', hint: '' })
-    showToast('เพิ่มแฟลชการ์ดใหม่เรียบร้อยแล้ว!')
+    showToast(lang === 'th' ? 'เพิ่มแฟลชการ์ดใหม่เรียบร้อยแล้ว!' : 'New flashcard created successfully!')
   }
 
   const handleCreatePretest = () => {
     if (!newPretestForm.stem.trim()) {
-      showToast('กรุณาระบุโจทย์คำถาม')
+      showToast(lang === 'th' ? 'กรุณาระบุโจทย์คำถาม' : 'Please provide a question stem')
       return
     }
     if (newPretestForm.options.some((o) => !o.trim())) {
-      showToast('กรุณากรอกตัวเลือกคำตอบให้ครบ 4 ข้อ')
+      showToast(lang === 'th' ? 'กรุณากรอกตัวเลือกคำตอบให้ครบ 4 ข้อ' : 'Please fill in all 4 options')
       return
     }
     addPretestQuestion({
@@ -290,7 +290,7 @@ export default function Studio() {
       stem: newPretestForm.stem.trim(),
       options: newPretestForm.options.map((o) => o.trim()),
       answerIndex: newPretestForm.answerIndex,
-      misconception: newPretestForm.misconception.trim() || 'คำถามนี้ออกแบบโดยอาจารย์ผู้สอนเพื่อวัดความเข้าใจเชิงลึก',
+      misconception: newPretestForm.misconception.trim() || (lang === 'th' ? 'คำถามนี้ออกแบบโดยอาจารย์ผู้สอนเพื่อวัดความเข้าใจเชิงลึก' : 'Custom assessment question designed to test cross-faculty understanding'),
       difficulty: newPretestForm.difficulty,
     })
     setIsAddingPretest(false)
@@ -301,7 +301,7 @@ export default function Studio() {
       misconception: '',
       difficulty: 'medium',
     })
-    showToast('เพิ่มข้อสอบใหม่เรียบร้อยแล้ว!')
+    showToast(lang === 'th' ? 'เพิ่มข้อสอบใหม่เรียบร้อยแล้ว!' : 'New question created successfully!')
   }
 
   const generationStepTexts = [
@@ -923,25 +923,29 @@ export default function Studio() {
                         <div className="flex items-center justify-between border-b border-pink-200/80 pb-2">
                           <span className="text-sm font-extrabold text-pink-700 flex items-center gap-1.5">
                             <Sparkles className="h-4 w-4 text-pink-600" />
-                            สร้างสรรค์กิจกรรมใหม่ด้วยตนเอง
+                            {lang === 'th' ? 'สร้างสรรค์กิจกรรมใหม่' : 'Create Custom Activity'}
                           </span>
                           <button
                             type="button"
                             onClick={() => setIsAddingActivity(false)}
                             className="text-xs text-grey-500 hover:underline cursor-pointer"
                           >
-                            ยกเลิก
+                            {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
                           </button>
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div className="sm:col-span-2">
                             <label className="block text-xs font-bold text-ink mb-1">
-                              ชื่อกิจกรรม:
+                              {lang === 'th' ? 'ชื่อกิจกรรม:' : 'Activity Name:'}
                             </label>
                             <input
                               type="text"
-                              placeholder="เช่น Debate: กลยุทธ์การขยายธุรกิจข้ามพรมแดน"
+                              placeholder={
+                                lang === 'th'
+                                  ? 'เช่น Debate: กลยุทธ์การขยายธุรกิจข้ามพรมแดน'
+                                  : 'e.g. Cross-Faculty Strategy Debate'
+                              }
                               value={newActivityForm.name}
                               onChange={(e) =>
                                 setNewActivityForm((p) => ({ ...p, name: e.target.value }))
@@ -952,7 +956,7 @@ export default function Studio() {
 
                           <div>
                             <label className="block text-xs font-bold text-ink mb-1">
-                              รูปแบบ:
+                              {lang === 'th' ? 'รูปแบบ:' : 'Format:'}
                             </label>
                             <select
                               value={newActivityForm.format}
@@ -964,15 +968,15 @@ export default function Studio() {
                               }
                               className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-sm text-ink outline-none focus:border-pink-500 font-medium"
                             >
-                              <option value="debate">Debate (อภิปรายโต้แย้ง)</option>
-                              <option value="case-based">Case Study (กรณีศึกษา)</option>
-                              <option value="quick-game">Quick Game (เกมสปีด)</option>
+                              <option value="debate">Debate</option>
+                              <option value="case-based">Case Study</option>
+                              <option value="quick-game">Quick Game</option>
                             </select>
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-ink mb-1">
-                              ระยะเวลา (นาที):
+                              {lang === 'th' ? 'ระยะเวลา (นาที):' : 'Duration (mins):'}
                             </label>
                             <input
                               type="number"
@@ -992,7 +996,7 @@ export default function Studio() {
 
                         <div>
                           <label className="block text-xs font-bold text-ink mb-1">
-                            ขั้นตอนการทำกิจกรรม:
+                            {lang === 'th' ? 'ขั้นตอนการทำกิจกรรม:' : 'Activity Steps:'}
                           </label>
                           <div className="space-y-2">
                             {newActivityForm.steps.map((step, sIdx) => (
@@ -1002,7 +1006,11 @@ export default function Studio() {
                                 </span>
                                 <input
                                   type="text"
-                                  placeholder={`ระบุขั้นตอนที่ ${sIdx + 1}`}
+                                  placeholder={
+                                    lang === 'th'
+                                      ? `ขั้นตอนที่ ${sIdx + 1}`
+                                      : `Step ${sIdx + 1}`
+                                  }
                                   value={step}
                                   onChange={(e) => {
                                     const next = [...newActivityForm.steps]
@@ -1034,7 +1042,7 @@ export default function Studio() {
                               }
                               className="flex items-center gap-1 text-xs font-bold text-pink-600 hover:underline cursor-pointer pt-1"
                             >
-                              <Plus className="h-3 w-3" /> เพิ่มขั้นตอน
+                              <Plus className="h-3 w-3" /> {lang === 'th' ? 'เพิ่มขั้นตอน' : 'Add step'}
                             </button>
                           </div>
                         </div>
@@ -1042,11 +1050,15 @@ export default function Studio() {
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div>
                             <label className="block text-xs font-bold text-ink mb-1">
-                              ทำไมถึงได้ผล (Why it works):
+                              {lang === 'th' ? 'ทำไมถึงได้ผล:' : 'Why It Works:'}
                             </label>
                             <textarea
                               rows={2}
-                              placeholder="ช่วยให้ผู้เรียนเชื่อมโยงทฤษฎีเข้ากับการปฏิบัติจริง..."
+                              placeholder={
+                                lang === 'th'
+                                  ? 'ช่วยให้ผู้เรียนเชื่อมโยงทฤษฎีเข้ากับการปฏิบัติจริง...'
+                                  : 'Connects theory with practical cross-faculty teamwork...'
+                              }
                               value={newActivityForm.whyItWorks}
                               onChange={(e) =>
                                 setNewActivityForm((p) => ({ ...p, whyItWorks: e.target.value }))
@@ -1056,11 +1068,15 @@ export default function Studio() {
                           </div>
                           <div>
                             <label className="block text-xs font-bold text-ink mb-1">
-                              สื่อ / อุปกรณ์ที่ต้องใช้:
+                              {lang === 'th' ? 'สื่อ / อุปกรณ์ที่ต้องใช้:' : 'Materials Needed:'}
                             </label>
                             <textarea
                               rows={2}
-                              placeholder="ใบงานกรณีศึกษา, ปากกาเคมี, กระดาษฟลิปชาร์ท..."
+                              placeholder={
+                                lang === 'th'
+                                  ? 'ใบงานกรณีศึกษา, ปากกาเคมี, กระดาษฟลิปชาร์ท...'
+                                  : 'Case study worksheets, markers, flip charts...'
+                              }
                               value={newActivityForm.materialsNeeded}
                               onChange={(e) =>
                                 setNewActivityForm((p) => ({
@@ -1079,14 +1095,14 @@ export default function Studio() {
                             onClick={() => setIsAddingActivity(false)}
                             className="rounded-xl border border-grey-300 px-3.5 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer"
                           >
-                            ยกเลิก
+                            {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
                           </button>
                           <button
                             type="button"
                             onClick={handleCreateActivity}
                             className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer"
                           >
-                            + บันทึกกิจกรรมใหม่
+                            {lang === 'th' ? '+ บันทึกกิจกรรมใหม่' : '+ Save Activity'}
                           </button>
                         </div>
                       </div>
@@ -1216,24 +1232,28 @@ export default function Studio() {
                         <div className="flex items-center justify-between border-b border-pink-200/80 pb-2">
                           <span className="text-xs font-extrabold text-pink-700 flex items-center gap-1.5">
                             <Sparkles className="h-4 w-4 text-pink-600" />
-                            สร้างสรรค์แฟลชการ์ดใหม่ด้วยตนเอง
+                            {lang === 'th' ? 'สร้างสรรค์แฟลชการ์ดใหม่' : 'Create Custom Flashcard'}
                           </span>
                           <button
                             type="button"
                             onClick={() => setIsAddingFlashcard(false)}
                             className="text-xs text-grey-500 hover:underline cursor-pointer"
                           >
-                            ยกเลิก
+                            {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
                           </button>
                         </div>
 
                         <div>
                           <label className="block text-xs font-bold text-ink mb-1">
-                            ด้านหน้า (คำถาม / หัวข้อคำศัพท์):
+                            {lang === 'th' ? 'ด้านหน้า (คำถาม / หัวข้อ):' : 'Front (Question / Prompt):'}
                           </label>
                           <textarea
                             rows={2}
-                            placeholder="เช่น Cultural Dimensions ของ Hofstede มีกี่มิติหลัก?"
+                            placeholder={
+                              lang === 'th'
+                                ? 'เช่น มิติวัฒนธรรมของ Hofstede มีกี่มิติหลัก?'
+                                : "e.g. Hofstede's Cultural Dimensions"
+                            }
                             value={newFlashcardForm.front}
                             onChange={(e) =>
                               setNewFlashcardForm((p) => ({ ...p, front: e.target.value }))
@@ -1244,11 +1264,15 @@ export default function Studio() {
 
                         <div>
                           <label className="block text-xs font-bold text-ink mb-1">
-                            ด้านหลัง (คำอธิบาย / เฉลยแนวคิด):
+                            {lang === 'th' ? 'ด้านหลัง (คำอธิบาย / เฉลย):' : 'Back (Answer / Definition):'}
                           </label>
                           <textarea
                             rows={2}
-                            placeholder="เช่น 6 มิติหลัก: Power Distance, Individualism, Masculinity, Uncertainty Avoidance, Long-Term Orientation, Indulgence"
+                            placeholder={
+                              lang === 'th'
+                                ? 'เช่น 6 มิติหลัก: Power Distance, Individualism, Masculinity...'
+                                : 'e.g. 6 dimensions: Power Distance, Individualism, Masculinity, Uncertainty Avoidance, Long-Term Orientation, Indulgence'
+                            }
                             value={newFlashcardForm.back}
                             onChange={(e) =>
                               setNewFlashcardForm((p) => ({ ...p, back: e.target.value }))
@@ -1259,11 +1283,15 @@ export default function Studio() {
 
                         <div>
                           <label className="block text-xs font-bold text-ink mb-1">
-                            คำใบ้ (Hint - ตัวช่วยจำ):
+                            {lang === 'th' ? 'คำใบ้ (ตัวช่วยจำ):' : 'Hint (Optional clue):'}
                           </label>
                           <input
                             type="text"
-                            placeholder="เช่น นึกถึงงานวิจัยพนักงาน IBM ทั่วโลก..."
+                            placeholder={
+                              lang === 'th'
+                                ? 'เช่น นึกถึงงานวิจัยพนักงาน IBM ทั่วโลก...'
+                                : 'e.g. Think of global research on intercultural communication...'
+                            }
                             value={newFlashcardForm.hint}
                             onChange={(e) =>
                               setNewFlashcardForm((p) => ({ ...p, hint: e.target.value }))
@@ -1278,14 +1306,14 @@ export default function Studio() {
                             onClick={() => setIsAddingFlashcard(false)}
                             className="rounded-xl border border-grey-300 px-3.5 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer"
                           >
-                            ยกเลิก
+                            {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
                           </button>
                           <button
                             type="button"
                             onClick={handleCreateFlashcard}
                             className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer"
                           >
-                            + บันทึกแฟลชการ์ดใหม่
+                            {lang === 'th' ? '+ บันทึกแฟลชการ์ดใหม่' : '+ Save Flashcard'}
                           </button>
                         </div>
                       </div>
@@ -1455,24 +1483,28 @@ export default function Studio() {
                         <div className="flex items-center justify-between border-b border-pink-200/80 pb-2">
                           <span className="text-sm font-extrabold text-pink-700 flex items-center gap-1.5">
                             <Sparkles className="h-4 w-4 text-pink-600" />
-                            สร้างสรรค์ข้อสอบ / คำถามใหม่ด้วยตนเอง
+                            {lang === 'th' ? 'สร้างสรรค์ข้อสอบใหม่' : 'Create Custom Question'}
                           </span>
                           <button
                             type="button"
                             onClick={() => setIsAddingPretest(false)}
                             className="text-xs text-grey-500 hover:underline cursor-pointer"
                           >
-                            ยกเลิก
+                            {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
                           </button>
                         </div>
 
                         <div>
                           <label className="block text-xs font-bold text-ink mb-1">
-                            โจทย์คำถาม:
+                            {lang === 'th' ? 'โจทย์คำถาม:' : 'Question Stem:'}
                           </label>
                           <textarea
                             rows={2}
-                            placeholder="เช่น ปัจจัยใดสำคัญที่สุดในการเลือกลงทุนตั้งโรงงานผลิตในต่างประเทศ?"
+                            placeholder={
+                              lang === 'th'
+                                ? 'เช่น ปัจจัยใดสำคัญที่สุดในการเลือกลงทุนตั้งโรงงานผลิตในต่างประเทศ?'
+                                : 'e.g. Which entry mode carries the highest strategic investment risk?'
+                            }
                             value={newPretestForm.stem}
                             onChange={(e) =>
                               setNewPretestForm((p) => ({ ...p, stem: e.target.value }))
@@ -1483,7 +1515,9 @@ export default function Studio() {
 
                         <div className="space-y-2">
                           <label className="block text-xs font-bold text-ink">
-                            ตัวเลือกคำตอบ 4 ข้อ (คลิกเลือกปุ่มวงกลมข้อที่ถูกต้อง):
+                            {lang === 'th'
+                              ? 'ตัวเลือกคำตอบ 4 ข้อ (คลิกเลือกปุ่มวงกลมข้อที่ถูกต้อง):'
+                              : '4 Options (Select the correct answer):'}
                           </label>
                           {newPretestForm.options.map((optText, optIdx) => (
                             <div key={optIdx} className="flex items-center gap-2">
@@ -1501,7 +1535,11 @@ export default function Studio() {
                               </span>
                               <input
                                 type="text"
-                                placeholder={`ตัวเลือก ${String.fromCharCode(65 + optIdx)}`}
+                                placeholder={
+                                  lang === 'th'
+                                    ? `ตัวเลือก ${String.fromCharCode(65 + optIdx)}`
+                                    : `Option ${String.fromCharCode(65 + optIdx)}`
+                                }
                                 value={optText}
                                 onChange={(e) => {
                                   const next = [...newPretestForm.options]
@@ -1522,7 +1560,7 @@ export default function Studio() {
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div>
                             <label className="block text-xs font-bold text-ink mb-1">
-                              ระดับความยาก:
+                              {lang === 'th' ? 'ระดับความยาก:' : 'Difficulty:'}
                             </label>
                             <select
                               value={newPretestForm.difficulty}
@@ -1534,19 +1572,23 @@ export default function Studio() {
                               }
                               className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium"
                             >
-                              <option value="easy">ง่าย (Easy)</option>
-                              <option value="medium">ปานกลาง (Medium)</option>
-                              <option value="hard">ยาก (Hard)</option>
+                              <option value="easy">{lang === 'th' ? 'ง่าย' : 'Easy'}</option>
+                              <option value="medium">{lang === 'th' ? 'ปานกลาง' : 'Medium'}</option>
+                              <option value="hard">{lang === 'th' ? 'ยาก' : 'Hard'}</option>
                             </select>
                           </div>
 
                           <div>
                             <label className="block text-xs font-bold text-ink mb-1">
-                              ข้อควรระวังสำหรับเด็กต่างคณะ:
+                              {lang === 'th' ? 'ข้อควรระวังสำหรับเด็กต่างคณะ:' : 'Cross-faculty Misconception Note:'}
                             </label>
                             <input
                               type="text"
-                              placeholder="เช่น เด็กวิศวะมักมองเฉพาะเทคนิค แต่ลืมบริบททางกฎหมาย..."
+                              placeholder={
+                                lang === 'th'
+                                  ? 'เช่น เด็กวิศวะมักมองเฉพาะเทคนิค แต่ลืมบริบททางกฎหมาย...'
+                                  : 'e.g. Engineering students often focus on technical aspects and overlook regulatory frameworks...'
+                              }
                               value={newPretestForm.misconception}
                               onChange={(e) =>
                                 setNewPretestForm((p) => ({
@@ -1565,14 +1607,14 @@ export default function Studio() {
                             onClick={() => setIsAddingPretest(false)}
                             className="rounded-xl border border-grey-300 px-3.5 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer"
                           >
-                            ยกเลิก
+                            {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
                           </button>
                           <button
                             type="button"
                             onClick={handleCreatePretest}
                             className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer"
                           >
-                            + บันทึกข้อสอบใหม่
+                            {lang === 'th' ? '+ บันทึกข้อสอบใหม่' : '+ Save Question'}
                           </button>
                         </div>
                       </div>
