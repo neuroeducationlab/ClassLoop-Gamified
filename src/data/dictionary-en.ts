@@ -743,6 +743,98 @@ export const DICTIONARY_EN: Record<string, string> = {
   'คำแนะนำการสอนคลาสเรียนข้ามคณะ': 'Tips for teaching a cross-faculty class',
   '✨ สร้างสื่อการสอน': '✨ Generate teaching materials',
   '⚡ ส่งเข้าคาบเรียนสด': '⚡ Send to the live class',
+
+  /* ----------------------------------- studio: sections & faculties -- */
+  'เศรษฐศาสตร์': 'Economics',
+  '1. ใส่ไฟล์ Course Syllabus': '1. Upload your course syllabus',
+  'คลิกหรือลากวางไฟล์ใหม่เพื่อเปลี่ยน': 'Click or drag a new file to change',
+  'วางไฟล์ที่นี่เพื่ออัปโหลด!': 'Drop your file here to upload!',
+  'ลากและวางไฟล์ Course Syllabus ที่นี่': 'Drag and drop your course syllabus here',
+  'หรือคลิกเพื่อเลือกไฟล์จากเครื่อง (รองรับ PDF, DOCX, TXT สูงสุด 20MB)':
+    'Or click to choose a file from your device (PDF, DOCX, TXT up to 20 MB)',
+  '3. กลุ่มเรียน (Sec) & จำนวนผู้เรียน': '3. Section & number of students',
+  'เลือก Section (กลุ่มเรียน):': 'Choose a section:',
+  'จำนวนผู้เรียน (คน):': 'Number of students:',
+  'คณะในคลาสเรียนนี้:': 'Faculties in this class:',
+
+  /* ------------------------------------------ studio: generation flow -- */
+  '📂 วิชาการตลาดดิจิทัล • ลากไปวางได้เลย':
+    '📂 Digital Marketing course · Drag and drop',
+
+  /* -------------------------------------------------- exams page only -- */
+  'สร้างข้อสอบ AI (Exam Generator)': 'AI Exam Generator',
+  '1. หย่อนไฟล์บทเรียนสกัดข้อสอบ': '1. Drop a lesson file to generate questions',
+  'วางไฟล์ที่นี่เพื่อสร้างข้อสอบ!': 'Drop file here to generate questions!',
+  'ลากและวางไฟล์บทเรียนที่นี่': 'Drag and drop a lesson file here',
+  'หรือคลิกเพื่อเลือกไฟล์ (รองรับ DOCX, PDF, PPTX, XLSX)':
+    'Or click to choose a file (DOCX, PDF, PPTX, XLSX)',
+  'วิเคราะห์เป้าหมายการเรียนรู้ → ออกแบบ Pre-test & Post-test...':
+    'Analysing learning objectives → Designing pre-test & post-test...',
+  '✓ สร้างข้อสอบสำเร็จ': '✓ Questions generated',
+  'สกัดได้ Pre-test 5 ข้อ + Post-test 5 ข้อ พร้อมวิเคราะห์จุดหลงผิดรายคณะ':
+    '5 pre-test + 5 post-test questions with per-faculty misconception analysis',
+  '🚀 นำไปใช้ในคาบเรียนเลย': '🚀 Use in a live class now',
+  'เปลี่ยนไฟล์ใหม่': 'Change file',
+  '📂 ไฟล์ข้อสอบโซ่อุปทาน • ลากไปวางได้เลย':
+    '📂 Supply chain exam file · Drag and drop',
+  'ข้อสอบชุดนี้ส่งตรงไปยังระบบ:': 'These questions are sent to the system:',
+  'ข้อสอบที่สร้างจะแปลงเป็น Speed Quiz สำหรับท้าดวลสดในคลาส และคะแนนจะสรุปแยกตามคณะเข้าสู่แดชบอร์ดโดยอัตโนมัติ':
+    'Generated questions become Speed Quizzes for live class battles, and scores are automatically broken down by faculty in the dashboard',
+  '📝 Pre-test (5 ข้อ)': '📝 Pre-test (5 questions)',
+  '🎯 Post-test (5 ข้อ)': '🎯 Post-test (5 questions)',
+  '💡 จุดหลงผิดรายคณะ': '💡 Per-faculty misconceptions',
+  'ชุดข้อสอบ Pre-test (วัดก่อนเรียน)': 'Pre-test (before class)',
+  'ชุดข้อสอบ Post-test (วัดหลังเรียน)': 'Post-test (after class)',
+  '+ สร้างเพิ่ม': '+ Generate more',
+  '💡 จุดหลงผิด:': '💡 Misconception:',
+  'การวิเคราะห์จุดหลงผิดที่ AI คาดการณ์ (Misconception Map)':
+    'AI-predicted misconception analysis (Misconception Map)',
+  'ช่วยอาจารย์เน้นย้ำเนื้อหาก่อนเริ่มทำกิจกรรม Active Learning':
+    'Helps you reinforce content before running Active Learning activities',
+  'สิ่งที่เด็กแต่ละคณะมักสับสน:': 'What students from each faculty often confuse:',
+
+  /* ----------------------------------- exams: pipeline stepper labels -- */
+  'อ่าน Syllabus สกัดวัตถุประสงค์': 'Read syllabus and extract objectives',
+  'AI สรุปแกนเนื้อหาหลัก': 'AI summarises the core content',
+  'เลือกเนื้อหาที่ต้องการสร้างข้อสอบ':
+    'Select the content you want to turn into questions',
+  'สร้าง Pre/Post-test ด้วย AI': 'Generate pre/post-test with AI',
+  'วิเคราะห์จุดอ่อนรายคณะด้วย AI':
+    'Analyse per-faculty weaknesses with AI',
+  'ตรวจสอบรับรองชุดข้อสอบ': 'Review and approve the question set',
+  'AI อ่าน Syllabus แล้วเทียบกับ Bloom\'s Taxonomy เพื่อระบุ Learning Outcomes ที่วัดผลได้':
+    'AI reads the syllabus and maps it against Bloom\'s Taxonomy to identify measurable Learning Outcomes',
+  'สรุปแกนเนื้อหาหลัก ทฤษฎี แนวคิดสำคัญ ข้อเท็จจริงที่ต้องทดสอบ':
+    'Summarises core content, key theories, concepts and facts to test',
+  'อาจารย์เลือก/ปรับเนื้อหาที่ต้องการเน้น ก่อนให้ AI ออกข้อสอบ':
+    'Select and refine the content to focus on before AI generates questions',
+  'สร้างชุดคำถาม 5 ข้อ Pre-test + 5 ข้อ Post-test พร้อม Distractor ที่ออกแบบตาม Common Misconceptions':
+    'Generates 5 pre-test + 5 post-test questions with distractors designed around common misconceptions',
+  'วิเคราะห์ว่าแต่ละคณะมักเข้าใจผิดเรื่องอะไร เพื่อ personalize Remediation':
+    'Analyses which misconceptions each faculty tends to have, enabling personalised remediation',
+  'อาจารย์ตรวจสอบ แก้ไขข้อสอบ ก่อน deploy เข้าสู่ระบบ Speed Quiz และแดชบอร์ด':
+    'You review and edit the questions before they go live as a Speed Quiz and enter the dashboard',
+
+  /* ----------------------------------------- studio: edit UI strings -- */
+  'แก้ไข': 'Edit',
+  'ลบ': 'Delete',
+  'บันทึก': 'Save',
+  'รูปแบบ:': 'Format:',
+  'ระยะเวลา (นาที):': 'Duration (min):',
+  'ขั้นตอน:': 'Steps:',
+  'เพิ่มขั้นตอน': 'Add step',
+  'ทำไมถึงได้ผล:': 'Why it works:',
+  'ด้านหน้า:': 'Front:',
+  'ด้านหลัง:': 'Back:',
+  'คำใบ้:': 'Hint:',
+  'คำถาม:': 'Question:',
+  'คำตอบที่ถูกต้อง:': 'Correct answer:',
+  'จุดหลงผิด:': 'Misconception:',
+  'ตัวเลือก': 'Option',
+  'ยืนยันลบ?': 'Confirm delete?',
+  'ลบกิจกรรมนี้': 'Delete this activity',
+  'ลบการ์ดนี้': 'Delete this card',
+  'ลบคำถามนี้': 'Delete this question',
 }
 
 /**
@@ -800,4 +892,15 @@ export const PATTERN_RULES: { re: RegExp; to: string }[] = [
   { re: /^การ์ดที่$/, to: 'Card' },
   { re: /^สำเร็จ$/, to: 'complete' },
   { re: /^ส่งงานเรียบร้อยแล้ว \($/, to: 'Submitted (' },
+  { re: /^เลือกไฟล์ "(.+)" เรียบร้อยแล้ว$/, to: 'File "$1" selected' },
+  { re: /^ลากวางไฟล์ "(.+)" เรียบร้อยแล้ว$/, to: 'File "$1" dropped' },
+  { re: /^ใช้กิจกรรม "(.+)" สำหรับคาบเรียนสดแล้ว$/, to: 'Activity "$1" applied to the live class' },
+  { re: /^กำลังอ่านไฟล์\s*(.+)$/, to: 'Reading file $1' },
+  { re: /^สร้างชุดข้อสอบ Pre\/Post-test จาก (.+) สำเร็จ!$/, to: 'Pre/post-test from $1 created!' },
+  { re: /^แก้ไขข้อสอบข้อที่\s*(\d+)$/, to: 'Editing question $1' },
+  { re: /^สร้างข้อสอบเพิ่ม\s*(\d+)\s*ข้อสำเร็จ!$/, to: '$1 more questions generated!' },
+  { re: /^Sec\s*(\d+)\s*\(กลุ่ม\s*\d+.*\)$/, to: 'Sec $1' },
+  { re: /^(\d+)\s*ข้อ$/, to: '$1 questions' },
+  { re: /^ข้อ\s*(\d+)\/(\d+)$/, to: 'Q $1/$2' },
+  { re: /^ลากโฟลเดอร์นี้ไปวางในกล่องด้านบนเพื่อทดสอบ.*$/, to: 'Drag this folder to the box above to test' },
 ]

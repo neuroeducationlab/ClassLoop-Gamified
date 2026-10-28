@@ -25,9 +25,11 @@ import {
   type Course,
   type ExpectationSticky,
   type GapAnalysis,
+  type Flashcard,
   type GeneratedContent,
   type PostKind,
   type PostReply,
+  type PretestQuestion,
   type PretestResponse,
   type Remediation,
   type Student,
@@ -299,10 +301,17 @@ type AppState = {
   teacherName: string
   currentStudent: Student
 
-  // static demo narrative (never mutates)
+  // demo narrative — mutable so the teacher can edit AI-generated content
   course: Course
   topics: Topic[]
   generatedContent: GeneratedContent
+  updateActivity: (index: number, partial: Partial<Activity>) => void
+  deleteActivity: (index: number) => void
+  updateFlashcard: (index: number, partial: Partial<Flashcard>) => void
+  deleteFlashcard: (index: number) => void
+  updatePretestQuestion: (id: string, partial: Partial<PretestQuestion>) => void
+  deletePretestQuestion: (id: string) => void
+  resetGeneratedContent: () => void
   gapAnalysis: GapAnalysis
   remediation: Remediation
 
@@ -428,6 +437,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS)
   const [expectations, setExpectations] = useState<ExpectationSticky[]>(INITIAL_EXPECTATIONS)
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent>(
+    () => structuredClone(GENERATED_CONTENT),
+  )
   const [activeActivity, setActiveActivity] = useState<Activity | null>(GENERATED_CONTENT.activities[0])
   const [studentXP, setStudentXP] = useState(120)
   const [studentCoins, setStudentCoins] = useState(180)
@@ -821,6 +833,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return Math.round((spoke / students.length) * 100)
   }, [students])
 
+  /* ----------------------------------------- generated-content editing -- */
+
+  const updateActivity = useCallback((index: number, partial: Partial<Activity>) => {
+    setGeneratedContent((prev) => ({
+      ...prev,
+      activities: prev.activities.map((a, i) => (i === index ? { ...a, ...partial } : a)),
+    }))
+  }, [])
+
+  const deleteActivity = useCallback((index: number) => {
+    setGeneratedContent((prev) => ({
+      ...prev,
+      activities: prev.activities.filter((_, i) => i !== index),
+    }))
+  }, [])
+
+  const updateFlashcard = useCallback((index: number, partial: Partial<Flashcard>) => {
+    setGeneratedContent((prev) => ({
+      ...prev,
+      flashcards: prev.flashcards.map((f, i) => (i === index ? { ...f, ...partial } : f)),
+    }))
+  }, [])
+
+  const deleteFlashcard = useCallback((index: number) => {
+    setGeneratedContent((prev) => ({
+      ...prev,
+      flashcards: prev.flashcards.filter((_, i) => i !== index),
+    }))
+  }, [])
+
+  const updatePretestQuestion = useCallback((id: string, partial: Partial<PretestQuestion>) => {
+    setGeneratedContent((prev) => ({
+      ...prev,
+      pretest: prev.pretest.map((q) => (q.id === id ? { ...q, ...partial } : q)),
+    }))
+  }, [])
+
+  const deletePretestQuestion = useCallback((id: string) => {
+    setGeneratedContent((prev) => ({
+      ...prev,
+      pretest: prev.pretest.filter((q) => q.id !== id),
+    }))
+  }, [])
+
+  const resetGeneratedContent = useCallback(() => {
+    setGeneratedContent(structuredClone(GENERATED_CONTENT))
+  }, [])
+
   /* -------------------------------------------------------------- value -- */
 
   const value: AppState = {
@@ -832,7 +892,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     course: COURSE,
     topics: TOPICS,
-    generatedContent: GENERATED_CONTENT,
+    generatedContent,
+    updateActivity,
+    deleteActivity,
+    updateFlashcard,
+    deleteFlashcard,
+    updatePretestQuestion,
+    deletePretestQuestion,
+    resetGeneratedContent,
     gapAnalysis: GAP_ANALYSIS,
     remediation: REMEDIATION,
 

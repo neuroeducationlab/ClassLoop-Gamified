@@ -15,10 +15,14 @@ import {
   Layers,
   Lightbulb,
   MessageSquare,
+  Minus,
   Package,
+  Pencil,
+  Plus,
   Radio,
   RotateCw,
   Sparkles,
+  Trash2,
   Upload,
   Users,
   Wand2,
@@ -30,7 +34,11 @@ import { cn } from '@/lib/utils'
 import type { ActivityFormat, PretestQuestion } from '@/data/seed-data'
 
 export default function Studio() {
-  const { topics, generatedContent, startGeneration, isGenerating, activeActivity, setActiveActivity } = useApp()
+  const {
+    topics, generatedContent, startGeneration, isGenerating, activeActivity, setActiveActivity,
+    updateActivity, deleteActivity, updateFlashcard, deleteFlashcard,
+    updatePretestQuestion, deletePretestQuestion,
+  } = useApp()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Left Panel Input State (Starts EMPTY as requested)
@@ -96,6 +104,17 @@ export default function Studio() {
   // Toast Notification State
   const [toastMsg, setToastMsg] = useState<string | null>(null)
 
+  // Inline-edit state for activities, flashcards and pretest
+  const [editingActivityIdx, setEditingActivityIdx] = useState<number | null>(null)
+  const [activityForm, setActivityForm] = useState({ name: '', format: 'debate' as ActivityFormat, durationMin: 0, steps: [''], whyItWorks: '' })
+  const [editingFlashcardIdx, setEditingFlashcardIdx] = useState<number | null>(null)
+  const [flashcardForm, setFlashcardForm] = useState({ front: '', back: '', hint: '' })
+  const [editingPretestId, setEditingPretestId] = useState<string | null>(null)
+  const [pretestForm, setPretestForm] = useState({ stem: '', options: ['', '', '', ''], answerIndex: 0, misconception: '' })
+  const [confirmDeleteActivity, setConfirmDeleteActivity] = useState<number | null>(null)
+  const [confirmDeleteFlashcard, setConfirmDeleteFlashcard] = useState<number | null>(null)
+  const [confirmDeletePretest, setConfirmDeletePretest] = useState<string | null>(null)
+
   // Selected topic metadata
   const currentTopic = topics.find((t) => t.id === selectedTopicId) || topics[1] || topics[0]
 
@@ -155,6 +174,39 @@ export default function Studio() {
     setTimeout(() => {
       setToastMsg((current) => (current === msg ? null : current))
     }, 3200)
+  }
+
+  const startEditActivity = (idx: number) => {
+    const act = generatedContent.activities[idx]
+    setActivityForm({ name: act.name, format: act.format, durationMin: act.durationMin, steps: [...act.steps], whyItWorks: act.whyItWorks })
+    setEditingActivityIdx(idx)
+  }
+  const saveActivity = () => {
+    if (editingActivityIdx === null) return
+    updateActivity(editingActivityIdx, activityForm)
+    setEditingActivityIdx(null)
+    showToast('Activity saved')
+  }
+  const startEditFlashcard = (idx: number) => {
+    const card = generatedContent.flashcards[idx]
+    setFlashcardForm({ front: card.front, back: card.back, hint: card.hint })
+    setEditingFlashcardIdx(idx)
+  }
+  const saveFlashcard = () => {
+    if (editingFlashcardIdx === null) return
+    updateFlashcard(editingFlashcardIdx, flashcardForm)
+    setEditingFlashcardIdx(null)
+    showToast('Flashcard saved')
+  }
+  const startEditPretest = (q: PretestQuestion) => {
+    setPretestForm({ stem: q.stem, options: [...q.options], answerIndex: q.answerIndex, misconception: q.misconception })
+    setEditingPretestId(q.id)
+  }
+  const savePretest = () => {
+    if (!editingPretestId) return
+    updatePretestQuestion(editingPretestId, pretestForm)
+    setEditingPretestId(null)
+    showToast('Question saved')
   }
 
   const generationStepTexts = [
@@ -569,6 +621,58 @@ export default function Studio() {
                       const isWhyOpen = openWhyItWorks[idx] ?? false
                       const isApplied = activeActivity?.name === act.name
 
+                      if (editingActivityIdx === idx) {
+                        return (
+                          <div key={idx} className="rounded-3xl border-2 border-pink-400 bg-pink-50/50 p-6 shadow-md space-y-4">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-extrabold text-pink-600">แก้ไข กิจกรรมที่ {idx + 1}</span>
+                              <button type="button" onClick={() => setEditingActivityIdx(null)} className="text-xs text-grey-500 hover:underline cursor-pointer">ยกเลิก</button>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="sm:col-span-2">
+                                <label className="block text-xs font-bold text-ink mb-1">Name</label>
+                                <input type="text" value={activityForm.name} onChange={(e) => setActivityForm((p) => ({ ...p, name: e.target.value }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-sm text-ink outline-none focus:border-pink-500 font-medium" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-ink mb-1">รูปแบบ:</label>
+                                <select value={activityForm.format} onChange={(e) => setActivityForm((p) => ({ ...p, format: e.target.value as ActivityFormat }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-sm text-ink outline-none focus:border-pink-500 font-medium">
+                                  <option value="debate">Debate</option>
+                                  <option value="case-based">Case Study</option>
+                                  <option value="quick-game">Quick Game</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-ink mb-1">ระยะเวลา (นาที):</label>
+                                <input type="number" min={1} value={activityForm.durationMin} onChange={(e) => setActivityForm((p) => ({ ...p, durationMin: parseInt(e.target.value) || 0 }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-sm text-ink outline-none focus:border-pink-500 font-medium" />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-ink mb-1">ขั้นตอน:</label>
+                              <div className="space-y-2">
+                                {activityForm.steps.map((step, sIdx) => (
+                                  <div key={sIdx} className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-grey-500 w-5 text-right">{sIdx + 1}.</span>
+                                    <input type="text" value={step} onChange={(e) => { const next = [...activityForm.steps]; next[sIdx] = e.target.value; setActivityForm((p) => ({ ...p, steps: next })) }} className="flex-1 rounded-lg border border-grey-300 bg-paper p-2 text-xs outline-none focus:border-pink-500 font-medium" />
+                                    {activityForm.steps.length > 1 && (
+                                      <button type="button" onClick={() => setActivityForm((p) => ({ ...p, steps: p.steps.filter((_, i) => i !== sIdx) }))} className="text-grey-400 hover:text-red-500"><Minus className="h-4 w-4" /></button>
+                                    )}
+                                  </div>
+                                ))}
+                                <button type="button" onClick={() => setActivityForm((p) => ({ ...p, steps: [...p.steps, ''] }))} className="flex items-center gap-1 text-xs font-bold text-pink-600 hover:underline cursor-pointer"><Plus className="h-3 w-3" /> เพิ่มขั้นตอน</button>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-ink mb-1">ทำไมถึงได้ผล:</label>
+                              <textarea rows={2} value={activityForm.whyItWorks} onChange={(e) => setActivityForm((p) => ({ ...p, whyItWorks: e.target.value }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium" />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1">
+                              <button type="button" onClick={() => setEditingActivityIdx(null)} className="rounded-xl border border-grey-300 px-3 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer">ยกเลิก</button>
+                              <button type="button" onClick={saveActivity} className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer">บันทึก</button>
+                            </div>
+                          </div>
+                        )
+                      }
+
                       return (
                         <div
                           key={idx}
@@ -586,6 +690,16 @@ export default function Studio() {
                             </div>
 
                             <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => startEditActivity(idx)} className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-pink-400 hover:text-pink-600 transition-colors cursor-pointer">
+                                <Pencil className="h-3 w-3" /> แก้ไข
+                              </button>
+                              {confirmDeleteActivity === idx ? (
+                                <button type="button" onClick={() => { deleteActivity(idx); setConfirmDeleteActivity(null); showToast('Activity deleted') }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-bold text-white cursor-pointer">ยืนยันลบ?</button>
+                              ) : (
+                                <button type="button" onClick={() => setConfirmDeleteActivity(idx)} className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-red-400 hover:text-red-600 transition-colors cursor-pointer">
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              )}
                               <span
                                 className={cn(
                                   'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold border',
@@ -702,45 +816,86 @@ export default function Studio() {
                       {generatedContent.flashcards.map((card, idx) => {
                         const isFlipped = flippedCards[idx] ?? false
 
+                        if (editingFlashcardIdx === idx) {
+                          return (
+                            <div key={idx} className="rounded-3xl border-2 border-pink-400 bg-pink-50/50 p-5 shadow-md space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-extrabold text-pink-600">แก้ไข การ์ดที่ {idx + 1}</span>
+                                <button type="button" onClick={() => setEditingFlashcardIdx(null)} className="text-xs text-grey-500 hover:underline cursor-pointer">ยกเลิก</button>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-ink mb-1">ด้านหน้า:</label>
+                                <textarea rows={2} value={flashcardForm.front} onChange={(e) => setFlashcardForm((p) => ({ ...p, front: e.target.value }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-ink mb-1">ด้านหลัง:</label>
+                                <textarea rows={2} value={flashcardForm.back} onChange={(e) => setFlashcardForm((p) => ({ ...p, back: e.target.value }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-ink mb-1">คำใบ้:</label>
+                                <input type="text" value={flashcardForm.hint} onChange={(e) => setFlashcardForm((p) => ({ ...p, hint: e.target.value }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium" />
+                              </div>
+                              <div className="flex justify-end gap-2 pt-1">
+                                <button type="button" onClick={() => setEditingFlashcardIdx(null)} className="rounded-xl border border-grey-300 px-3 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer">ยกเลิก</button>
+                                <button type="button" onClick={saveFlashcard} className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer">บันทึก</button>
+                              </div>
+                            </div>
+                          )
+                        }
+
                         return (
                           <div key={idx} className="flex flex-col space-y-2">
-                            <div
-                              onClick={() =>
-                                setFlippedCards((prev) => ({
-                                  ...prev,
-                                  [idx]: !prev[idx],
-                                }))
-                              }
-                              className="perspective-1000 h-44 w-full cursor-pointer select-none"
-                            >
-                              <div
-                                className={cn(
-                                  'relative h-full w-full rounded-3xl transition-transform duration-500 transform-style-3d shadow-sm border border-grey-300/60',
-                                  isFlipped ? 'rotate-y-180 bg-pink-50/80' : 'bg-paper'
+                            <div className="relative">
+                              <div className="absolute top-2 right-2 z-10 flex gap-1">
+                                <button type="button" onClick={(e) => { e.stopPropagation(); startEditFlashcard(idx) }} className="rounded-lg bg-white/90 border border-grey-300 p-1.5 text-grey-600 hover:text-pink-600 hover:border-pink-400 transition-colors cursor-pointer shadow-sm" title="แก้ไข">
+                                  <Pencil className="h-3 w-3" />
+                                </button>
+                                {confirmDeleteFlashcard === idx ? (
+                                  <button type="button" onClick={(e) => { e.stopPropagation(); deleteFlashcard(idx); setConfirmDeleteFlashcard(null); showToast('Flashcard deleted') }} className="rounded-lg bg-red-600 p-1.5 text-white cursor-pointer shadow-sm text-[10px] font-bold px-2">ยืนยันลบ?</button>
+                                ) : (
+                                  <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteFlashcard(idx) }} className="rounded-lg bg-white/90 border border-grey-300 p-1.5 text-grey-600 hover:text-red-600 hover:border-red-400 transition-colors cursor-pointer shadow-sm" title="ลบ">
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
                                 )}
+                              </div>
+                              <div
+                                onClick={() =>
+                                  setFlippedCards((prev) => ({
+                                    ...prev,
+                                    [idx]: !prev[idx],
+                                  }))
+                                }
+                                className="perspective-1000 h-44 w-full cursor-pointer select-none"
                               >
-                                {/* FRONT FACE */}
-                                <div className="backface-hidden absolute inset-0 flex flex-col justify-between p-5 rounded-3xl bg-paper">
-                                  <span className="rounded-lg bg-pink-50 px-2.5 py-1 text-pink-600 text-xs font-bold w-fit">
-                                    #{idx + 1}
-                                  </span>
-                                  <h4 className="text-center font-bold text-ink text-base leading-snug my-auto px-1">
-                                    {card.front}
-                                  </h4>
-                                  <span className="text-[11px] text-center font-bold text-pink-600">
-                                    แตะเพื่อพลิก
-                                  </span>
-                                </div>
+                                <div
+                                  className={cn(
+                                    'relative h-full w-full rounded-3xl transition-transform duration-500 transform-style-3d shadow-sm border border-grey-300/60',
+                                    isFlipped ? 'rotate-y-180 bg-pink-50/80' : 'bg-paper'
+                                  )}
+                                >
+                                  {/* FRONT FACE */}
+                                  <div className="backface-hidden absolute inset-0 flex flex-col justify-between p-5 rounded-3xl bg-paper">
+                                    <span className="rounded-lg bg-pink-50 px-2.5 py-1 text-pink-600 text-xs font-bold w-fit">
+                                      #{idx + 1}
+                                    </span>
+                                    <h4 className="text-center font-bold text-ink text-base leading-snug my-auto px-1">
+                                      {card.front}
+                                    </h4>
+                                    <span className="text-[11px] text-center font-bold text-pink-600">
+                                      แตะเพื่อพลิก
+                                    </span>
+                                  </div>
 
-                                {/* BACK FACE */}
-                                <div className="backface-hidden rotate-y-180 absolute inset-0 flex flex-col justify-between p-5 rounded-3xl bg-pink-50/90 text-ink">
-                                  <span className="text-xs font-bold text-pink-600">คำอธิบาย:</span>
-                                  <p className="text-sm text-center font-bold leading-relaxed my-auto text-ink">
-                                    {card.back}
-                                  </p>
-                                  <span className="text-[10px] text-center text-grey-600 font-medium">
-                                    แตะเพื่อพลิกกลับ
-                                  </span>
+                                  {/* BACK FACE */}
+                                  <div className="backface-hidden rotate-y-180 absolute inset-0 flex flex-col justify-between p-5 rounded-3xl bg-pink-50/90 text-ink">
+                                    <span className="text-xs font-bold text-pink-600">คำอธิบาย:</span>
+                                    <p className="text-sm text-center font-bold leading-relaxed my-auto text-ink">
+                                      {card.back}
+                                    </p>
+                                    <span className="text-[10px] text-center text-grey-600 font-medium">
+                                      แตะเพื่อพลิกกลับ
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -765,6 +920,38 @@ export default function Studio() {
                       const diffBadge = getDifficultyBadge(q.difficulty)
                       const isRevealed = revealedAnswers[q.id] ?? false
 
+                      if (editingPretestId === q.id) {
+                        return (
+                          <div key={q.id} className="rounded-3xl border-2 border-pink-400 bg-pink-50/50 p-6 shadow-md space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-extrabold text-pink-600">แก้ไขข้อสอบข้อที่ {qIdx + 1}</span>
+                              <button type="button" onClick={() => setEditingPretestId(null)} className="text-xs text-grey-500 hover:underline cursor-pointer">ยกเลิก</button>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-ink mb-1">โจทย์คำถาม:</label>
+                              <textarea rows={2} value={pretestForm.stem} onChange={(e) => setPretestForm((p) => ({ ...p, stem: e.target.value }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium" />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="block text-xs font-bold text-ink">ตัวเลือกคำตอบ (เลือกข้อที่ถูก):</label>
+                              {pretestForm.options.map((optText, optIdx) => (
+                                <div key={optIdx} className="flex items-center gap-2">
+                                  <input type="radio" name={`studio-correct-${q.id}`} checked={pretestForm.answerIndex === optIdx} onChange={() => setPretestForm((p) => ({ ...p, answerIndex: optIdx }))} className="h-4 w-4 accent-pink-600 cursor-pointer" />
+                                  <input type="text" value={optText} onChange={(e) => { const next = [...pretestForm.options]; next[optIdx] = e.target.value; setPretestForm((p) => ({ ...p, options: next })) }} className={cn('w-full rounded-lg border p-2 text-xs outline-none font-medium', pretestForm.answerIndex === optIdx ? 'border-pink-500 bg-pink-50 font-bold' : 'border-grey-300 bg-paper')} />
+                                </div>
+                              ))}
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-ink mb-1">จุดที่มักเข้าใจผิด:</label>
+                              <input type="text" value={pretestForm.misconception} onChange={(e) => setPretestForm((p) => ({ ...p, misconception: e.target.value }))} className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium" />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1">
+                              <button type="button" onClick={() => setEditingPretestId(null)} className="rounded-xl border border-grey-300 px-3 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer">ยกเลิก</button>
+                              <button type="button" onClick={savePretest} className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer">บันทึก</button>
+                            </div>
+                          </div>
+                        )
+                      }
+
                       return (
                         <div
                           key={q.id}
@@ -780,9 +967,21 @@ export default function Studio() {
                               </h4>
                             </div>
 
-                            <span className={cn('shrink-0 rounded-full px-3 py-1 text-xs', diffBadge.class)}>
-                              {diffBadge.label}
-                            </span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button type="button" onClick={() => startEditPretest(q)} className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-pink-400 hover:text-pink-600 transition-colors cursor-pointer">
+                                <Pencil className="h-3 w-3" /> แก้ไข
+                              </button>
+                              {confirmDeletePretest === q.id ? (
+                                <button type="button" onClick={() => { deletePretestQuestion(q.id); setConfirmDeletePretest(null); showToast('Question deleted') }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-bold text-white cursor-pointer">ยืนยันลบ?</button>
+                              ) : (
+                                <button type="button" onClick={() => setConfirmDeletePretest(q.id)} className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-red-400 hover:text-red-600 transition-colors cursor-pointer">
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              )}
+                              <span className={cn('rounded-full px-3 py-1 text-xs', diffBadge.class)}>
+                                {diffBadge.label}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Options Grid */}
