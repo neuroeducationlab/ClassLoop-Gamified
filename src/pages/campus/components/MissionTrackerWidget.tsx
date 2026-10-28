@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Scroll, CheckCircle2, ArrowRight, Clock, X } from 'lucide-react'
 import { useApp, type Mission } from '@/context/AppContext'
 import { GameIcon } from '@/components/icons/GameIcon'
@@ -5,10 +6,13 @@ import { GameIcon } from '@/components/icons/GameIcon'
 export default function MissionTrackerWidget({
   onSelectMission,
   onClose,
+  header,
 }: {
   onSelectMission: (mission: Mission) => void
   /** Hides the panel; the HUD's Quests button brings it back. */
   onClose: () => void
+  /** Shown above the list (the wardrobe's special quests). */
+  header?: ReactNode
 }) {
   const { missions, lang } = useApp()
 
@@ -48,7 +52,8 @@ export default function MissionTrackerWidget({
 
         {/* Mission List */}
         {(
-          <div className="mt-3 space-y-2 max-h-80 overflow-y-auto pr-1">
+          <div className="mt-3 space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            {header}
             {activeMissions.map((mission) => {
               const isExam = mission.type === 'exam'
               const isQuiz = mission.type === 'quiz'

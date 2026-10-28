@@ -38,7 +38,16 @@ import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './component
 import LeaderboardWidget from './components/LeaderboardWidget'
 import MissionTrackerWidget from './components/MissionTrackerWidget'
 import BrainGymModal from './components/BrainGymModal'
-import AvatarShopModal from './components/AvatarShopModal'
+import MysteryBlocks from '@/pages/wardrobe/MysteryBlocks'
+import BlockQuestion from '@/pages/wardrobe/BlockQuestion'
+import FlashcardSprint from '@/pages/wardrobe/FlashcardSprint'
+import SpecialQuests, { type SpecialGo } from '@/pages/wardrobe/SpecialQuests'
+import ProfileModal, { BadgeRow, ProfilePic } from '@/pages/wardrobe/ProfileCard'
+import RewardCelebration from '@/pages/wardrobe/RewardCelebration'
+import { useAvatar3DSync } from '@/pages/wardrobe/sync'
+import { BLOCK_QUESTS, recordTalk, wardrobeState } from '@/pages/wardrobe/store'
+import { BLOCK_SPOTS } from '@/pages/wardrobe/quests'
+import type { QuestId } from '@/pages/wardrobe/catalog'
 import CampusNPCs, { CAMPUS_NPCS, type CampusNPC } from './components/CampusNPCs'
 import NPCDialogModal from './components/NPCDialogModal'
 import {
@@ -190,7 +199,11 @@ export default function Campus3D() {
 
   // ── Student Gamification Modals & Widgets State ───────────────────────────
   const [showBrainGym, setShowBrainGym] = useState<boolean>(false)
-  const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
+  // the coin shop is the wardrobe now (/create); these are its campus-side modals
+  const [showProfile, setShowProfile] = useState(false)
+  const [showFlashcards, setShowFlashcards] = useState(false)
+  const [blockQuest, setBlockQuest] = useState<QuestId | null>(null)
+  useAvatar3DSync()
   // phones start with the Quests panel closed, so it doesn't cover the 3D view (the HUD button opens it)
   const [showMissions, setShowMissions] = useState<boolean>(() => window.innerWidth >= 640)
 
@@ -293,10 +306,10 @@ export default function Campus3D() {
   }
 
   // Warp: the scene jumps under a flash of light (see warpTo in CampusScene)
-  const warpRef = useRef<(target: [number, number], building: BuildingConfig | null) => boolean>(() => false)
+  const warpRef = useRef<(target: [number, number], building: BuildingConfig | null, face?: [number, number]) => boolean>(() => false)
   const warpFxRef = useRef<HTMLDivElement>(null)
-  const warp = useCallback((target: [number, number], building: BuildingConfig | null) => {
-    if (!warpRef.current(target, building)) return
+  const warp = useCallback((target: [number, number], building: BuildingConfig | null, face?: [number, number]) => {
+    if (!warpRef.current(target, building, face)) return
     playPortalSound()
     warpFxRef.current?.animate(
       [
@@ -308,6 +321,46 @@ export default function Campus3D() {
     )
   }, [])
   const warpToBuilding = useCallback((b: BuildingConfig) => warp(doorPoint(b), b), [warp])
+
+  /** Warp to stand a few steps in front of a spot (towards the plaza), facing it. */
+  const warpNear = useCallback(
+    ([x, z]: [number, number]) => {
+      const dx = PLAZA_CENTER[0] - x
+      const dz = PLAZA_CENTER[1] - z
+      const d = Math.hypot(dx, dz) || 1
+      warp([x + (dx / d) * 4.6, z + (dz / d) * 4.6], null, [x, z])
+    },
+    [warp],
+  )
+  const handleSpecial = useCallback(
+    (go: SpecialGo) => {
+      const st = wardrobeState()
+      if (go === 'flashcards') setShowFlashcards(true)
+      else if (go === 'braingym') setShowBrainGym(true)
+      else if (go === 'blocks') {
+        const i = BLOCK_QUESTS.findIndex((b) => !st.quests.includes(b))
+        if (i >= 0) warpNear(BLOCK_SPOTS[i])
+      } else {
+        const npc = CAMPUS_NPCS.find((n) => !st.npcTalks.includes(n.id)) ?? CAMPUS_NPCS[0]
+        warpNear([npc.position[0], npc.position[2]])
+      }
+    },
+    [warpNear],
+  )
+
+  // The wardrobe's "go do it" buttons land here with { open }
+  const [openOnArrive] = useState(() => (location.state as { open?: string } | null)?.open)
+  useEffect(() => {
+    if (!openOnArrive) return
+    if (openOnArrive === 'braingym') setShowBrainGym(true)
+    else if (openOnArrive === 'flashcards') setShowFlashcards(true)
+    else setShowMissions(true)
+  }, [openOnArrive])
+
+  // talking to classmates counts towards the "make friends" special quest
+  useEffect(() => {
+    if (activeNPC) recordTalk(activeNPC.id)
+  }, [activeNPC])
 
   const handleSelectMission = useCallback(
     (mission: Mission) => {
@@ -387,6 +440,7 @@ export default function Campus3D() {
           entering={entering}
           turnHeadRef={turnHeadRef}
         />
+        {!isTeacher && <MysteryBlocks onOpen={setBlockQuest} />}
 
         {!isMobile && (
           <EffectComposer multisampling={4}>
@@ -469,7 +523,9 @@ export default function Campus3D() {
               <GameIcon name="gradCap" />
             </div>
           ) : (
-            <span className="h-9 w-9 rounded-full border-2 border-white shadow shrink-0" style={{ backgroundColor: me.color }} />
+            <button onClick={() => setShowProfile(true)} className="cursor-pointer rounded-full transition hover:scale-105" aria-label={lang === 'th' ? 'โปรไฟล์' : 'Profile'}>
+              <ProfilePic size={44} />
+            </button>
           )}
           <div className="min-w-[9rem]">
             <p className="text-sm font-bold leading-tight">{isTeacher ? (teacherName || 'อ.ดร.ธนพร') : me.nickname}</p>
@@ -481,6 +537,9 @@ export default function Campus3D() {
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
                   <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: CAMPUS_PALETTE.path }} />
                 </div>
+                <button onClick={() => setShowProfile(true)} className="mt-1 cursor-pointer" aria-label={lang === 'th' ? 'เหรียญตรา' : 'Badges'}>
+                  <BadgeRow max={5} size={18} />
+                </button>
               </>
             )}
           </div>
@@ -543,7 +602,7 @@ export default function Campus3D() {
             <>
               {/* SPU Boutique Shop with Student Coins */}
               <button
-                onClick={() => setShowAvatarShop(true)}
+                onClick={() => navigate('/create')}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
                 title={`SPU Boutique · ${t.shop}`}
               >
@@ -756,12 +815,16 @@ export default function Campus3D() {
       {!isTeacher && !isArriving && (
         <>
           <LeaderboardWidget />
-          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} onClose={() => setShowMissions(false)} />}
+          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} onClose={() => setShowMissions(false)} header={<SpecialQuests onGo={handleSpecial} />} />}
         </>
       )}
 
       {/* ── SPU Boutique Avatar Shop Modal ── */}
-      {showAvatarShop && <AvatarShopModal onClose={() => setShowAvatarShop(false)} />}
+      {/* ── Wardrobe special quests, profile, and the reward fanfare ── */}
+      {showFlashcards && <FlashcardSprint onClose={() => setShowFlashcards(false)} />}
+      {blockQuest && <BlockQuestion quest={blockQuest} onClose={() => setBlockQuest(null)} />}
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+      <RewardCelebration />
 
       {/* ── Brain Gym Pre-Learning Arena Modal ── */}
       {showBrainGym && <BrainGymModal onClose={() => setShowBrainGym(false)} />}
@@ -784,7 +847,7 @@ export default function Campus3D() {
             const b = BUILDINGS.find((x) => x.id === id)
             if (b) warpToBuilding(b)
           }}
-          onOpenShop={() => setShowAvatarShop(true)}
+          onOpenShop={() => navigate('/create')}
         />
       )}
 
@@ -825,7 +888,7 @@ type SceneProps = {
   avatarPosRef: RefObject<[number, number]>
   avatarRotRef: RefObject<number>
   walkGroundRef: RefObject<(x: number, z: number) => void>
-  warpRef: RefObject<(target: [number, number], building: BuildingConfig | null) => boolean>
+  warpRef: RefObject<(target: [number, number], building: BuildingConfig | null, face?: [number, number]) => boolean>
   onNearDoor: (b: BuildingConfig | null) => void
   onNearNPC: (npc: CampusNPC | null) => void
   onTalkNPC: (npc: CampusNPC) => void
@@ -1034,15 +1097,16 @@ function CampusScene({
     t: number
     target: [number, number]
     building: BuildingConfig | null
+    face?: [number, number]
     jumped: boolean
     fov: number
   } | null>(null)
-  const warpTo = (target: [number, number], building: BuildingConfig | null) => {
+  const warpTo = (target: [number, number], building: BuildingConfig | null, face?: [number, number]) => {
     if (warp.current || entering) return false
     waypoints.current = []
     destination.current = null
     if (markerRef.current) markerRef.current.visible = false
-    warp.current = { t: 0, target, building, jumped: false, fov: (camera as PerspectiveCamera).fov }
+    warp.current = { t: 0, target, building, face, jumped: false, fov: (camera as PerspectiveCamera).fov }
     return true
   }
   useEffect(() => {
@@ -1104,9 +1168,10 @@ function CampusScene({
         w.jumped = true
         const [x, z] = w.target
         a.position.set(x, 0, z)
-        if (w.building) {
-          // land facing the building's door
-          const [bx, bz] = w.building.position
+        const facing = w.face ?? w.building?.position
+        if (facing) {
+          // land facing the building's door (or the ? block / classmate warped to)
+          const [bx, bz] = facing
           a.rotation.y = Math.atan2(bx - x, bz - z)
           mouseYaw.current = Math.atan2(bx - x, -(bz - z))
           mousePitch.current = 0

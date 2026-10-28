@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Trophy, Flame, ChevronLeft, ChevronRight, Crown, Sparkles, X } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { lookupEn } from '@/components/AutoTranslate'
+import { ProfilePic } from '@/pages/wardrobe/ProfileCard'
 
 interface LeaderboardEntry {
   rank: number
@@ -185,12 +186,17 @@ export default function LeaderboardWidget() {
                       {isTop1 ? <Crown className="h-3.5 w-3.5" /> : item.rank}
                     </span>
 
-                    <span
-                      className="h-7 w-7 rounded-full border border-white/40 shadow-xs shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
-                      style={{ backgroundColor: item.avatarColor }}
-                    >
-                      {(lang === 'en' ? lookupEn(item.nickname) : item.nickname)[0]}
-                    </span>
+                    {item.isUser ? (
+                      // you: your dressed-up chibi, the same one as the HUD and the wardrobe
+                      <ProfilePic size={28} ring="#F9A8D4" />
+                    ) : (
+                      <span
+                        className="h-7 w-7 rounded-full border border-white/40 shadow-xs shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
+                        style={{ backgroundColor: item.avatarColor }}
+                      >
+                        {(lang === 'en' ? lookupEn(item.nickname) : item.nickname)[0]}
+                      </span>
+                    )}
 
                     <div>
                       <p className={`font-bold leading-tight ${item.isUser ? 'text-pink-300' : 'text-white'}`}>
