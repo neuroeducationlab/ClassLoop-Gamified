@@ -263,27 +263,20 @@ const HATS: Item[] = [
 const [ELX, ELY] = G.eyeL
 const [ERX, ERY] = G.eyeR
 /**
- * Default face: big shiny iris with a sparkle (anime-stylised SPU student), a soft brow and
- * a cute upper-lash curve. Reads as a young adult, not a toddler, without changing head size
- * (so every hair and hat item still fits).
+ * Default face: a natural brown iris that matches the brow (OUT), a single soft highlight,
+ * and gentle brows. Reads as a friendly university student, not an anime stylised one.
+ * Head size and all item anchor points are unchanged, so every hair/hat/eye item still fits.
  */
 function dotEyes(): Draw {
   return () => (
     <g>
       {[[ELX, ELY], [ERX, ERY]].map(([x, y]) => (
         <g key={x}>
-          {/* soft brow */}
-          <path d={`M${x - 10},${y - 15} Q${x},${y - 19} ${x + 10},${y - 15}`} fill="none" stroke={OUT} strokeWidth={2.6} strokeLinecap="round" />
-          {/* eye outline + upper lash accent */}
-          <ellipse cx={x} cy={y + 1} rx={8.5} ry={10} fill="#FFFFFF" stroke={OUT} strokeWidth={2.4} />
-          <path d={`M${x - 9},${y - 6} Q${x},${y - 11} ${x + 9},${y - 6}`} fill="none" stroke={OUT} strokeWidth={3.5} strokeLinecap="round" />
-          {/* iris: warm brown rim, violet inner */}
-          <ellipse cx={x} cy={y + 2} rx={6} ry={8.5} fill="#4F3B6A" />
-          <ellipse cx={x} cy={y + 4} rx={4.2} ry={6.5} fill="#8869C8" />
-          <ellipse cx={x} cy={y + 6} rx={2.6} ry={4} fill="#D4C0F2" />
-          {/* two highlights: a big one up-right, a tiny one lower-left */}
-          <circle cx={x + 2.5} cy={y - 2} r={2.6} fill="#FFFFFF" />
-          <circle cx={x - 2.5} cy={y + 5} r={1.4} fill="#FFFFFF" />
+          {/* soft brow in the character line colour */}
+          <path d={`M${x - 10},${y - 14} Q${x},${y - 17} ${x + 10},${y - 14}`} fill="none" stroke={OUT} strokeWidth={2.6} strokeLinecap="round" />
+          {/* iris: the same warm brown as the brow, a small white highlight on top */}
+          <ellipse cx={x} cy={y} rx={5.5} ry={7.5} fill={OUT} />
+          <circle cx={x + 1.8} cy={y - 2.5} r={2.2} fill="#FFFFFF" />
         </g>
       ))}
     </g>
@@ -473,13 +466,23 @@ const OUTFITS: Item[] = [
         <path d="M112,196 L128,196 L124,214 L120,210 L116,214 Z" fill="#E8414E" {...S} />
       </g>
     ) }) },
-  { id: 'outfit-spu', slot: 'outfit', name: n('ชุดนักศึกษา SPU', 'SPU student uniform'), rarity: 'common', unlock: free, pants: '#2B3150', shoes: '#2A2A35', three: { outfit: 'suit', color: '#F4F4F8' },
-    front: outfitFront({ top: '#FBFBFD', details: () => (
+  { id: 'outfit-spu', slot: 'outfit', name: n('ชุดนักศึกษา SPU', 'SPU student uniform'), rarity: 'common', unlock: free, pants: '#2B3150', shoes: '#1A1A24', three: { outfit: 'suit', color: '#F4F4F8' },
+    front: outfitFront({ top: '#FFFFFF', details: () => (
       <g>
-        <path d="M120,166 L108,176 L120,184 L132,176 Z" fill="#E6E8F0" {...S} />
-        <path d="M120,184 L120,230" stroke={OUT} strokeWidth={2} strokeDasharray="1 7" strokeLinecap="round" />
-        <rect x={130} y={192} width={14} height={9} rx={2} fill="#E8414E" stroke={OUT} strokeWidth={1.8} />
-        <rect x={78} y={222} width={84} height={9} rx={3} fill="#2B3150" {...S} />
+        {/* collar: a cream V-notch with crisp lapels */}
+        <path d="M98,164 L120,188 L142,164" fill="none" stroke={OUT} strokeWidth={2.2} strokeLinejoin="round" />
+        <path d="M98,164 L108,182 L120,188 L132,182 L142,164" fill="#F3F5FA" stroke={OUT} strokeWidth={2.2} strokeLinejoin="round" />
+        {/* placket + three buttons straight down the chest */}
+        <path d="M120,188 L120,228" stroke={OUT} strokeWidth={2.2} strokeLinecap="round" />
+        <circle cx={120} cy={198} r={1.8} fill={OUT} />
+        <circle cx={120} cy={210} r={1.8} fill={OUT} />
+        <circle cx={120} cy={222} r={1.8} fill={OUT} />
+        {/* SPU name tag on the right chest */}
+        <rect x={126} y={194} width={18} height={10} rx={1.5} fill="#E89BC4" stroke={OUT} strokeWidth={1.6} />
+        <text x={135} y={201.6} fontSize={6.4} fill="#FFFFFF" fontFamily="Fredoka, Arial Rounded MT Bold, sans-serif" fontWeight="700" textAnchor="middle" letterSpacing={0.4}>SPU</text>
+        {/* navy belt with a gold buckle, so the uniform reads as "nicely done" */}
+        <rect x={78} y={224} width={84} height={9} rx={2} fill="#1E2140" stroke={OUT} strokeWidth={2} />
+        <rect x={115} y={223} width={10} height={11} rx={1.5} fill="#F2C14E" stroke={OUT} strokeWidth={1.6} />
       </g>
     ) }) },
   { id: 'outfit-frog', slot: 'outfit', name: n('เสื้อกันฝนกบน้อย', 'Froggy raincoat'), rarity: 'rare', unlock: coins(120), shoes: '#8CC85A', three: { outfit: 'hoodie', color: '#A6D46B' },
@@ -942,11 +945,16 @@ export const THUMB_BOX: Record<Slot, [number, number, number, number]> = {
   bg: [0, 0, 240, 300],
 }
 
+/**
+ * The fresh-player look: a clean SPU uniform (no bow covering the name tag and buttons),
+ * fluffy hair, a brown-eyed friendly face. Hat and held item start empty so the uniform
+ * reads clearly before anything else is added.
+ */
 export const DEFAULT_LOOK: Record<Slot, string> = {
-  hat: 'hat-sprout',
+  hat: 'hat-none',
   hair: 'hair-fluffy',
   eyes: 'eyes-dot',
-  neck: 'neck-bow-blue',
+  neck: 'neck-none',
   outfit: 'outfit-spu',
   held: 'held-none',
   aura: 'aura-none',

@@ -1,41 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Lock, Pencil, Shirt, X, RotateCw } from 'lucide-react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, ContactShadows } from '@react-three/drei'
+import { Check, Lock, Pencil, Shirt, X } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import Avatar3D from '@/pages/campus/components/Avatar3D'
-import Avatar3DSvg from '@/pages/campus/components/Avatar3DSvg'
+import ChibiAvatar from './ChibiAvatar'
 import { ITEMS, ITEM_BY_ID, RARITY } from './catalog'
 import { BADGES } from './badges'
 import { Medal } from './Medal'
 import { isOwned, useWardrobe } from './store'
 
-/** The player's 3D avatar as a round profile picture (HUD, leaderboard). */
+/**
+ * The player's chibi as a round profile picture (HUD, leaderboard).
+ * Molly's reference is the cozy dress-up chibi, not the capsule-robot 3D avatar.
+ */
 export function ProfilePic({ size = 40, ring = '#fff' }: { size?: number; ring?: string }) {
-  const { avatar } = useApp()
-  const color = avatar?.color || '#E89BC4'
-  const hat = avatar?.hat || 'grad'
-  const outfit = avatar?.outfit || 'default'
-  const aura = avatar?.aura || 'none'
-
+  const { look } = useWardrobe()
   return (
-    <span
-      className="inline-block shrink-0 overflow-hidden rounded-full shadow-sm"
-      style={{
-        width: size,
-        height: size,
-        boxShadow: ring ? `0 0 0 2px ${ring}` : undefined,
-      }}
-    >
-      <Avatar3DSvg
-        color={color}
-        hat={hat}
-        outfit={outfit}
-        aura={aura}
-        size={size}
-        className="h-full w-full block"
-      />
+    <span className="inline-block shrink-0 overflow-hidden rounded-full" style={{ width: size, height: size, boxShadow: `0 0 0 2px ${ring}` }}>
+      <ChibiAvatar look={look} crop="bust" className="h-full w-full" />
     </span>
   )
 }
@@ -84,33 +65,8 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           <X className="h-5 w-5" strokeWidth={3} />
         </button>
 
-        <div className="relative aspect-[4/5] self-start overflow-hidden rounded-3xl border-[3px] border-[#5B3A2E] bg-gradient-to-b from-[#1E2235] via-[#2A2035] to-[#121422] shadow-[0_4px_0_#5B3A2E] flex items-center justify-center">
-          <Canvas camera={{ position: [0, 1.25, 2.9], fov: 42 }}>
-            <ambientLight intensity={0.9} />
-            <directionalLight position={[4, 6, 4]} intensity={1.5} color="#FFEACC" />
-            <directionalLight position={[-4, 3, -3]} intensity={0.7} color="#90CDF4" />
-            <group position={[0, -0.68, 0]}>
-              <Avatar3D
-                color={avatar?.color || '#E89BC4'}
-                hat={avatar?.hat || 'grad'}
-                outfit={avatar?.outfit || 'default'}
-                aura={avatar?.aura || 'none'}
-              />
-              <ContactShadows opacity={0.6} scale={3.5} blur={2.4} far={2} />
-            </group>
-            <OrbitControls
-              autoRotate
-              autoRotateSpeed={2}
-              enableZoom={false}
-              enablePan={false}
-              minPolarAngle={Math.PI / 3.2}
-              maxPolarAngle={Math.PI / 1.9}
-            />
-          </Canvas>
-          <div className="absolute bottom-2.5 left-2.5 z-10 rounded-xl bg-black/60 px-2.5 py-1 text-[10px] text-white/80 backdrop-blur-md border border-white/10 flex items-center gap-1 pointer-events-none">
-            <RotateCw className="h-2.5 w-2.5 text-pink-400 animate-spin" style={{ animationDuration: '6s' }} />
-            <span>{th ? '3D อวตาร หมุนได้ 360°' : '360° 3D Avatar'}</span>
-          </div>
+        <div className="aspect-[4/5] self-start overflow-hidden rounded-3xl border-[3px] border-[#5B3A2E] shadow-[0_4px_0_#5B3A2E]">
+          <ChibiAvatar look={w.look} className="block h-full w-full" />
         </div>
 
         <div className="flex min-w-0 flex-col">

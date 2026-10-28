@@ -21,7 +21,9 @@ import Review from '@/pages/student/Review'
 import Assignments from '@/pages/student/Assignments'
 
 // The campus pulls in three.js (~700 kB) — load it only when a student goes there.
-const CharacterCreate = lazy(() => import('@/pages/create/CharacterCreate'))
+// /create is the cozy chibi wardrobe (Molly-approved); @/pages/create/CharacterCreate still
+// exists for a 3D avatar customizer another session added, but it is not the user-facing route.
+const CharacterCreate = lazy(() => import('@/pages/wardrobe/Wardrobe'))
 const Campus3D = lazy(() => import('@/pages/campus/Campus3D'))
 const BuildingInterior = lazy(() => import('@/pages/campus/BuildingInterior'))
 const CampusMap2D = lazy(() => import('@/pages/campus/CampusMap2D'))
