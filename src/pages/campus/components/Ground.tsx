@@ -569,6 +569,8 @@ export default function Ground({ onWalk }: { onWalk: (x: number, z: number) => v
 
   const click = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
+    // the end of a drag-to-look is not a click: don't walk
+    if (e.delta > 6) return
     onWalk(e.point.x, e.point.z)
   }
 

@@ -71,7 +71,11 @@ export default function NPCDialogModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300"
+      // a click outside the card closes it
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-[#16182E]/95 via-[#1E1B4B]/95 to-[#0F172A]/95 p-6 text-white shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 duration-200">
         {/* Ambient Glow */}
         <div
@@ -105,10 +109,10 @@ export default function NPCDialogModal({
 
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all cursor-pointer"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/25 hover:text-white transition-all cursor-pointer"
             aria-label="Close"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 

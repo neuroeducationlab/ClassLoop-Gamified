@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useApp, type AvatarHat, type AvatarOutfit, type AvatarAura } from '@/context/AppContext'
 import { playClickSound, playCoinSound, playLevelUpSound, playWrongSound } from '../soundEngine'
@@ -207,6 +207,13 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
 
   const items = SHOP_ITEMS.filter((i) => i.category === activeTab)
 
+  // Esc closes, like every other campus modal
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   const handleAction = (item: ShopItem) => {
     const isOwned = item.price === 0 || ownedStoreItems.includes(item.id)
 
@@ -252,7 +259,11 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300"
+      // a click outside the card closes it
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="relative w-full max-w-xl rounded-3xl border border-white/20 bg-[#16182E]/95 p-6 text-white shadow-2xl">
         {/* Close Button */}
         <button
@@ -260,9 +271,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
             playClickSound()
             onClose()
           }}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all cursor-pointer"
+          aria-label={lang === 'th' ? 'ปิด' : 'Close'}
+          className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/25 hover:text-white transition-all cursor-pointer"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
 
         {/* Top Header & Coin Counter */}
