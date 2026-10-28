@@ -12,10 +12,11 @@ import {
   UserX,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { initials } from '@/components/AutoTranslate'
 import { cn } from '@/lib/utils'
 
 export default function Community() {
-  const { posts, students, addPost, addReply } = useApp()
+  const { posts, students, addPost, addReply, lang } = useApp()
 
   // Teacher post composer state
   const [postBody, setPostBody] = useState('')
@@ -180,7 +181,7 @@ export default function Community() {
                           : 'bg-pink-100 text-pink-700 border-pink-300'
                       )}
                     >
-                      {isAnon ? <UserX className="h-4 w-4 text-purple-600" /> : post.alias?.includes('ผู้สอน') ? <BookOpen className="h-4 w-4 text-white" /> : (author?.nickname.slice(0, 2) || 'SP')}
+                      {isAnon ? <UserX className="h-4 w-4 text-purple-600" /> : post.alias?.includes('ผู้สอน') ? <BookOpen className="h-4 w-4 text-white" /> : (author ? initials(author.nickname, lang) : 'SP')}
                     </div>
 
                     <div>

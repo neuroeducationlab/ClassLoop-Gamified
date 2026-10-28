@@ -26,6 +26,7 @@ import {
   X,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { initials } from '@/components/AutoTranslate'
 import { useReveal } from '@/hooks/useReveal'
 import {
   ASSIGNMENTS,
@@ -304,6 +305,7 @@ export default function Dashboard() {
     students,
     responses,
     topics,
+    lang,
   } = useApp()
 
   const [selectedSecTab, setSelectedSecTab] = useState<'all' | 'sec1' | 'sec2' | 'sec3'>('all')
@@ -618,7 +620,7 @@ export default function Dashboard() {
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2.5">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 font-extrabold text-pink-700 text-xs shrink-0">
-                                  {s.nickname.slice(0, 2)}
+                                  {initials(s.nickname, lang)}
                                 </div>
                                 <div>
                                   <p className="font-extrabold text-ink">

@@ -696,7 +696,7 @@ export default function Studio() {
                               {confirmDeleteActivity === idx ? (
                                 <button type="button" onClick={() => { deleteActivity(idx); setConfirmDeleteActivity(null); showToast('Activity deleted') }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-bold text-white cursor-pointer">ยืนยันลบ?</button>
                               ) : (
-                                <button type="button" onClick={() => setConfirmDeleteActivity(idx)} className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-red-400 hover:text-red-600 transition-colors cursor-pointer">
+                                <button type="button" onClick={() => setConfirmDeleteActivity(idx)} title="ลบ" aria-label="ลบ" className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-red-400 hover:text-red-600 transition-colors cursor-pointer">
                                   <Trash2 className="h-3 w-3" />
                                 </button>
                               )}
@@ -974,7 +974,7 @@ export default function Studio() {
                               {confirmDeletePretest === q.id ? (
                                 <button type="button" onClick={() => { deletePretestQuestion(q.id); setConfirmDeletePretest(null); showToast('Question deleted') }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-xs font-bold text-white cursor-pointer">ยืนยันลบ?</button>
                               ) : (
-                                <button type="button" onClick={() => setConfirmDeletePretest(q.id)} className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-red-400 hover:text-red-600 transition-colors cursor-pointer">
+                                <button type="button" onClick={() => setConfirmDeletePretest(q.id)} title="ลบ" aria-label="ลบ" className="inline-flex items-center gap-1 rounded-lg border border-grey-300 px-2 py-1 text-xs font-bold text-grey-600 hover:border-red-400 hover:text-red-600 transition-colors cursor-pointer">
                                   <Trash2 className="h-3 w-3" />
                                 </button>
                               )}

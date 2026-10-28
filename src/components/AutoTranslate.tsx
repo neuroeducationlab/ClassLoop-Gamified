@@ -54,6 +54,11 @@ export function lookupEn(text: string): string {
   return lookup(text.trim()) ?? text
 }
 
+/** Two-letter avatar initials, taken from the English name in EN mode. */
+export function initials(name: string, lang: 'th' | 'en'): string {
+  return (lang === 'en' ? lookupEn(name) : name).slice(0, 2)
+}
+
 function translateTextNode(node: Text) {
   const source = originalText.get(node) ?? node.nodeValue ?? ''
   if (!THAI.test(source)) return

@@ -27,6 +27,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { initials } from '@/components/AutoTranslate'
 import { cn } from '@/lib/utils'
 import type { Student } from '@/data/seed-data'
 
@@ -47,6 +48,7 @@ export default function Live() {
     startSession,
     endSession,
     pickRandomSpeaker,
+    lang,
   } = useApp()
 
   // View Mode: 'plan' (ตารางการเรียน & เตรียมสื่อ) or 'live' (สอนเรียลไทม์)
@@ -558,7 +560,7 @@ export default function Live() {
                             : 'bg-canvas text-grey-300 border-grey-300/40 scale-75 opacity-40'
                         )}
                       >
-                        {student.nickname.slice(0, 2)}
+                        {initials(student.nickname, lang)}
                         {isJoined && (
                           <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-pink-600 text-[8px] text-white">
                             ✓
@@ -642,7 +644,7 @@ export default function Live() {
 
             <div className="space-y-3">
               <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-pink-600 font-black text-3xl text-white shadow-lg shadow-pink-600/30">
-                {pickedSpeaker.nickname.slice(0, 2)}
+                {initials(pickedSpeaker.nickname, lang)}
               </div>
 
               <div>

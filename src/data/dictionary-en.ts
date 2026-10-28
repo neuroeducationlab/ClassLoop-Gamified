@@ -994,7 +994,7 @@ export const DICTIONARY_EN: Record<string, string> = {
   'คน จาก 3 กลุ่มเรียน)': 'students across 3 sections)',
   'ส่งออกรายงาน PDF เรียบร้อยแล้ว!': 'PDF report exported!',
   'ส่งออก PDF': 'Export PDF',
-  '+ สร้างสื่อการเรียน': '+ Create learning materials',
+  '+ สร้างสื่อการเรียน': 'Create learning materials',
   'กลุ่มเรียน:': 'Section:',
   'นักศึกษาใน Sec นี้': 'Students in this section',
   'รวม 3 กลุ่มเรียน': 'All 3 sections',
@@ -1104,6 +1104,8 @@ export const DICTIONARY_EN: Record<string, string> = {
   'หมวก · Hat': 'Hat',
   'ชื่อเล่น · Nickname': 'Nickname',
   'เข้าแคมปัส · Enter campus →': 'Enter campus →',
+  'อ.ดร.ธนพร': 'Dr. Thanaporn',
+  'รายงานกลุ่ม ธุรกิจข้ามชาติ': 'Group report: Multinational Business',
 }
 
 /**
@@ -1190,4 +1192,6 @@ export const PATTERN_RULES: { re: RegExp; to: string }[] = [
 
   /* ----------------------------------------------------------- campus -- */
   { re: /^(.*?)กำลังนำทางไปเควสต์ที่\s*(.+)$/, to: '$1Navigating to quest: $2' },
+  { re: /^(Time of [dD]ay: [^(]+?)\s*\([฀-๿]+\)$/, to: '$1' },
+  { re: /^Welcome, (.+)$/, to: 'Welcome, $1' },
 ]

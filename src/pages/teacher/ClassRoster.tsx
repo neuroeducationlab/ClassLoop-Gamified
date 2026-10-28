@@ -11,6 +11,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { initials } from '@/components/AutoTranslate'
 import {
   WEEKLY_SCORES,
   getStudentAssignments,
@@ -25,6 +26,7 @@ export default function ClassRoster() {
     getParticipationRate,
     getAverageScore,
     getFacultyGap,
+    lang,
   } = useApp()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -266,7 +268,7 @@ export default function ClassRoster() {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-100 font-extrabold text-pink-700 text-xs shrink-0">
-                          {s.nickname.slice(0, 2)}
+                          {initials(s.nickname, lang)}
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5 font-extrabold text-ink">
