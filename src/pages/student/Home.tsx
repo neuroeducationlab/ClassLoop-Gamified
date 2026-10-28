@@ -25,7 +25,6 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import { initials } from '@/components/AutoTranslate'
 import { useReveal } from '@/hooks/useReveal'
 import { cn } from '@/lib/utils'
 import { GameIcon } from '@/components/icons/GameIcon'
