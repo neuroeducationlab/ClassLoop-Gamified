@@ -20,7 +20,7 @@ import Review from '@/pages/student/Review'
 import Assignments from '@/pages/student/Assignments'
 
 // The campus pulls in three.js (~700 kB) — load it only when a student goes there.
-const CharacterCreate = lazy(() => import('@/pages/wardrobe/Wardrobe'))
+const Wardrobe = lazy(() => import('@/pages/wardrobe/Wardrobe'))
 const Campus3D = lazy(() => import('@/pages/campus/Campus3D'))
 const BuildingInterior = lazy(() => import('@/pages/campus/BuildingInterior'))
 const CampusMap2D = lazy(() => import('@/pages/campus/CampusMap2D'))
@@ -40,7 +40,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Suspense fallback={<div className="min-h-screen bg-[#E9C9A8]" />}><Landing /></Suspense>} />
             <Route path="/login" element={<Login />} />
-            <Route path="/create" element={<Suspense fallback={campusFallback}><CharacterCreate /></Suspense>} />
+            <Route path="/create" element={<Suspense fallback={campusFallback}><Wardrobe /></Suspense>} />
             <Route path="/campus" element={<Suspense fallback={landingFallback}><Campus3D /></Suspense>} />
             <Route path="/map" element={<Suspense fallback={campusFallback}><CampusMap2D /></Suspense>} />
             <Route
