@@ -261,10 +261,9 @@ export default function Landing() {
   const diving = phase === 'dive'
 
   const start = () => {
-    // Enter Campus → everyone must sign in first, so go to the Login page
-    // (the Landing's own role/signin phases below are kept only as a fallback and are no longer reachable)
+    // fetch the campus while the camera glides, so the hand-off after the dive is instant
     void import('@/pages/campus/Campus3D')
-    navigate('/login')
+    setPhase('approach')
   }
 
   /** Role picked: show the demo credentials card. The actual sign-in happens on Sign in. */
@@ -464,43 +463,62 @@ function SignInCard({ role, onConfirm, onBack }: { role: Role; onConfirm: () => 
     return () => window.removeEventListener('keydown', onKey)
   }, [onBack, onConfirm])
   return (
-    <div className="absolute inset-0 isolate flex items-center justify-center px-5 text-white animate-in fade-in duration-300">
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[520px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.7),transparent_70%)]" />
-      <div className="w-full max-w-md rounded-3xl border border-white/25 bg-[#16182E]/85 p-6 shadow-2xl backdrop-blur-md animate-in zoom-in-95 duration-300">
-        <p className="text-[11px] font-bold tracking-[0.3em] text-[#7FE3FF]">DEMO SIGN-IN</p>
+    <div
+      className="absolute inset-0 isolate flex items-center justify-center px-5 text-white animate-in fade-in duration-300"
+      // click outside the card goes back to role picking
+      onMouseDown={(e) => e.target === e.currentTarget && onBack()}
+    >
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.75),transparent_70%)]" />
+      <form
+        onSubmit={(e) => { e.preventDefault(); onConfirm() }}
+        className="w-full max-w-md rounded-3xl border border-white/25 bg-[#16182E]/90 p-6 shadow-2xl backdrop-blur-md animate-in zoom-in-95 duration-300"
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-bold tracking-[0.3em] text-[#7FE3FF]">SIGN IN · เข้าสู่ระบบ</p>
+          <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[10px] font-semibold text-white/70">DEMO</span>
+        </div>
         <h3 className="mt-1 text-2xl font-bold">
-          Sign in as <span className="text-[#F2C879]">{role === 'student' ? 'Student' : 'Faculty'}</span>
+          {role === 'student' ? 'Student' : 'Faculty'} <span className="text-white/40 text-base font-medium">· {account.name}</span>
         </h3>
-        <p className="mt-1 text-sm text-white/70">{account.name} · credentials are shown so the audience can log in themselves at any time.</p>
+        <p className="mt-1 text-[11px] text-white/55">Credentials are pre-filled so anyone can sign in. Click Sign in when ready.</p>
 
-        <div className="mt-4 space-y-2">
-          <div className="rounded-xl border border-white/15 bg-white/5 px-3 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Email</p>
-            <p className="font-mono text-sm">{account.email}</p>
-          </div>
-          <div className="flex items-stretch gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2">
-            <div className="flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Password</p>
-              <p className="font-mono text-sm tracking-widest">{show ? account.password : '•'.repeat(account.password.length)}</p>
-            </div>
-            <button onClick={() => setShow((v) => !v)} className="rounded-lg bg-white/10 px-2 text-[11px] font-semibold text-white/70 hover:bg-white/20">
+        <label className="mt-4 block">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-white/50">Email</span>
+          <input
+            type="email"
+            readOnly
+            value={account.email}
+            onFocus={(e) => e.target.select()}
+            className="w-full cursor-text select-all rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2.5 font-mono text-sm text-white outline-none transition focus:border-[#7FE3FF]/60 focus:bg-white/[0.1]"
+          />
+        </label>
+        <label className="mt-2.5 block">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-white/50">Password</span>
+          <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2.5 transition focus-within:border-[#7FE3FF]/60 focus-within:bg-white/[0.1]">
+            <input
+              type={show ? 'text' : 'password'}
+              readOnly
+              value={account.password}
+              className="w-full cursor-text select-all bg-transparent font-mono text-sm tracking-widest text-white outline-none"
+            />
+            <button type="button" onClick={() => setShow((v) => !v)} className="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-[10px] font-semibold text-white/70 hover:bg-white/20">
               {show ? 'Hide' : 'Show'}
             </button>
           </div>
-        </div>
+        </label>
 
         <button
-          onClick={onConfirm}
+          type="submit"
           autoFocus
           className="group mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-6 py-3 text-base font-bold text-[#2B2D55] shadow-[0_0_30px_rgba(242,200,121,0.55)] transition-transform hover:scale-[1.02] active:scale-95"
         >
           Sign in · ลงชื่อเข้าใช้
           <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </button>
-        <button onClick={onBack} className="mt-3 flex w-full items-center justify-center gap-1.5 text-xs text-white/70 hover:text-white">
+        <button type="button" onClick={onBack} className="mt-3 flex w-full items-center justify-center gap-1.5 text-xs text-white/70 hover:text-white">
           <ArrowLeft className="h-3.5 w-3.5" /> Back · เลือกบทบาทใหม่
         </button>
-      </div>
+      </form>
     </div>
   )
 }
