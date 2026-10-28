@@ -43,6 +43,8 @@ export default function Building({ building, hovered, onHover, onSelect }: Props
   }
   const click = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
+    // the end of a drag-to-look is not a click: don't walk to the door
+    if (e.delta > 6) return
     onSelect(building)
   }
 

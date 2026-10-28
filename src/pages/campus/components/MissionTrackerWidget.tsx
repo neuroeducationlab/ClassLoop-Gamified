@@ -1,14 +1,15 @@
-import { useState } from 'react'
-import { Scroll, CheckCircle2, ChevronDown, ChevronUp, ArrowRight, Clock } from 'lucide-react'
+import { Scroll, CheckCircle2, ArrowRight, Clock, X } from 'lucide-react'
 import { useApp, type Mission } from '@/context/AppContext'
 
 export default function MissionTrackerWidget({
   onSelectMission,
+  onClose,
 }: {
   onSelectMission: (mission: Mission) => void
+  /** Hides the panel; the HUD's Quests button brings it back. */
+  onClose: () => void
 }) {
   const { missions, lang } = useApp()
-  const [expanded, setExpanded] = useState(true)
 
   const activeMissions = missions.filter((m) => !m.completed)
   const completedMissions = missions.filter((m) => m.completed)
@@ -31,25 +32,21 @@ export default function MissionTrackerWidget({
                   {activeMissions.length}
                 </span>
               </div>
-              <p className="text-[10px] text-white/60">Challenge Missions & Tasks</p>
             </div>
           </div>
 
           <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all cursor-pointer"
-            title={
-              expanded
-                ? (lang === 'th' ? 'ย่อเควสต์' : 'Collapse Quests')
-                : (lang === 'th' ? 'ขยายเควสต์' : 'Expand Quests')
-            }
+            onClick={onClose}
+            aria-label={lang === 'th' ? 'ปิดเควสต์' : 'Close quests'}
+            title={lang === 'th' ? 'ปิด (เปิดใหม่ได้ที่ปุ่มเควสต์ด้านบน)' : 'Close (reopen from Quests at the top)'}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/25 hover:text-white transition-all cursor-pointer"
           >
-            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Mission List */}
-        {expanded && (
+        {(
           <div className="mt-3 space-y-2 max-h-80 overflow-y-auto pr-1">
             {activeMissions.map((mission) => {
               const isExam = mission.type === 'exam'
@@ -76,7 +73,7 @@ export default function MissionTrackerWidget({
                           {lang === 'en' && mission.titleEn ? mission.titleEn : mission.title}
                         </h4>
                       </div>
-                      <p className="mt-1 text-[11px] text-white/70 line-clamp-2 leading-relaxed">
+                      <p className="mt-1 text-[11px] text-white/70 line-clamp-1 leading-relaxed">
                         {lang === 'en' && mission.descriptionEn ? mission.descriptionEn : mission.description}
                       </p>
                     </div>
@@ -103,7 +100,7 @@ export default function MissionTrackerWidget({
 
                     <button
                       onClick={() => onSelectMission(mission)}
-                      className="flex items-center gap-1 rounded-xl bg-pink-600/80 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-pink-600 transition-all shadow cursor-pointer group-hover:translate-x-0.5"
+                      className="flex items-center gap-1 rounded-xl bg-pink-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-pink-500 transition-all shadow-lg cursor-pointer group-hover:translate-x-0.5"
                     >
                       <span>{lang === 'th' ? 'ทำเควสต์' : 'Start Quest'}</span>
                       <ArrowRight className="h-3 w-3" />

@@ -1,13 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, X, RotateCcw, ArrowRight, Zap } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { playCorrectSound, playWrongSound } from '../soundEngine'
 
 interface DrillQuestion {
   id: number
   stem: string
   stemEn: string
-  sub: string
-  subEn: string
   options: string[]
   optionsEn: string[]
   answer: number
@@ -15,74 +14,71 @@ interface DrillQuestion {
   explanationEn: string
 }
 
+// Kept short on purpose: one line of question, one line per answer, one line of why.
 const DRILL_QUESTIONS: DrillQuestion[] = [
   {
     id: 1,
-    stem: 'ในการเจรจาการค้ากับนักธุรกิจชาวญี่ปุ่น (High-Context Culture) ข้อใดถูกต้องที่สุด?',
-    stemEn: 'When negotiating business with Japanese partners (High-Context Culture), which strategy is most appropriate?',
-    sub: 'หัวข้อการสื่อสารและการเจรจาข้ามวัฒนธรรม',
-    subEn: 'Cross-Cultural Communication & Negotiation',
+    stem: 'เจรจาธุรกิจกับคนญี่ปุ่น (วัฒนธรรม High-Context) ควรทำแบบไหน?',
+    stemEn: 'Negotiating with Japanese partners (a high-context culture). What works best?',
     options: [
-      'พูดตรงไปตรงมาและปิดดีลให้เร็วที่สุดในวันแรก',
-      'ให้ความสำคัญกับการสร้างความสัมพันธ์ (Nemawashi) และความเคารพในลำดับขั้น',
-      'ใช้อารมณ์ร่วมเพื่อแสดงความจริงใจ',
-      'ไม่จำเป็นต้องแลกนามบัตรอย่างเป็นทางการ',
+      'เร่งปิดดีลให้ได้ในวันแรก',
+      'ปูทางสร้างฉันทามติก่อน (Nemawashi) และเคารพอาวุโส',
+      'แสดงอารมณ์ให้เห็นความจริงใจ',
+      'ข้ามการแลกนามบัตรแบบเป็นทางการ',
     ],
     optionsEn: [
-      'Be overly direct and pressure for an immediate close on Day 1',
-      'Prioritize consensus-building (Nemawashi) and respect for organizational hierarchy',
-      'Rely heavily on emotional displays to express sincerity',
-      'Omit formal business card exchange protocols',
+      'Push to close the deal on day one',
+      'Build consensus first (Nemawashi) and respect seniority',
+      'Show strong emotion to prove sincerity',
+      'Skip the formal business-card exchange',
     ],
     answer: 1,
-    explanation: 'วัฒนธรรมญี่ปุ่นเป็น High-Context และให้ความสำคัญกับการสร้างความสัมพันธ์ล่วงหน้า (Nemawashi) และความเคารพในลำดับอาวุโส',
-    explanationEn: 'Japanese business culture is High-Context, emphasizing groundwork consensus (Nemawashi) and seniority protocols before closing deals.',
+    explanation: 'ญี่ปุ่นเป็น High-Context: ต้องปูทางสร้างฉันทามติก่อน (Nemawashi) และเคารพอาวุโส',
+    explanationEn: 'Japan is high-context: build consensus quietly first (Nemawashi) and follow seniority.',
   },
   {
     id: 2,
-    stem: 'มิติทางวัฒนธรรม "Power Distance Index (PDI)" สูง ใน Hofstede Model บ่งบอกถึงสิ่งใด?',
-    stemEn: 'In Hofstede\'s Model, what does a high Power Distance Index (PDI) signify?',
-    sub: 'หัวข้อ Hofstede’s Cultural Dimensions',
-    subEn: 'Hofstede\'s Cultural Dimensions',
+    stem: 'ใน Hofstede Model ค่า Power Distance (PDI) สูง หมายถึงอะไร?',
+    stemEn: 'In Hofstede\'s model, what does a high Power Distance (PDI) mean?',
     options: [
-      'พนักงานทุกคนมีอำนาจตัดสินใจเท่าเทียมกัน',
-      'องค์กรยอมรับความเหลื่อมล้ำของอำนาจและมีการตัดสินใจแบบ Top-Down ชัดเจน',
-      'ทุกคนในองค์กรหลีกเลี่ยงความเสี่ยง',
-      'เน้นการทำงานแบบประชาธิปไตยในทุกขั้นตอน',
+      'พนักงานกับหัวหน้ามีสิทธิ์ตัดสินใจเท่ากัน',
+      'ยอมรับลำดับชั้น การตัดสินใจมาจากบนลงล่าง',
+      'องค์กรหลีกเลี่ยงความเสี่ยงทุกอย่าง',
+      'ทุกขั้นตอนต้องโหวตร่วมกัน',
     ],
     optionsEn: [
-      'Subordinates and managers hold strictly equal decision-making power',
-      'Hierarchical authority is accepted, with clear top-down directive decisions',
-      'The organization actively avoids all structural risks',
-      'Consensus voting is strictly required for every workflow',
+      'Staff and managers have an equal say',
+      'Hierarchy is accepted; decisions come top-down',
+      'The company avoids every risk',
+      'Every step needs a team vote',
     ],
     answer: 1,
-    explanation: 'ค่า PDI สูง แสดงว่าคนในสังคมหรือองค์กรยอมรับความแตกต่างของระดับชั้นอำนาจ การตัดสินใจส่วนใหญ่มาจากผู้บริหารระดับสูง',
-    explanationEn: 'High PDI indicates acceptance of hierarchical inequality, where strategic decisions predominantly originate from top leadership.',
+    explanation: 'PDI สูง = ยอมรับความต่างของอำนาจ การตัดสินใจส่วนใหญ่มาจากผู้บริหาร',
+    explanationEn: 'High PDI = people accept unequal power, so decisions mostly come from the top.',
   },
   {
     id: 3,
-    stem: 'แนวคิด "Glocalization" ในการบริหารธุรกิจระหว่างประเทศหมายถึงอะไร?',
-    stemEn: 'What does the term "Glocalization" mean in international business management?',
-    sub: 'หัวข้อ Global vs Local Strategy',
-    subEn: 'Global vs Local Strategy',
+    stem: '"Glocalization" หมายถึงอะไร?',
+    stemEn: 'What does "Glocalization" mean?',
     options: [
-      'การดำเนินธุรกิจโดยใช้กลยุทธ์เดียวกันเป๊ะทั่วโลก',
-      'การปรับผลิตภัณฑ์ระดับสากลให้เข้ากับรสนิยมและวัฒนธรรมท้องถิ่น (Think Global, Act Local)',
-      'การขายสินค้าเฉพาะในตลาดท้องถิ่นเท่านั้น',
-      'การนำเข้าสินค้าจากต่างประเทศโดยไม่ดัดแปลง',
+      'ใช้สินค้าและโฆษณาเหมือนกันทั่วโลก',
+      'ปรับสินค้าระดับโลกให้เข้ากับท้องถิ่น (Think Global, Act Local)',
+      'ขายเฉพาะตลาดในประเทศ',
+      'นำเข้าสินค้ามาขายโดยไม่ปรับเลย',
     ],
     optionsEn: [
-      'Enforcing identical products and marketing worldwide without modification',
-      'Adapting global products to resonate with local cultural tastes (Think Global, Act Local)',
-      'Restricting brand operations exclusively to domestic markets',
-      'Importing foreign goods without localization or language adaptation',
+      'Same product and ads everywhere',
+      'Adapt a global product to local taste (think global, act local)',
+      'Sell only in the home market',
+      'Import goods without any changes',
     ],
     answer: 1,
-    explanation: 'Glocalization (Global + Local) คือการคิดเชิงระดับสากลแต่ปรับการปฏิบัติการ ผลิตภัณฑ์ หรือการตลาดให้เข้ากับบริบทท้องถิ่น',
-    explanationEn: 'Glocalization (Global + Local) represents thinking on a global scale while customizing product design and messaging to local cultural contexts.',
+    explanation: 'Glocalization = คิดระดับโลก ทำแบบท้องถิ่น ปรับสินค้าและการสื่อสารให้เข้ากับแต่ละตลาด',
+    explanationEn: 'Glocalization = think global, act local: adapt the product and message to each market.',
   },
 ]
+
+const LETTERS = ['A', 'B', 'C', 'D']
 
 export default function BrainGymModal({ onClose }: { onClose: () => void }) {
   const { addXP, addCoins, lang } = useApp()
@@ -91,12 +87,21 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
   const [answered, setAnswered] = useState(false)
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
+  const th = lang === 'th'
+
+  // Esc closes, like every other campus modal
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   const q = DRILL_QUESTIONS[currentIdx]
-  const currentStem = lang === 'en' ? q.stemEn : q.stem
-  const currentSub = lang === 'en' ? q.subEn : q.sub
-  const currentOptions = lang === 'en' ? q.optionsEn : q.options
-  const currentExplanation = lang === 'en' ? q.explanationEn : q.explanation
+  const stem = th ? q.stem : q.stemEn
+  const options = th ? q.options : q.optionsEn
+  const explanation = th ? q.explanation : q.explanationEn
+  const last = currentIdx + 1 === DRILL_QUESTIONS.length
+  const correct = selectedOpt === q.answer
 
   const handleSelect = (idx: number) => {
     if (answered) return
@@ -104,17 +109,19 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
     setAnswered(true)
     if (idx === q.answer) {
       setScore((s) => s + 1)
+      playCorrectSound()
+    } else {
+      playWrongSound()
     }
   }
 
   const handleNext = () => {
-    if (currentIdx + 1 < DRILL_QUESTIONS.length) {
+    if (!last) {
       setCurrentIdx((c) => c + 1)
       setSelectedOpt(null)
       setAnswered(false)
     } else {
       setFinished(true)
-      // Award XP and coins
       addXP(50 + score * 20)
       addCoins(30 + score * 10)
     }
@@ -129,154 +136,141 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="relative w-full max-w-lg rounded-3xl border border-white/20 bg-[#16182E]/95 p-6 text-white shadow-2xl">
-        {/* Close Button */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-300"
+      // a click outside the card closes it
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative w-full max-w-lg rounded-3xl border border-white/20 bg-[#16182E]/95 p-5 text-white shadow-2xl sm:p-6">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all cursor-pointer"
+          aria-label={th ? 'ปิด' : 'Close'}
+          className="absolute right-3 top-3 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white/80 transition-all hover:bg-white/25 hover:text-white"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
 
         {!finished ? (
           <div>
-            {/* Header */}
-            <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-4">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-lg text-xl">
+            {/* Header: name + progress, nothing else */}
+            <div className="mb-4 flex items-center gap-3 pr-12">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-xl shadow-lg">
                 🧠
               </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-extrabold text-white">
-                    {lang === 'th' ? 'ลานฝึกสมอง & สกิลอารีน่า' : 'Brain Gym & Skill Arena'}
-                  </h3>
-                  <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
-                    {lang === 'th' ? 'เรียนล่วงหน้า' : 'Pre-learning'}
+              <div className="min-w-0">
+                <h3 className="text-base font-extrabold">{th ? 'ลานฝึกสมอง' : 'Brain Gym'}</h3>
+                <div className="mt-1 flex items-center gap-1.5" aria-label={`${currentIdx + 1} / ${DRILL_QUESTIONS.length}`}>
+                  {DRILL_QUESTIONS.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i < currentIdx ? 'w-5 bg-cyan-400' : i === currentIdx ? 'w-8 bg-cyan-300' : 'w-5 bg-white/15'
+                      }`}
+                    />
+                  ))}
+                  <span className="ml-1 text-[11px] font-semibold text-white/50">
+                    {currentIdx + 1}/{DRILL_QUESTIONS.length}
                   </span>
                 </div>
-                <p className="text-xs text-white/60">
-                  {lang === 'th'
-                    ? `ข้อ ${currentIdx + 1} จาก ${DRILL_QUESTIONS.length} · สะสมคะแนนและฝีมือก่อนเข้าคลาส`
-                    : `Question ${currentIdx + 1} of ${DRILL_QUESTIONS.length} · Earn XP & Coins before class`}
-                </p>
               </div>
             </div>
 
-            {/* Question Stem */}
-            <div className="rounded-2xl bg-white/5 p-4 border border-white/10 mb-4">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 block mb-1">
-                {currentSub}
-              </span>
-              <p className="text-sm font-bold text-white leading-relaxed">{currentStem}</p>
-            </div>
+            <p className="mb-3 text-base font-bold leading-snug sm:text-lg">{stem}</p>
 
-            {/* Options */}
-            <div className="space-y-2 mb-4">
-              {currentOptions.map((opt, idx) => {
+            {/* The call to action, until an answer is picked */}
+            {!answered && (
+              <p className="mb-2 text-sm font-semibold text-cyan-300">{th ? 'แตะคำตอบที่ถูก 👇' : 'Tap the right answer 👇'}</p>
+            )}
+
+            <div className="mb-4 space-y-2">
+              {options.map((opt, idx) => {
                 const isSelected = selectedOpt === idx
                 const isCorrect = idx === q.answer
-
-                let btnStyle = 'border-white/10 bg-white/5 hover:bg-white/10 text-white/90'
+                let style = 'border-white/15 bg-white/5 hover:border-cyan-300/70 hover:bg-white/10'
+                let chip = 'bg-white/10 text-white/80'
                 if (answered) {
                   if (isCorrect) {
-                    btnStyle = 'border-emerald-500 bg-emerald-950/60 text-emerald-200'
+                    style = 'border-emerald-400 bg-emerald-950/60 text-emerald-100'
+                    chip = 'bg-emerald-400 text-emerald-950'
                   } else if (isSelected) {
-                    btnStyle = 'border-rose-500 bg-rose-950/60 text-rose-200'
+                    style = 'border-rose-400 bg-rose-950/60 text-rose-100'
+                    chip = 'bg-rose-400 text-rose-950'
                   } else {
-                    btnStyle = 'border-white/5 bg-white/5 opacity-50'
+                    style = 'border-white/5 bg-white/5 opacity-40'
                   }
                 }
-
                 return (
                   <button
                     key={idx}
                     onClick={() => handleSelect(idx)}
                     disabled={answered}
-                    className={`flex w-full items-center justify-between rounded-xl border p-3 text-left text-xs font-medium transition-all ${btnStyle}`}
+                    className={`flex w-full cursor-pointer items-center gap-3 rounded-2xl border p-3 text-left text-sm font-medium transition-all disabled:cursor-default ${style}`}
                   >
-                    <span>{opt}</span>
-                    {answered && isCorrect && <Check className="h-4 w-4 text-emerald-400 shrink-0" />}
-                    {answered && isSelected && !isCorrect && <X className="h-4 w-4 text-rose-400 shrink-0" />}
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${chip}`}>
+                      {LETTERS[idx]}
+                    </span>
+                    <span className="flex-1">{opt}</span>
+                    {answered && isCorrect && <Check className="h-5 w-5 shrink-0 text-emerald-300" />}
+                    {answered && isSelected && !isCorrect && <X className="h-5 w-5 shrink-0 text-rose-300" />}
                   </button>
                 )
               })}
             </div>
 
-            {/* Explanation card after answered */}
             {answered && (
-              <div className="rounded-xl bg-cyan-950/30 border border-cyan-500/30 p-3 mb-4 text-xs animate-in fade-in">
-                <p className="font-bold text-cyan-300 mb-0.5">
-                  {lang === 'th' ? '💡 คำอธิบายความรู้:' : '💡 Explanation:'}
+              <div className="animate-in fade-in">
+                <p className="mb-3 text-sm leading-relaxed text-white/85">
+                  <span className={`font-extrabold ${correct ? 'text-emerald-300' : 'text-rose-300'}`}>
+                    {correct ? (th ? 'ถูกต้อง! ' : 'Correct! ') : th ? 'ยังไม่ใช่ ' : 'Not quite. '}
+                  </span>
+                  {explanation}
                 </p>
-                <p className="text-white/80 leading-relaxed">{currentExplanation}</p>
-              </div>
-            )}
-
-            {/* Bottom Next Button */}
-            {answered && (
-              <div className="flex justify-end">
                 <button
                   onClick={handleNext}
-                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover:brightness-110 transition-all cursor-pointer"
+                  autoFocus
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold shadow-lg transition-all hover:brightness-110"
                 >
-                  <span>
-                    {currentIdx + 1 < DRILL_QUESTIONS.length
-                      ? lang === 'th'
-                        ? 'ข้อถัดไป'
-                        : 'Next Question'
-                      : lang === 'th'
-                      ? 'สรุปผลคะแนน'
-                      : 'View Results'}
-                  </span>
+                  {last ? (th ? 'ดูผลคะแนน' : 'See my score') : th ? 'ข้อถัดไป' : 'Next question'}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             )}
           </div>
         ) : (
-          /* Finished Result Screen */
-          <div className="text-center py-4">
-            <span className="flex h-16 w-16 mx-auto items-center justify-center rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-4xl shadow-xl animate-bounce mb-3">
+          <div className="py-2 text-center">
+            <span className="mx-auto mb-3 flex h-16 w-16 animate-bounce items-center justify-center rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-4xl shadow-xl">
               🏆
             </span>
-            <h3 className="text-xl font-black text-white">
-              {lang === 'th' ? 'ฝึกฝนล่วงหน้าสำเร็จ!' : 'Pre-Learning Completed!'}
+            <h3 className="text-xl font-black">
+              {th ? `ถูก ${score} จาก ${DRILL_QUESTIONS.length} ข้อ` : `${score} of ${DRILL_QUESTIONS.length} correct`}
             </h3>
-            <p className="text-xs text-white/70 mt-1">
-              {lang === 'th'
-                ? `คุณตอบถูก ${score} จาก ${DRILL_QUESTIONS.length} ข้อ`
-                : `You scored ${score} of ${DRILL_QUESTIONS.length} correct`}
-            </p>
 
-            {/* Rewards Received */}
-            <div className="my-5 flex items-center justify-center gap-4 rounded-2xl bg-white/5 border border-white/10 p-4">
-              <div className="flex items-center gap-1.5 text-amber-300 font-extrabold text-sm">
+            <div className="my-5 flex items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center gap-1.5 text-sm font-extrabold text-amber-300">
                 <Zap className="h-4 w-4 fill-amber-400" />
                 <span>+{50 + score * 20} XP</span>
               </div>
               <div className="h-6 w-px bg-white/10" />
-              <div className="flex items-center gap-1.5 text-yellow-300 font-extrabold text-sm">
+              <div className="flex items-center gap-1.5 text-sm font-extrabold text-yellow-300">
                 <span>🪙</span>
-                <span>+{30 + score * 10} Coins</span>
+                <span>+{30 + score * 10}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={handleRestart}
-                className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>{lang === 'th' ? 'ฝึกฝนอีกครั้ง' : 'Try Again'}</span>
-              </button>
-              <button
-                onClick={onClose}
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 px-5 py-2 text-xs font-bold text-white shadow-lg hover:brightness-110 transition-all cursor-pointer"
-              >
-                <span>{lang === 'th' ? 'กลับสู่แคมปัส' : 'Return to Campus'}</span>
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              autoFocus
+              className="mb-2 flex w-full cursor-pointer items-center justify-center rounded-2xl bg-gradient-to-r from-pink-500 to-rose-600 py-3 text-sm font-bold shadow-lg transition-all hover:brightness-110"
+            >
+              {th ? 'กลับสู่แคมปัส' : 'Back to campus'}
+            </button>
+            <button
+              onClick={handleRestart}
+              className="mx-auto flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-white/60 hover:text-white"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {th ? 'เล่นอีกครั้ง' : 'Play again'}
+            </button>
           </div>
         )}
       </div>

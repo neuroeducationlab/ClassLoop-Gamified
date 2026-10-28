@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trophy, Flame, ChevronLeft, ChevronRight, Crown, Sparkles } from 'lucide-react'
+import { Trophy, Flame, ChevronLeft, ChevronRight, Crown, Sparkles, X } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 
 interface LeaderboardEntry {
@@ -70,7 +70,8 @@ const LEADERBOARD_DATA: LeaderboardEntry[] = [
 
 export default function LeaderboardWidget() {
   const { studentXP, lang } = useApp()
-  const [collapsed, setCollapsed] = useState(false)
+  // phones start tucked away, so the panel doesn't cover the 3D view
+  const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
   const [filter, setFilter] = useState<'all' | 'faculty'>('all')
 
   // Live updated user XP
@@ -100,7 +101,8 @@ export default function LeaderboardWidget() {
   return (
     <div
       className={`pointer-events-auto absolute left-4 top-24 z-20 transition-all duration-500 ease-out ${
-        collapsed ? '-translate-x-[calc(100%-2.5rem)]' : 'translate-x-0'
+        // tucked: slide out past the left-4 gap too, so only the 🏆 tab shows at the edge
+        collapsed ? '-translate-x-[calc(100%-1.5rem)]' : 'translate-x-0'
       }`}
     >
       <div className="relative flex items-start">
@@ -117,9 +119,6 @@ export default function LeaderboardWidget() {
                   {lang === 'th' ? 'อันดับประจำสัปดาห์' : 'Weekly Leaderboard'}
                   <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 </h3>
-                <p className="text-[10px] text-white/60">
-                  {lang === 'th' ? 'Weekly Hall of Fame' : 'Hall of Fame'}
-                </p>
               </div>
             </div>
 
@@ -142,6 +141,13 @@ export default function LeaderboardWidget() {
                 {lang === 'th' ? 'คณะ' : 'Faculty'}
               </button>
             </div>
+            <button
+              onClick={() => setCollapsed(true)}
+              aria-label={lang === 'th' ? 'ปิดอันดับ' : 'Close leaderboard'}
+              className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80 transition-all hover:bg-white/25 hover:text-white cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Leaderboard List */}
@@ -222,13 +228,16 @@ export default function LeaderboardWidget() {
         {/* Toggle Collapse Tab Button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="ml-1 flex h-10 w-6 items-center justify-center rounded-r-xl border border-l-0 border-white/20 bg-black/70 text-white/80 backdrop-blur-md hover:bg-black/90 hover:text-white transition-all shadow-xl cursor-pointer"
+          className={`ml-1 flex items-center justify-center gap-0.5 rounded-r-xl border border-l-0 border-white/20 bg-black/70 text-white/80 backdrop-blur-md hover:bg-black/90 hover:text-white transition-all shadow-xl cursor-pointer ${
+            collapsed ? 'h-14 w-9 flex-col' : 'h-10 w-6'
+          }`}
           title={
             collapsed
               ? (lang === 'th' ? 'เปิดลีดเดอร์บอร์ด' : 'Open Leaderboard')
               : (lang === 'th' ? 'ซ่อนลีดเดอร์บอร์ด' : 'Hide Leaderboard')
           }
         >
+          {collapsed && <Trophy className="h-4 w-4 text-amber-300" />}
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>

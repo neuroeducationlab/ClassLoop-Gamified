@@ -10,7 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
-import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
+import { MathUtils, Vector3, Fog, type Group, type Mesh, type PerspectiveCamera } from 'three'
 import {
   Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll, Volume2, VolumeX,
   DoorOpen, GraduationCap, Trophy, MessageCircleHeart, BarChart3, Wand2, BookOpen, Users, Coffee,
@@ -73,6 +73,9 @@ const GATE_SPAWN = doorPoint(GATE)
 const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
 const INTRO_SECONDS = 2.4
 const ENTER_DELAY_MS = 650
+/** HUD shortcuts warp instead of walking: the jump happens under the flash, then it clears. */
+const WARP_SECONDS = 0.7
+const WARP_JUMP_AT = 0.28
 
 // ── Phase 6 Step 3 — Arrival animation ─────────────────────────────────────
 const ARRIVAL_FROM = new Vector3(-24, 26, -10)
@@ -187,7 +190,8 @@ export default function Campus3D() {
   // ── Student Gamification Modals & Widgets State ───────────────────────────
   const [showBrainGym, setShowBrainGym] = useState<boolean>(false)
   const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
-  const [showMissions, setShowMissions] = useState<boolean>(true)
+  // phones start with the Quests panel closed, so it doesn't cover the 3D view (the HUD button opens it)
+  const [showMissions, setShowMissions] = useState<boolean>(() => window.innerWidth >= 640)
 
   // ── View mode and time of day toggles ───
   // First person by default: the landing dive ends on the first-person pose at the gate,
@@ -287,6 +291,23 @@ export default function Campus3D() {
     nickname: currentStudent.nickname,
   }
 
+  // Warp: the scene jumps under a flash of light (see warpTo in CampusScene)
+  const warpRef = useRef<(target: [number, number], building: BuildingConfig | null) => boolean>(() => false)
+  const warpFxRef = useRef<HTMLDivElement>(null)
+  const warp = useCallback((target: [number, number], building: BuildingConfig | null) => {
+    if (!warpRef.current(target, building)) return
+    playPortalSound()
+    warpFxRef.current?.animate(
+      [
+        { opacity: 0, transform: 'scale(1.25)' },
+        { opacity: 1, transform: 'scale(1)', offset: WARP_JUMP_AT / WARP_SECONDS },
+        { opacity: 0, transform: 'scale(0.96)' },
+      ],
+      { duration: WARP_SECONDS * 1000, easing: 'ease-in-out' },
+    )
+  }, [])
+  const warpToBuilding = useCallback((b: BuildingConfig) => warp(doorPoint(b), b), [warp])
+
   const handleSelectMission = useCallback(
     (mission: Mission) => {
       if (mission.type === 'drill') {
@@ -295,24 +316,20 @@ export default function Campus3D() {
       }
       if (mission.buildingId) {
         const b = BUILDINGS.find((bld) => bld.id === mission.buildingId)
-        if (b) {
-          const dp = doorPoint(b)
-          walkGroundRef.current(dp[0], dp[1])
-          setToast(`📍 กำลังนำทางไปเควสต์ที่ ${b.emoji} ${b.name[lang]}`)
-        }
+        if (b) warpToBuilding(b)
       }
     },
-    [lang],
+    [warpToBuilding],
   )
 
   const arrive = useCallback(
-    (b: BuildingConfig) => {
+    (b: BuildingConfig, opts?: { silent?: boolean }) => {
       lastSpot = doorPoint(b)
       if (b.studentSees === null) {
         setToast(`${b.emoji} ${b.name[lang]} — ${t.teachersOnly}`)
         return
       }
-      playPortalSound()
+      if (!opts?.silent) playPortalSound()
       setEntering(b)
       setTimeout(() => {
         navigate(`/campus/${b.id}`) // the interior route is /campus/:buildingId (App.tsx)
@@ -360,6 +377,7 @@ export default function Campus3D() {
           avatarPosRef={avatarPosRef}
           avatarRotRef={avatarRotRef}
           walkGroundRef={walkGroundRef}
+          warpRef={warpRef}
           onNearDoor={setNearDoor}
           onNearNPC={setNearNPC}
           onTalkNPC={setActiveNPC}
@@ -687,11 +705,12 @@ export default function Campus3D() {
           avatarPosition={minimapAvatarPos}
           avatarColor={me.color}
           avatarRotation={minimapAvatarRot}
-          onWalk={(x, z) => walkGroundRef.current(x, z)}
-          onSelectBuilding={(b) => {
-            const dp = doorPoint(b)
-            walkGroundRef.current(dp[0], dp[1])
+          onWalk={(x, z) => {
+            const r = Math.hypot(x, z)
+            const k = r > CAMPUS_RADIUS ? CAMPUS_RADIUS / r : 1
+            warp([x * k, z * k], null)
           }}
+          onSelectBuilding={warpToBuilding}
           lang={lang}
         />
       )}
@@ -736,7 +755,7 @@ export default function Campus3D() {
       {!isTeacher && !isArriving && (
         <>
           <LeaderboardWidget />
-          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} />}
+          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} onClose={() => setShowMissions(false)} />}
         </>
       )}
 
@@ -762,15 +781,17 @@ export default function Campus3D() {
           }}
           onNavigateToBuilding={(id) => {
             const b = BUILDINGS.find((x) => x.id === id)
-            if (b) {
-              const dp = doorPoint(b)
-              walkGroundRef.current(dp[0], dp[1])
-              setToast(lang === 'th' ? `📍 กำลังนำทางไปที่ ${b.emoji} ${b.name.th}` : `📍 Guiding to ${b.emoji} ${b.name.en}`)
-            }
+            if (b) warpToBuilding(b)
           }}
           onOpenShop={() => setShowAvatarShop(true)}
         />
       )}
+
+      {/* ── Warp flash: a tunnel of light the scene jumps under (played by warp()) ── */}
+      <div ref={warpFxRef} className="pointer-events-none absolute inset-0 z-40 opacity-0" aria-hidden>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.97)_0%,rgba(207,250,254,0.9)_30%,rgba(56,189,248,0.6)_58%,rgba(30,27,75,0.15)_85%)]" />
+        <div className="absolute inset-0 bg-[repeating-conic-gradient(from_0deg,rgba(255,255,255,0.45)_0deg_1.5deg,transparent_1.5deg_9deg)] [mask-image:radial-gradient(circle,transparent_22%,black_70%)]" />
+      </div>
 
       {/* ── Building enter transition with description ── */}
       {entering && (
@@ -795,7 +816,7 @@ type SceneProps = {
   me: Avatar
   hovered: BuildingId | null
   onHover: (id: BuildingId | null) => void
-  onArrive: (b: BuildingConfig) => void
+  onArrive: (b: BuildingConfig, opts?: { silent?: boolean }) => void
   labels: RefObject<LabelMap>
   isArriving: boolean
   onArrivalDone: () => void
@@ -803,6 +824,7 @@ type SceneProps = {
   avatarPosRef: RefObject<[number, number]>
   avatarRotRef: RefObject<number>
   walkGroundRef: RefObject<(x: number, z: number) => void>
+  warpRef: RefObject<(target: [number, number], building: BuildingConfig | null) => boolean>
   onNearDoor: (b: BuildingConfig | null) => void
   onNearNPC: (npc: CampusNPC | null) => void
   onTalkNPC: (npc: CampusNPC) => void
@@ -831,6 +853,7 @@ function CampusScene({
   avatarPosRef,
   avatarRotRef,
   walkGroundRef,
+  warpRef,
   onNearDoor,
   onNearNPC,
   onTalkNPC,
@@ -868,7 +891,6 @@ function CampusScene({
   const initialHeading = Math.atan2(PLAZA_CENTER[0] - spawn[0], -(PLAZA_CENTER[1] - spawn[1]))
   const mouseYaw = useRef(initialHeading)
   const mousePitch = useRef(0) // Level gaze
-  const isPointerLocked = useRef(false)
 
   // Wire turnHeadRef for external / UI button rotation triggers
   useEffect(() => {
@@ -892,6 +914,10 @@ function CampusScene({
   }, [])
 
   // Comprehensive Drag-to-Look, Touch-Look, and Pointer Lock Controller
+  // Drag to look. Only a drag that starts on the 3D canvas turns the head: a press on any
+  // DOM overlay (HUD, panels, modals) is left alone. There is deliberately no pointer lock:
+  // a stray click on a modal used to lock the mouse to the canvas, hiding the cursor and
+  // swallowing every click after it, so quiz options, X buttons and the HUD stopped working.
   useEffect(() => {
     let isDragging = false
     let lastX = 0
@@ -900,9 +926,7 @@ function CampusScene({
 
     const onPointerDown = (e: PointerEvent) => {
       if (!fpModeRef.current) return
-      // Ignore if clicking on buttons or interactive UI
-      const target = e.target as HTMLElement | null
-      if (target && target.closest('button, a, input, [role="button"]')) return
+      if (!(e.target instanceof HTMLCanvasElement)) return
 
       // For touch, only capture look drag on the right 65% of screen (so joystick remains usable on left)
       if (e.pointerType === 'touch' && e.clientX < window.innerWidth * 0.35) return
@@ -911,71 +935,38 @@ function CampusScene({
       activePointerId = e.pointerId
       lastX = e.clientX
       lastY = e.clientY
-
-      const canvas = document.querySelector('canvas')
-      if (e.pointerType === 'mouse' && canvas && !isPointerLocked.current) {
-        try {
-          canvas.requestPointerLock?.()
-        } catch {}
-      }
     }
 
     const onPointerMove = (e: PointerEvent) => {
       if (!fpModeRef.current) return
+      if (!isDragging || e.pointerId !== activePointerId) return
+      const dx = e.clientX - lastX
+      const dy = e.clientY - lastY
+      lastX = e.clientX
+      lastY = e.clientY
 
-      if (isPointerLocked.current) {
-        mouseYaw.current += e.movementX * 0.003
-        // three.js: positive rotation.x looks UP, so mouse moving down (movementY > 0) must lower pitch (ก้ม)
-        mousePitch.current = MathUtils.clamp(
-          mousePitch.current - e.movementY * 0.0022,
-          -Math.PI / 3,
-          Math.PI / 3,
-        )
-      } else if (isDragging && (activePointerId === -1 || e.pointerId === activePointerId)) {
-        const dx = e.clientX - lastX
-        const dy = e.clientY - lastY
-        lastX = e.clientX
-        lastY = e.clientY
-
-        mouseYaw.current += dx * 0.0045
-        // drag up = look up (เงย), drag down = look down (ก้ม)
-        mousePitch.current = MathUtils.clamp(
-          mousePitch.current - dy * 0.0035,
-          -Math.PI / 3,
-          Math.PI / 3,
-        )
-      }
+      mouseYaw.current += dx * 0.0045
+      // drag up = look up (เงย), drag down = look down (ก้ม)
+      mousePitch.current = MathUtils.clamp(mousePitch.current - dy * 0.0035, -Math.PI / 3, Math.PI / 3)
     }
 
     const onPointerUp = (e: PointerEvent) => {
-      if (activePointerId === e.pointerId || activePointerId === -1) {
+      if (e.pointerId === activePointerId) {
         isDragging = false
         activePointerId = -1
       }
-    }
-
-    const onLockChange = () => {
-      const canvas = document.querySelector('canvas')
-      isPointerLocked.current = Boolean(canvas && document.pointerLockElement === canvas)
     }
 
     window.addEventListener('pointerdown', onPointerDown, { passive: true })
     window.addEventListener('pointermove', onPointerMove, { passive: true })
     window.addEventListener('pointerup', onPointerUp, { passive: true })
     window.addEventListener('pointercancel', onPointerUp, { passive: true })
-    document.addEventListener('pointerlockchange', onLockChange)
 
     return () => {
       window.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointercancel', onPointerUp)
-      document.removeEventListener('pointerlockchange', onLockChange)
-      if (document.pointerLockElement) {
-        try {
-          document.exitPointerLock?.()
-        } catch {}
-      }
     }
   }, [fpModeRef])
 
@@ -1036,6 +1027,27 @@ function CampusScene({
     walkGroundRef.current = walkGround
   })
 
+  // HUD shortcuts (quests, minimap, NPC directions) warp straight there instead of walking.
+  // Only clicking a building in the 3D scene still walks to its door.
+  const warp = useRef<{
+    t: number
+    target: [number, number]
+    building: BuildingConfig | null
+    jumped: boolean
+    fov: number
+  } | null>(null)
+  const warpTo = (target: [number, number], building: BuildingConfig | null) => {
+    if (warp.current || entering) return false
+    waypoints.current = []
+    destination.current = null
+    if (markerRef.current) markerRef.current.visible = false
+    warp.current = { t: 0, target, building, jumped: false, fov: (camera as PerspectiveCamera).fov }
+    return true
+  }
+  useEffect(() => {
+    warpRef.current = warpTo
+  })
+
   const look = new Vector3()
   const follow = new Vector3()
   const lookAt = new Vector3()
@@ -1079,6 +1091,39 @@ function CampusScene({
     let vx = 0
     let vz = 0
     const isFP = fpModeRef.current
+
+    // ── Warp (HUD shortcuts): FOV kick, jump under the flash, settle ─────
+    const w = warp.current
+    if (w) {
+      w.t += dt
+      const cam = camera as PerspectiveCamera
+      cam.fov = w.fov + 22 * Math.sin(Math.PI * Math.min(1, w.t / WARP_SECONDS))
+      cam.updateProjectionMatrix()
+      if (!w.jumped && w.t >= WARP_JUMP_AT) {
+        w.jumped = true
+        const [x, z] = w.target
+        a.position.set(x, 0, z)
+        if (w.building) {
+          // land facing the building's door
+          const [bx, bz] = w.building.position
+          a.rotation.y = Math.atan2(bx - x, bz - z)
+          mouseYaw.current = Math.atan2(bx - x, -(bz - z))
+          mousePitch.current = 0
+        }
+        if (!isFP) {
+          // snap the follow camera, or it would glide across the campus after the jump
+          lookTarget(x, z, look)
+          camera.position.copy(look).add(CAMERA_OFFSET)
+          camera.lookAt(look)
+        }
+      }
+      if (w.t >= WARP_SECONDS) {
+        cam.fov = w.fov
+        cam.updateProjectionMatrix()
+        warp.current = null
+        if (w.building) onArrive(w.building, { silent: true })
+      }
+    }
 
     if (isFP) {
       // First-person head rotation via Keyboard (Instant & smooth!)
@@ -1140,6 +1185,10 @@ function CampusScene({
     }
 
     let moving = false
+    if (w) {
+      vx = 0
+      vz = 0
+    }
 
     if (vx !== 0 || vz !== 0) {
       waypoints.current = []
@@ -1186,10 +1235,20 @@ function CampusScene({
           a.position.z += (dz / dist) * step
           moving = true
         }
-        const want = Math.atan2(next[0] - a.position.x, next[1] - a.position.z)
-        const diff = Math.atan2(Math.sin(want - a.rotation.y), Math.cos(want - a.rotation.y))
-        a.rotation.y += diff * Math.min(1, dt * 12)
-        if (isFP) mouseYaw.current = a.rotation.y
+        const hx = next[0] - a.position.x
+        const hz = next[1] - a.position.z
+        if (Math.hypot(hx, hz) > 0.05) {
+          const want = Math.atan2(hx, hz)
+          const diff = Math.atan2(Math.sin(want - a.rotation.y), Math.cos(want - a.rotation.y))
+          a.rotation.y += diff * Math.min(1, dt * 12)
+          if (isFP) {
+            // the first-person heading is atan2(dx, -dz) (0 = north), not the avatar's
+            // atan2(dx, dz): copying rotation.y made the camera face backwards on the walk
+            const wantFP = Math.atan2(hx, -hz)
+            const d = Math.atan2(Math.sin(wantFP - mouseYaw.current), Math.cos(wantFP - mouseYaw.current))
+            mouseYaw.current += d * Math.min(1, dt * 8)
+          }
+        }
       }
     }
 
