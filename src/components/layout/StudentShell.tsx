@@ -4,6 +4,7 @@ import { BookOpen, Brain, FileCheck, MessagesSquare, User } from 'lucide-react'
 import RoleSwitcher from '@/components/layout/RoleSwitcher'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
 import DarkModeToggle from '@/components/layout/DarkModeToggle'
+import { BrandLockup } from '@/components/brand/BrandMark'
 import { useApp, type TranslationKey } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 
@@ -27,10 +28,7 @@ export default function StudentShell() {
     <div className="flex min-h-screen flex-col bg-canvas">
       <header className="shrink-0 border-b border-grey-300/60 bg-paper">
         <div className="mx-auto flex h-14 w-full max-w-lg items-center justify-between px-4">
-          <span className="text-base">
-            <span className="font-extrabold tracking-tight text-grey-300">SPU</span>{' '}
-            <span className="font-bold text-pink-600">ClassLoop</span>
-          </span>
+          <BrandLockup markClassName="h-5 w-10" />
           <div className="flex items-center gap-1.5">
             <Link
               to="/campus"

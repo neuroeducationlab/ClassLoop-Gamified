@@ -22,6 +22,7 @@ import {
 import RoleSwitcher from '@/components/layout/RoleSwitcher'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
 import DarkModeToggle from '@/components/layout/DarkModeToggle'
+import { BrandLockup } from '@/components/brand/BrandMark'
 import { useApp, type TranslationKey } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 
@@ -57,12 +58,7 @@ function ComingSoonBadge() {
 }
 
 function Brand() {
-  return (
-    <span className="text-lg">
-      <span className="font-extrabold tracking-tight text-grey-300">SPU</span>{' '}
-      <span className="font-bold text-pink-600">ClassLoop</span>
-    </span>
-  )
+  return <BrandLockup />
 }
 
 export default function TeacherShell() {

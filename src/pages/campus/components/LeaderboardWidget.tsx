@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Trophy, Flame, ChevronLeft, ChevronRight, Crown, Sparkles } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { lookupEn } from '@/components/AutoTranslate'
 
 interface LeaderboardEntry {
   rank: number
@@ -182,7 +183,7 @@ export default function LeaderboardWidget() {
                       className="h-7 w-7 rounded-full border border-white/40 shadow-xs shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
                       style={{ backgroundColor: item.avatarColor }}
                     >
-                      {item.nickname[0]}
+                      {(lang === 'en' ? lookupEn(item.nickname) : item.nickname)[0]}
                     </span>
 
                     <div>

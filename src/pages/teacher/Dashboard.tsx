@@ -123,8 +123,12 @@ function MiniCalendar({
 }: {
   onSelectDate?: (date: number) => void
 }) {
+  const { lang } = useApp()
   const [selectedDay, setSelectedDay] = useState(12)
   const daysInMonth = 31
+  // single Thai letters can't go in the dictionary: they'd also hit avatar initials
+  const weekdays =
+    lang === 'th' ? ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const startDayOffset = 5 // Saturday start for Aug 2026
 
   type CalendarEvent = {
@@ -188,13 +192,9 @@ function MiniCalendar({
 
       {/* Weekday Labels */}
       <div className="grid grid-cols-7 text-center text-[11px] font-extrabold text-grey-400">
-        <span>จ</span>
-        <span>อ</span>
-        <span>พ</span>
-        <span>พฤ</span>
-        <span>ศ</span>
-        <span>ส</span>
-        <span>อา</span>
+        {weekdays.map((d) => (
+          <span key={d}>{d}</span>
+        ))}
       </div>
 
       {/* Days Grid */}

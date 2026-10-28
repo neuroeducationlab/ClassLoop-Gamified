@@ -36,9 +36,22 @@ function lookup(text: string): string | undefined {
   const exact = DICTIONARY_EN[text]
   if (exact) return exact
   for (const { re, to } of PATTERN_RULES) {
-    if (re.test(text)) return text.replace(re, to)
+    if (re.test(text)) {
+      // captured Thai fragments (a nickname, a topic title) get their own dictionary pass
+      return text.replace(re, (...m: string[]) =>
+        to.replace(/\$(\d)/g, (_, i: string) => {
+          const g = m[Number(i)] ?? ''
+          return DICTIONARY_EN[g.trim()] ?? g
+        }),
+      )
+    }
   }
   return undefined
+}
+
+/** For text the DOM walker can't reach (canvas, computed initials). */
+export function lookupEn(text: string): string {
+  return lookup(text.trim()) ?? text
 }
 
 function translateTextNode(node: Text) {

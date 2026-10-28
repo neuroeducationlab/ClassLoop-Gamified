@@ -5,6 +5,7 @@ import { Environment, Lightformer } from '@react-three/drei'
 import { MathUtils, Vector3 } from 'three'
 import { AlertCircle, BookOpen, GraduationCap, Loader2, Lock, Mail, Sparkles } from 'lucide-react'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
+import { BrandMark } from '@/components/brand/BrandMark'
 import { DEMO_ACCOUNTS, useApp } from '@/context/AppContext'
 import { BUILDINGS, PLAZA_CENTER } from '@/data/buildings'
 import Building from '@/pages/campus/components/Building'
@@ -290,6 +291,7 @@ export default function Login() {
 
           {/* Logo & Headline */}
           <div className="mb-6 text-center">
+            <BrandMark className="mx-auto mb-2 h-12 w-24 drop-shadow-[0_0_12px_rgba(209,46,128,0.55)]" />
             <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow">
               ClassLoop <span className="text-[#F2C879]">Campus</span>
             </h1>
