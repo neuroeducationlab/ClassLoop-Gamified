@@ -394,6 +394,11 @@ export default function Dashboard() {
         for (const s of SERIES.slice(1)) {
           row[s.key] = rec.byFaculty[s.key] ?? 70
         }
+      } else {
+        row.class = 65
+        for (const s of SERIES.slice(1)) {
+          row[s.key] = 70
+        }
       }
       // If we have live responses and this is week 2, update with live data
       if (week === 2 && hasData) {
@@ -777,8 +782,8 @@ export default function Dashboard() {
             </div>
 
             {/* High-Resolution Full-Width Graph */}
-            <div className="h-88 w-full pt-2">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full pt-2" style={{ width: '100%', height: 360, minHeight: 350 }}>
+              <ResponsiveContainer width="100%" height={350} minHeight={320}>
                 <LineChart data={weeklyData} margin={{ top: 20, right: 30, left: -10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                   <XAxis
@@ -859,7 +864,7 @@ export default function Dashboard() {
                     }}
                   />
                   {SERIES.map((s) => {
-                    if (!visibleSeries[s.key]) return null
+                    if (visibleSeries[s.key] === false) return null
                     const isClass = s.key === 'class'
                     return (
                       <Line
