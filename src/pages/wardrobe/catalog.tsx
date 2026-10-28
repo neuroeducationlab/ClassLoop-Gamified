@@ -262,13 +262,30 @@ const HATS: Item[] = [
 
 const [ELX, ELY] = G.eyeL
 const [ERX, ERY] = G.eyeR
+/**
+ * Default face: big shiny iris with a sparkle (anime-stylised SPU student), a soft brow and
+ * a cute upper-lash curve. Reads as a young adult, not a toddler, without changing head size
+ * (so every hair and hat item still fits).
+ */
 function dotEyes(): Draw {
   return () => (
     <g>
-      <ellipse cx={ELX} cy={ELY} rx={6} ry={8} fill={OUT} />
-      <ellipse cx={ERX} cy={ERY} rx={6} ry={8} fill={OUT} />
-      <circle cx={ELX + 2} cy={ELY - 3} r={2.3} fill="#fff" />
-      <circle cx={ERX + 2} cy={ERY - 3} r={2.3} fill="#fff" />
+      {[[ELX, ELY], [ERX, ERY]].map(([x, y]) => (
+        <g key={x}>
+          {/* soft brow */}
+          <path d={`M${x - 10},${y - 15} Q${x},${y - 19} ${x + 10},${y - 15}`} fill="none" stroke={OUT} strokeWidth={2.6} strokeLinecap="round" />
+          {/* eye outline + upper lash accent */}
+          <ellipse cx={x} cy={y + 1} rx={8.5} ry={10} fill="#FFFFFF" stroke={OUT} strokeWidth={2.4} />
+          <path d={`M${x - 9},${y - 6} Q${x},${y - 11} ${x + 9},${y - 6}`} fill="none" stroke={OUT} strokeWidth={3.5} strokeLinecap="round" />
+          {/* iris: warm brown rim, violet inner */}
+          <ellipse cx={x} cy={y + 2} rx={6} ry={8.5} fill="#4F3B6A" />
+          <ellipse cx={x} cy={y + 4} rx={4.2} ry={6.5} fill="#8869C8" />
+          <ellipse cx={x} cy={y + 6} rx={2.6} ry={4} fill="#D4C0F2" />
+          {/* two highlights: a big one up-right, a tiny one lower-left */}
+          <circle cx={x + 2.5} cy={y - 2} r={2.6} fill="#FFFFFF" />
+          <circle cx={x - 2.5} cy={y + 5} r={1.4} fill="#FFFFFF" />
+        </g>
+      ))}
     </g>
   )
 }

@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, Shirt, X } from 'lucide-react'
+import { Check, Lock, Pencil, Shirt, X } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import ChibiAvatar from './ChibiAvatar'
 import { ITEMS, ITEM_BY_ID, RARITY } from './catalog'
@@ -32,13 +32,22 @@ export function BadgeRow({ max = 4, size = 18 }: { max?: number; size?: number }
 /** Show-off card: the full character in its scene, level, best items and the badge wall. */
 export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
-  const { lang, studentXP, studentCoins, avatar, currentStudent } = useApp()
+  const { lang, studentXP, studentCoins, avatar, setAvatar, currentStudent } = useApp()
   const w = useWardrobe()
   const th = lang === 'th'
   const level = Math.max(1, Math.floor(studentXP / 100))
   const owned = ITEMS.filter((i) => isOwned(i, w))
   const best = owned.filter((i) => i.rarity === 'legendary' || i.rarity === 'epic').slice(0, 6)
   const equippedLegend = Object.values(w.look).map((id) => ITEM_BY_ID[id as string]).filter((i) => i?.rarity === 'legendary')
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(avatar?.nickname ?? currentStudent.nickname)
+  const saveName = () => {
+    const n = draft.trim() || currentStudent.nickname
+    setDraft(n)
+    setEditing(false)
+    const base = avatar ?? { color: '#E89BC4', hat: 'grad' as const, outfit: 'default' as const, aura: 'none' as const, nickname: currentStudent.nickname }
+    setAvatar({ ...base, nickname: n })
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -59,9 +68,37 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
 
         <div className="flex min-w-0 flex-col">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-60">{th ? 'โปรไฟล์ผู้เล่น' : 'Player profile'}</p>
-          <h2 className="pr-10 text-2xl font-bold">{avatar?.nickname ?? currentStudent.nickname}</h2>
+          {editing ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); saveName() }}
+              className="mt-1 flex items-center gap-2 rounded-2xl border-[3px] border-[#5B3A2E] bg-white px-3 py-1.5 shadow-[0_2px_0_#5B3A2E]"
+            >
+              <input
+                autoFocus
+                maxLength={16}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={saveName}
+                aria-label={th ? 'ชื่อที่แสดง' : 'Display name'}
+                className="w-full bg-transparent text-2xl font-bold outline-none"
+              />
+              <button type="submit" aria-label={th ? 'บันทึก' : 'Save'} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                <Check className="h-4 w-4" strokeWidth={3} />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => { setDraft(avatar?.nickname ?? currentStudent.nickname); setEditing(true) }}
+              className="group mt-0.5 flex items-center gap-2 self-start rounded-xl pr-10 text-left transition hover:bg-black/5 hover:px-2"
+              title={th ? 'ตั้งชื่อที่แสดง' : 'Edit display name'}
+            >
+              <h2 className="text-2xl font-bold">{avatar?.nickname ?? currentStudent.nickname}</h2>
+              <Pencil className="h-4 w-4 opacity-50 transition group-hover:opacity-100" strokeWidth={2.5} />
+            </button>
+          )}
+          <p className="text-[11px] font-semibold opacity-60">{currentStudent.name} · {currentStudent.faculty} · {th ? `ปี ${currentStudent.year}` : `Yr ${currentStudent.year}`}</p>
           {equippedLegend.length > 0 && (
-            <p className="text-xs font-bold" style={{ color: RARITY.legendary.color }}>★ {equippedLegend.map((i) => i.name[lang]).join(' · ')}</p>
+            <p className="mt-0.5 text-xs font-bold" style={{ color: RARITY.legendary.color }}>★ {equippedLegend.map((i) => i.name[lang]).join(' · ')}</p>
           )}
           <div className="mt-2 grid grid-cols-3 gap-2 text-center">
             {[
