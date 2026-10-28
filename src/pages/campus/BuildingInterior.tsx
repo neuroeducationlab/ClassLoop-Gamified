@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Lock, Map as MapIcon, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, Lock, Volume2, VolumeX } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { BUILDINGS, type Building } from '@/data/buildings'
 import { INTERIORS, stationsFor } from '@/data/interiors'
@@ -137,16 +137,6 @@ function Room({ building }: { building: Building }) {
           >
             <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">{backText}</span>
           </button>
-          {role === 'teacher' && !fromMap && (
-            <button
-              onClick={() => navigate('/map')}
-              className="hidden items-center gap-1 rounded-full border border-white/20 bg-black/30 px-3 py-2 text-xs font-medium text-white/85 backdrop-blur transition-all hover:bg-black/50 sm:flex"
-              title={lang === 'th' ? 'สลับไปแผนที่ 2D' : 'Switch to 2D Map'}
-            >
-              <MapIcon className="h-3.5 w-3.5" />
-              <span>2D Map</span>
-            </button>
-          )}
           <div className="flex items-center gap-2.5 rounded-2xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur">
             <GameIcon name={building.icon} className="text-2xl" />
             <div className="min-w-0">

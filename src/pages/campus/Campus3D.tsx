@@ -10,12 +10,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
-import { MathUtils, Vector3, Fog, type Group, type Mesh, type PerspectiveCamera } from 'three'
+import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
 import {
   Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll, Volume2, VolumeX,
-  DoorOpen, GraduationCap, Trophy, MessageCircleHeart, BarChart3, Wand2, BookOpen, Users, Coffee,
-  Lock,
-  type LucideIcon,
 } from 'lucide-react'
 import { useApp, type Avatar, type Mission } from '@/context/AppContext'
 import {
@@ -28,7 +25,7 @@ import {
 import Avatar3D from './components/Avatar3D'
 import Building from './components/Building'
 import ContextBuildings from './components/ContextBuildings'
-import { doorPoint, facingPlaza, labelHeight, landingSpot } from './geometry'
+import { doorPoint, facingPlaza, landingSpot } from './geometry'
 import Ground, { CAMPUS_RADIUS } from './components/Ground'
 import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
@@ -41,26 +38,15 @@ import BrainGymModal from './components/BrainGymModal'
 import AvatarShopModal from './components/AvatarShopModal'
 import CampusNPCs, { CAMPUS_NPCS, type CampusNPC } from './components/CampusNPCs'
 import NPCDialogModal from './components/NPCDialogModal'
+import CloudTransition from './components/CloudTransition'
 import {
   playCoinSound,
   playFootstepSound,
-  playPortalSound,
+  playCloudWhooshSound,
   isSoundMuted,
   toggleSoundMute,
 } from './soundEngine'
 import { GameIcon } from '@/components/icons/GameIcon'
-
-const BUILDING_ICON: Record<string, LucideIcon> = {
-  entry: DoorOpen,
-  faculty: GraduationCap,
-  arena: Trophy,
-  dorm: MessageCircleHeart,
-  data: BarChart3,
-  plan: Wand2,
-  library: BookOpen,
-  union: Users,
-  lounge: Coffee,
-}
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
@@ -74,9 +60,6 @@ const GATE_SPAWN = doorPoint(GATE)
 const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
 const INTRO_SECONDS = 2.4
 const ENTER_DELAY_MS = 650
-/** HUD shortcuts warp instead of walking: the jump happens under the flash, then it clears. */
-const WARP_SECONDS = 0.7
-const WARP_JUMP_AT = 0.28
 
 // ── Phase 6 Step 3 — Arrival animation ─────────────────────────────────────
 const ARRIVAL_FROM = new Vector3(-24, 26, -10)
@@ -99,6 +82,48 @@ let lastSpot: [number, number] | null = null
 let introPlayed = true
 
 type LabelMap = Map<string, HTMLDivElement>
+
+const TEACHER_BUILDING_IDS = new Set<BuildingId>(['faculty', 'data', 'plan', 'dorm', 'lounge'])
+
+const GAME_FEATURE_SNIPPETS: Record<BuildingId, { th: string; en: string }> = {
+  faculty: {
+    th: 'จอบรรยาย วิดีโอก่อนเรียน & ควิซสด',
+    en: 'Live Lecture, Pre-class Video & Quizzes',
+  },
+  data: {
+    th: 'ศูนย์วิเคราะห์ Gap ความรู้ & สถิติส่งงาน',
+    en: 'Learning Gap Analytics & Submission Stats',
+  },
+  plan: {
+    th: 'สตูดิโอออกแบบบทเรียน AI 1-คลิก',
+    en: '1-Click AI Lesson Design Studio',
+  },
+  dorm: {
+    th: 'ศาลานิรนาม 3D แชทถามอาจารย์ไร้ตัวตน',
+    en: '3D Anonymous Sanctuary & Direct Feedback',
+  },
+  lounge: {
+    th: 'ห้องพักครู VIP & มอนิเตอร์ 6 จอ',
+    en: 'Executive Staff Lounge & 6-Monitor Wall',
+  },
+  library: {
+    th: 'ศูนย์ทบทวนก่อนสอบ & ซิลลาบัสรายวิชา',
+    en: 'Exam Review Hub & Course Syllabus',
+  },
+  arena: {
+    th: 'ลานประลอง Brain Gym & Leaderboard',
+    en: 'Brain Gym, Boss Rush & Class Leaderboard',
+  },
+  union: {
+    th: 'ชุมชนนักศึกษา บอร์ดถาม-ตอบ & แลกเปลี่ยนโน้ต',
+    en: 'Student Community Board & Achievements',
+  },
+  entry: {
+    th: 'ประตูทางเข้า MRT & ตู้แต่งตัวละคร',
+    en: 'MRT Gateway & Character Wardrobe',
+  },
+}
+
 const AVATAR_LABEL_HEIGHT = 2.1
 
 // ── Language helpers ────────────────────────────────────────────────────────
@@ -292,22 +317,11 @@ export default function Campus3D() {
     nickname: currentStudent.nickname,
   }
 
-  // Warp: the scene jumps under a flash of light (see warpTo in CampusScene)
-  const warpRef = useRef<(target: [number, number], building: BuildingConfig | null) => boolean>(() => false)
-  const warpFxRef = useRef<HTMLDivElement>(null)
-  const warp = useCallback((target: [number, number], building: BuildingConfig | null) => {
-    if (!warpRef.current(target, building)) return
-    playPortalSound()
-    warpFxRef.current?.animate(
-      [
-        { opacity: 0, transform: 'scale(1.25)' },
-        { opacity: 1, transform: 'scale(1)', offset: WARP_JUMP_AT / WARP_SECONDS },
-        { opacity: 0, transform: 'scale(0.96)' },
-      ],
-      { duration: WARP_SECONDS * 1000, easing: 'ease-in-out' },
-    )
-  }, [])
-  const warpToBuilding = useCallback((b: BuildingConfig) => warp(doorPoint(b), b), [warp])
+  const visibleBuildings = useMemo(() => {
+    return isTeacher
+      ? BUILDINGS.filter((b) => TEACHER_BUILDING_IDS.has(b.id))
+      : BUILDINGS
+  }, [isTeacher])
 
   const handleSelectMission = useCallback(
     (mission: Mission) => {
@@ -317,33 +331,54 @@ export default function Campus3D() {
       }
       if (mission.buildingId) {
         const b = BUILDINGS.find((bld) => bld.id === mission.buildingId)
-        if (b) warpToBuilding(b)
+        if (b) {
+          const dp = doorPoint(b)
+          walkGroundRef.current(dp[0], dp[1])
+          setToast(lang === 'th' ? `🧭 กำลังนำทางไปเควสต์ที่ ${b.name.th}` : `🧭 Guiding to quest at ${b.name.en}`)
+        }
       }
     },
-    [warpToBuilding],
+    [lang],
   )
 
   const arrive = useCallback(
-    (b: BuildingConfig, opts?: { silent?: boolean }) => {
+    (b: BuildingConfig, _opts?: { silent?: boolean }) => {
       lastSpot = doorPoint(b)
-      if (b.studentSees === null) {
+      if (!isTeacher && b.studentSees === null) {
         setToast(`${b.name[lang]} — ${t.teachersOnly}`)
         return
       }
-      if (!opts?.silent) playPortalSound()
+      playCloudWhooshSound()
       setEntering(b)
       setTimeout(() => {
         navigate(`/campus/${b.id}`) // the interior route is /campus/:buildingId (App.tsx)
       }, ENTER_DELAY_MS)
     },
-    [navigate, lang, t.teachersOnly],
+    [navigate, lang, t.teachersOnly, isTeacher],
   )
 
   const level = Math.max(1, Math.floor(studentXP / 100))
   const progress = (studentXP % 100) / 100 * 100
 
   const joystickRef = useRef<[number, number] | null>(null)
-  const walkGroundRef = useRef<(x: number, z: number) => void>(() => {})
+  const walkGroundRef = useRef<(x: number, z: number, b?: BuildingConfig | null) => void>(() => {})
+
+  const handleBuildingLabelClick = useCallback(
+    (b: BuildingConfig) => {
+      if (nearDoor?.id === b.id) {
+        arrive(b)
+      } else {
+        const dp = doorPoint(b)
+        walkGroundRef.current(dp[0], dp[1], b)
+        setToast(
+          lang === 'th'
+            ? `🚶 กำลังเดินไปที่ ${b.name.th}…`
+            : `🚶 Walking to ${b.name.en}…`,
+        )
+      }
+    },
+    [nearDoor, arrive, lang],
+  )
 
   return (
     <div
@@ -378,7 +413,6 @@ export default function Campus3D() {
           avatarPosRef={avatarPosRef}
           avatarRotRef={avatarRotRef}
           walkGroundRef={walkGroundRef}
-          warpRef={warpRef}
           onNearDoor={setNearDoor}
           onNearNPC={setNearNPC}
           onTalkNPC={setActiveNPC}
@@ -386,6 +420,7 @@ export default function Campus3D() {
           fpModeRef={fpModeRef}
           entering={entering}
           turnHeadRef={turnHeadRef}
+          isTeacher={isTeacher}
         />
 
         {!isMobile && (
@@ -397,55 +432,138 @@ export default function Campus3D() {
         )}
       </Canvas>
 
-      {/* ── Building floating labels — compact pill by default, expand on hover/near ── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {BUILDINGS.map((b) => {
+      {/* ── Building floating labels: low door height, 3 progressive RPG states ── */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-10">
+        {visibleBuildings.map((b) => {
           const isHovered = hovered === b.id
           const isNear = nearDoor?.id === b.id
-          const locked = b.studentSees === null
-          const expanded = isHovered || isNear
-          const Icon = BUILDING_ICON[b.id]
-          const isTeacherZone = !isTeacher && locked
+          const showLock = !isTeacher && b.studentSees === null
+          const snippet = GAME_FEATURE_SNIPPETS[b.id]?.[lang]
+
           return (
-            <div key={b.id} ref={labelRef(b.id)} className="absolute left-0 top-0" style={{ visibility: 'hidden' }}>
-              <div
-                className={`rounded-xl text-center text-white shadow-xl backdrop-blur-md transition-all duration-200 border ${
-                  isTeacherZone
-                    ? 'border-white/10 px-2.5 py-1.5'
-                    : expanded
-                      ? 'border-white/30 px-3 py-2'
-                      : 'border-white/20 px-2.5 py-1.5'
-                }`}
-                style={{
-                  backgroundColor: isTeacherZone ? b.color + '80' : b.color + 'E6',
-                  transform: expanded ? 'scale(1.08) translateY(-4px)' : 'scale(1)',
-                  maxWidth: expanded ? '220px' : '180px',
-                  opacity: isTeacherZone ? 0.65 : 1,
-                }}
-              >
-                <div className="flex items-center gap-1.5 justify-center">
-                  {Icon && <Icon size={isTeacherZone ? 12 : 14} strokeWidth={2.2} className="shrink-0" />}
-                  <span className={`font-bold tracking-tight ${isTeacherZone ? 'text-[11px] text-white/90' : 'text-xs text-white'}`}>
-                    {b.name[lang]}
-                  </span>
-                  {locked && <Lock size={10} className="opacity-60 shrink-0" />}
+            <div
+              key={b.id}
+              ref={labelRef(b.id)}
+              role="button"
+              tabIndex={0}
+              data-interactive="true"
+              aria-label={`${b.name[lang]} - ${lang === 'th' ? 'คลิกเพื่อเดินไปที่นี่' : 'Click to walk here'}`}
+              className="campus-label absolute left-0 top-0 pointer-events-auto cursor-pointer select-none transition-transform active:scale-95"
+              style={{ visibility: 'hidden' }}
+              onMouseEnter={() => setHovered(b.id)}
+              onMouseLeave={() => setHovered(null)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleBuildingLabelClick(b)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleBuildingLabelClick(b)
+                }
+              }}
+            >
+              {/* State 1: NEAR DOOR — Full Expanded Sign with Door Entry Action */}
+              {isNear ? (
+                <div className="flex flex-col items-center animate-page-fade">
+                  <div
+                    className="rounded-2xl px-3.5 py-2.5 text-center text-white shadow-[0_4px_25px_rgba(0,0,0,0.65)] backdrop-blur-xl border border-white/30 transition-all duration-200"
+                    style={{
+                      backgroundColor: 'rgba(12, 16, 38, 0.94)',
+                      borderColor: b.color,
+                      boxShadow: `0 0 24px ${b.color}77`,
+                      maxWidth: '280px',
+                    }}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <GameIcon name={b.icon} className="h-4 w-4" />
+                      <span className="text-xs font-black tracking-tight text-white">{b.name[lang]}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/15 text-white/80 font-mono">
+                        {b.spuRef}
+                      </span>
+                      {showLock && <GameIcon name="lock" className="h-3 w-3 text-amber-300" />}
+                    </div>
+                    <p className="mt-1 text-[11px] text-white/90 leading-tight font-normal whitespace-normal">
+                      {b.description[lang]}
+                    </p>
+                    <div className="mt-2 pt-1.5 border-t border-white/20">
+                      {showLock ? (
+                        <p className="text-[10px] font-bold text-amber-300">
+                          {t.facultyOnly}
+                        </p>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/25 border border-emerald-400/40 px-2.5 py-0.5 text-[11px] font-bold text-emerald-200 shadow-sm animate-pulse">
+                          <span>{lang === 'th' ? 'กด E หรือคลิกเพื่อเข้า' : 'Press E or Click to enter'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Direction Arrow */}
+                  <div className="text-emerald-400 text-xs font-black -mt-1 drop-shadow animate-bounce">
+                    ▼
+                  </div>
                 </div>
-                {expanded && (
-                  <p className="mt-1 text-[10px] font-normal leading-snug text-white/90 whitespace-normal text-center">
-                    {b.description[lang]}
-                  </p>
-                )}
-                {expanded && !locked && (
-                  <p className="mt-1 text-[10px] font-semibold text-white/95 border-t border-white/20 pt-1">
-                    {t.clickToEnter}
-                  </p>
-                )}
-                {expanded && locked && (
-                  <p className="mt-1 text-[10px] font-semibold text-white/80 border-t border-white/20 pt-1">
-                    {t.facultyOnly}
-                  </p>
-                )}
-              </div>
+              ) : isHovered ? (
+                /* State 2: HOVER — RPG Game Feature Snippet Tooltip */
+                <div className="flex flex-col items-center animate-page-fade">
+                  <div
+                    className="rounded-xl px-3 py-2 text-center text-white shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-xl border transition-all duration-200"
+                    style={{
+                      backgroundColor: 'rgba(10, 14, 34, 0.92)',
+                      borderColor: b.color,
+                      boxShadow: `0 0 20px ${b.color}88`,
+                      maxWidth: '250px',
+                    }}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <GameIcon name={b.icon} className="h-3.5 w-3.5" />
+                      <span className="text-xs font-bold tracking-tight text-white">{b.name[lang]}</span>
+                      {showLock && <GameIcon name="lock" className="h-3 w-3 text-amber-300" />}
+                    </div>
+                    {snippet && (
+                      <p className="mt-1 text-[11px] font-medium text-cyan-200 leading-snug">
+                        {snippet}
+                      </p>
+                    )}
+                  </div>
+                  {/* Direction Arrow pointing to entrance */}
+                  <div
+                    className="text-xs font-black -mt-0.5 drop-shadow animate-bounce"
+                    style={{ color: b.color }}
+                  >
+                    ▼
+                  </div>
+                  {/* Faint, subtle click hint text separated from the box */}
+                  <div className="mt-1 text-[10px] text-white/50 tracking-wide font-normal drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] pointer-events-none select-none">
+                    {lang === 'th' ? 'คลิกเพื่อเดินไปที่นี่' : 'Click to walk here'}
+                  </div>
+                </div>
+              ) : (
+                /* State 3: DISTANCE — Compact Text Pill with Walking Direction Arrow */
+                <div className="flex flex-col items-center group">
+                  <div
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg backdrop-blur-md border border-white/25 transition-transform duration-150 group-hover:scale-105"
+                    style={{
+                      backgroundColor: 'rgba(10, 14, 30, 0.82)',
+                      borderLeftColor: b.color,
+                      borderLeftWidth: '3px',
+                    }}
+                  >
+                    <GameIcon name={b.icon} className="h-3 w-3 text-white/90" />
+                    <span className="text-[11px] font-bold text-white tracking-tight whitespace-nowrap leading-tight">
+                      {b.name[lang]}
+                    </span>
+                    {showLock && <GameIcon name="lock" className="h-2.5 w-2.5 text-amber-300" />}
+                  </div>
+                  {/* Downward direction arrow pointing toward entrance door path */}
+                  <div
+                    className="text-[10px] font-black -mt-0.5 drop-shadow transition-transform group-hover:translate-y-0.5"
+                    style={{ color: b.color }}
+                  >
+                    ▼
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}
@@ -520,25 +638,29 @@ export default function Campus3D() {
             <span className="hidden sm:inline">{fpMode ? t.fpModeLabel : t.tpModeLabel}</span>
           </button>
 
+          {/* Sound SFX Toggle (Small, accessible to everyone) */}
+          <button
+            onClick={() => {
+              const next = toggleSoundMute()
+              setIsMuted(next)
+              if (!next) playCoinSound()
+            }}
+            className="flex items-center justify-center h-8 w-8 rounded-xl bg-black/40 text-white/90 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-all cursor-pointer shadow"
+            title={isMuted ? (lang === 'th' ? 'เปิดเสียง SFX' : 'Unmute Sound') : (lang === 'th' ? 'ปิดเสียง SFX' : 'Mute Sound')}
+            aria-label={isMuted ? 'Unmute Sound' : 'Mute Sound'}
+          >
+            {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4 text-emerald-400" />}
+          </button>
+
           {isTeacher ? (
-            <>
-              <Link
-                to="/map"
-                aria-label={t.map2d}
-                className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
-              >
-                <GameIcon name="map" />
-                <span className="hidden sm:inline">{t.map2d}</span>
-              </Link>
-              <Link
-                to="/teacher"
-                aria-label={t.studio}
-                className="flex items-center gap-1.5 rounded-xl bg-pink-600/80 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-pink-400/30 hover:bg-pink-600 transition-colors shadow"
-              >
-                <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.studio}</span>
-              </Link>
-            </>
+            <Link
+              to="/teacher"
+              aria-label={t.studio}
+              className="flex items-center gap-1.5 rounded-xl bg-pink-600/80 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-pink-400/30 hover:bg-pink-600 transition-colors shadow"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">{t.studio}</span>
+            </Link>
           ) : (
             <>
               {/* SPU Boutique Shop with Student Coins */}
@@ -592,19 +714,6 @@ export default function Campus3D() {
                 <LayoutGrid className="h-4 w-4" />
                 <span className="hidden sm:inline">{t.back}</span>
               </Link>
-
-              {/* Sound SFX Toggle */}
-              <button
-                onClick={() => {
-                  const next = toggleSoundMute()
-                  setIsMuted(next)
-                  if (!next) playCoinSound()
-                }}
-                className="flex items-center justify-center h-8 w-8 rounded-xl bg-black/40 text-white/90 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-all cursor-pointer shadow"
-                title={isMuted ? (lang === 'th' ? 'เปิดเสียง SFX' : 'Unmute Sound') : (lang === 'th' ? 'ปิดเสียง SFX' : 'Mute Sound')}
-              >
-                {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4 text-emerald-400" />}
-              </button>
             </>
           )}
         </div>
@@ -709,10 +818,14 @@ export default function Campus3D() {
           onWalk={(x, z) => {
             const r = Math.hypot(x, z)
             const k = r > CAMPUS_RADIUS ? CAMPUS_RADIUS / r : 1
-            warp([x * k, z * k], null)
+            walkGroundRef.current(x * k, z * k)
           }}
-          onSelectBuilding={warpToBuilding}
+          onSelectBuilding={(b) => {
+            const dp = doorPoint(b)
+            walkGroundRef.current(dp[0], dp[1], b)
+          }}
           lang={lang}
+          activeFilter={isTeacher ? (b) => TEACHER_BUILDING_IDS.has(b.id) : undefined}
         />
       )}
 
@@ -782,31 +895,18 @@ export default function Campus3D() {
           }}
           onNavigateToBuilding={(id) => {
             const b = BUILDINGS.find((x) => x.id === id)
-            if (b) warpToBuilding(b)
+            if (b) {
+              const dp = doorPoint(b)
+              walkGroundRef.current(dp[0], dp[1])
+              setToast(lang === 'th' ? `🧭 กำลังนำทางไปที่ ${b.name.th}` : `🧭 Guiding to ${b.name.en}`)
+            }
           }}
           onOpenShop={() => setShowAvatarShop(true)}
         />
       )}
 
-      {/* ── Warp flash: a tunnel of light the scene jumps under (played by warp()) ── */}
-      <div ref={warpFxRef} className="pointer-events-none absolute inset-0 z-40 opacity-0" aria-hidden>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.97)_0%,rgba(207,250,254,0.9)_30%,rgba(56,189,248,0.6)_58%,rgba(30,27,75,0.15)_85%)]" />
-        <div className="absolute inset-0 bg-[repeating-conic-gradient(from_0deg,rgba(255,255,255,0.45)_0deg_1.5deg,transparent_1.5deg_9deg)] [mask-image:radial-gradient(circle,transparent_22%,black_70%)]" />
-      </div>
-
-      {/* ── Building enter transition with description ── */}
-      {entering && (
-        <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 text-white animate-in fade-in duration-500"
-          style={{ backgroundColor: entering.color }}
-        >
-          <GameIcon name={entering.icon} className="text-7xl animate-in zoom-in-50 duration-500" />
-          <p className="text-2xl font-bold animate-in slide-in-from-bottom-4 duration-500">{entering.name[lang]}</p>
-          <p className="text-sm text-white/85 max-w-sm text-center animate-in slide-in-from-bottom-4 duration-700 px-4">
-            {entering.description[lang]}
-          </p>
-        </div>
-      )}
+      {/* ── Soft Cloud Cover & Reveal Transition ── */}
+      <CloudTransition active={Boolean(entering)} />
     </div>
   )
 }
@@ -824,8 +924,7 @@ type SceneProps = {
   joystickRef: RefObject<[number, number] | null>
   avatarPosRef: RefObject<[number, number]>
   avatarRotRef: RefObject<number>
-  walkGroundRef: RefObject<(x: number, z: number) => void>
-  warpRef: RefObject<(target: [number, number], building: BuildingConfig | null) => boolean>
+  walkGroundRef: RefObject<(x: number, z: number, b?: BuildingConfig | null) => void>
   onNearDoor: (b: BuildingConfig | null) => void
   onNearNPC: (npc: CampusNPC | null) => void
   onTalkNPC: (npc: CampusNPC) => void
@@ -833,6 +932,7 @@ type SceneProps = {
   fpModeRef: RefObject<boolean>
   entering: BuildingConfig | null
   turnHeadRef: RefObject<((deltaYaw: number) => void) | null>
+  isTeacher?: boolean
 }
 
 function passesNear(a: [number, number], b: [number, number], p: [number, number], r: number) {
@@ -854,7 +954,6 @@ function CampusScene({
   avatarPosRef,
   avatarRotRef,
   walkGroundRef,
-  warpRef,
   onNearDoor,
   onNearNPC,
   onTalkNPC,
@@ -862,6 +961,7 @@ function CampusScene({
   fpModeRef,
   entering,
   turnHeadRef,
+  isTeacher = false,
 }: SceneProps) {
   const { camera, size, scene } = useThree()
   const avatarRef = useRef<Group>(null)
@@ -871,6 +971,12 @@ function CampusScene({
   const spawn = lastSpot ?? GATE_SPAWN
   const intro = useRef(introPlayed ? 1 : 0)
   const nearNPCRef = useRef<CampusNPC | null>(null)
+
+  const visibleBuildings = useMemo(() => {
+    return isTeacher
+      ? BUILDINGS.filter((b) => TEACHER_BUILDING_IDS.has(b.id))
+      : BUILDINGS
+  }, [isTeacher])
 
   // Arrival animation
   const arrivalT = useRef(0)
@@ -927,6 +1033,16 @@ function CampusScene({
 
     const onPointerDown = (e: PointerEvent) => {
       if (!fpModeRef.current) return
+      // Ignore if clicking on buttons, links, inputs, or interactive labels
+      const target = e.target as HTMLElement | null
+      if (
+        target &&
+        (target.closest('button, a, input, [role="button"], [data-interactive], .campus-label') ||
+          target.tagName === 'BUTTON' ||
+          target.tagName === 'A')
+      ) {
+        return
+      }
       if (!(e.target instanceof HTMLCanvasElement)) return
 
       // For touch, only capture look drag on the right 65% of screen (so joystick remains usable on left)
@@ -997,7 +1113,7 @@ function CampusScene({
     const a = avatarRef.current
     if (!a) return
     const here: [number, number] = [a.position.x, a.position.z]
-    const blocked = BUILDINGS.some(
+    const blocked = visibleBuildings.some(
       (b) => b.id !== building?.id && passesNear(here, target, b.position, 3.2),
     )
     if (blocked) {
@@ -1018,35 +1134,14 @@ function CampusScene({
     }
   }
 
-  const walkGround = (x: number, z: number) => {
+  const walkGround = (x: number, z: number, building: BuildingConfig | null = null) => {
     const r = Math.hypot(x, z)
     const k = r > CAMPUS_RADIUS ? CAMPUS_RADIUS / r : 1
-    walkTo([x * k, z * k], null)
+    walkTo([x * k, z * k], building)
   }
 
   useEffect(() => {
     walkGroundRef.current = walkGround
-  })
-
-  // HUD shortcuts (quests, minimap, NPC directions) warp straight there instead of walking.
-  // Only clicking a building in the 3D scene still walks to its door.
-  const warp = useRef<{
-    t: number
-    target: [number, number]
-    building: BuildingConfig | null
-    jumped: boolean
-    fov: number
-  } | null>(null)
-  const warpTo = (target: [number, number], building: BuildingConfig | null) => {
-    if (warp.current || entering) return false
-    waypoints.current = []
-    destination.current = null
-    if (markerRef.current) markerRef.current.visible = false
-    warp.current = { t: 0, target, building, jumped: false, fov: (camera as PerspectiveCamera).fov }
-    return true
-  }
-  useEffect(() => {
-    warpRef.current = warpTo
   })
 
   const look = new Vector3()
@@ -1082,7 +1177,10 @@ function CampusScene({
         scene.fog.far = MathUtils.lerp(FOG_FAR_ARRIVAL, FOG_FAR_CLEAR, fogT.current)
       }
       if (arrivalT.current >= 1) onArrivalDone()
-      for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+      for (const b of visibleBuildings) {
+        const dp = doorPoint(b)
+        place(b.id, dp[0], 2.4, dp[1])
+      }
       place('me', a.position.x, a.position.y + AVATAR_LABEL_HEIGHT, a.position.z)
       return
     }
@@ -1092,39 +1190,6 @@ function CampusScene({
     let vx = 0
     let vz = 0
     const isFP = fpModeRef.current
-
-    // ── Warp (HUD shortcuts): FOV kick, jump under the flash, settle ─────
-    const w = warp.current
-    if (w) {
-      w.t += dt
-      const cam = camera as PerspectiveCamera
-      cam.fov = w.fov + 22 * Math.sin(Math.PI * Math.min(1, w.t / WARP_SECONDS))
-      cam.updateProjectionMatrix()
-      if (!w.jumped && w.t >= WARP_JUMP_AT) {
-        w.jumped = true
-        const [x, z] = w.target
-        a.position.set(x, 0, z)
-        if (w.building) {
-          // land facing the building's door
-          const [bx, bz] = w.building.position
-          a.rotation.y = Math.atan2(bx - x, bz - z)
-          mouseYaw.current = Math.atan2(bx - x, -(bz - z))
-          mousePitch.current = 0
-        }
-        if (!isFP) {
-          // snap the follow camera, or it would glide across the campus after the jump
-          lookTarget(x, z, look)
-          camera.position.copy(look).add(CAMERA_OFFSET)
-          camera.lookAt(look)
-        }
-      }
-      if (w.t >= WARP_SECONDS) {
-        cam.fov = w.fov
-        cam.updateProjectionMatrix()
-        warp.current = null
-        if (w.building) onArrive(w.building, { silent: true })
-      }
-    }
 
     if (isFP) {
       // First-person head rotation via Keyboard (Instant & smooth!)
@@ -1186,10 +1251,6 @@ function CampusScene({
     }
 
     let moving = false
-    if (w) {
-      vx = 0
-      vz = 0
-    }
 
     if (vx !== 0 || vz !== 0) {
       waypoints.current = []
@@ -1227,28 +1288,23 @@ function CampusScene({
           waypoints.current.shift()
           if (waypoints.current.length === 0) {
             if (markerRef.current) markerRef.current.visible = false
-            const b = destination.current
             destination.current = null
-            if (b) onArrive(b)
           }
         } else {
           a.position.x += (dx / dist) * step
           a.position.z += (dz / dist) * step
           moving = true
         }
-        const hx = next[0] - a.position.x
-        const hz = next[1] - a.position.z
-        if (Math.hypot(hx, hz) > 0.05) {
-          const want = Math.atan2(hx, hz)
+        if (isFP) {
+          // In First-Person: smoothly turn camera heading toward target waypoint!
+          const wantYaw = Math.atan2(dx, -dz)
+          const diffYaw = Math.atan2(Math.sin(wantYaw - mouseYaw.current), Math.cos(wantYaw - mouseYaw.current))
+          mouseYaw.current += diffYaw * Math.min(1, dt * 6)
+        } else {
+          // In Third-Person: turn 3D avatar model toward target waypoint!
+          const want = Math.atan2(dx, dz)
           const diff = Math.atan2(Math.sin(want - a.rotation.y), Math.cos(want - a.rotation.y))
           a.rotation.y += diff * Math.min(1, dt * 12)
-          if (isFP) {
-            // the first-person heading is atan2(dx, -dz) (0 = north), not the avatar's
-            // atan2(dx, dz): copying rotation.y made the camera face backwards on the walk
-            const wantFP = Math.atan2(hx, -hz)
-            const d = Math.atan2(Math.sin(wantFP - mouseYaw.current), Math.cos(wantFP - mouseYaw.current))
-            mouseYaw.current += d * Math.min(1, dt * 8)
-          }
         }
       }
     }
@@ -1269,10 +1325,10 @@ function CampusScene({
     // Door proximity
     let nearest: BuildingConfig | null = null
     let nearestDist = DOOR_PROMPT_DISTANCE
-    for (const b of BUILDINGS) {
+    for (const b of visibleBuildings) {
       const dp = doorPoint(b)
       const d = Math.hypot(dp[0] - a.position.x, dp[1] - a.position.z)
-      if (d < nearestDist && b.studentSees !== null) {
+      if (d < nearestDist && (isTeacher || b.studentSees !== null)) {
         nearest = b
         nearestDist = d
       }
@@ -1315,7 +1371,10 @@ function CampusScene({
       const targetLook = new Vector3(door[0], 1.8, door[1])
       camera.position.lerp(targetCamPos, Math.min(1, dt * 5))
       camera.lookAt(targetLook)
-      for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+      for (const b of visibleBuildings) {
+        const dp = doorPoint(b)
+        place(b.id, dp[0], 2.4, dp[1])
+      }
       return
     }
 
@@ -1347,8 +1406,11 @@ function CampusScene({
       }
     }
 
-    // Labels
-    for (const b of BUILDINGS) place(b.id, b.position[0], labelHeight(b.shape), b.position[1])
+    // Labels at eye level right above entrance door
+    for (const b of visibleBuildings) {
+      const dp = doorPoint(b)
+      place(b.id, dp[0], 2.4, dp[1])
+    }
     if (!isFP) place('me', a.position.x, a.position.y + AVATAR_LABEL_HEIGHT, a.position.z)
   })
 
@@ -1357,7 +1419,7 @@ function CampusScene({
       <Ground onWalk={walkGround} />
       <ContextBuildings />
 
-      {BUILDINGS.map((b) => (
+      {visibleBuildings.map((b) => (
         <Building
           key={b.id}
           building={b}

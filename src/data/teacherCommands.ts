@@ -49,7 +49,7 @@ export const TEACHER_COMMANDS: TeacherCommand[] = [
     icon: 'broadcast',
     label: { th: 'สอนสด & คอนโซล', en: 'Live Class & Console' },
     does: { th: 'เปิดคลาสสด ถามตอบและควิซแบบเรียลไทม์ พร้อมสุ่มผู้ตอบ', en: 'Run live class with real-time quizzes & picker' },
-    actionBadge: { th: 'Session พร้อมเปิดคลาส', en: 'Ready to launch' },
+    actionBadge: { th: 'พร้อมเปิดคลาส', en: 'Ready to launch' },
     route: '/teacher/live',
     content: 'teacher-live',
     buildingId: 'faculty',

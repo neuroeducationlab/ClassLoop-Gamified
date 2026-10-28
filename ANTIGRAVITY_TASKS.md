@@ -64,19 +64,39 @@ props in the rooms.
   - `/campus/lounge` as a student shows the lock.
 - 60 fps on the filming laptop (`?hq`).
 
-## Notes for Claude
+## Notes for Claude & Next Session
 - **Tasks 1–3 Complete**:
   - Added shapes `'library'`, `'union'`, `'lounge'` in `src/data/buildings.ts`, `src/pages/campus/geometry.ts`, `src/pages/campus/components/CampusMapSVG.tsx`, and `src/pages/campus/components/Building.tsx`.
-  - All 3 buildings have distinct procedural geometry that matches their interiors (visible bookshelves, café pergola string lights, monitor wall, and Staff Only security sign).
+  - All 3 buildings have distinct procedural geometry matching their interiors (visible bookshelves, café pergola string lights, monitor wall, and Staff Only security sign).
   - Walkways and avenues are completely unblocked: `npc-mind` at `[-4.8, 0, 7.8]`, `npc-guide` at `[-2.2, 0, 14.0]`, and `SPURestPavilion` at `[14.5, 0, 11.5]`.
+
 - **Heart Dorm Redesign (Discord 3D Holographic Cyber Sanctuary)**:
-  - Transformed `src/pages/campus/interiors/HeartDorm.tsx` from narrow 2D mobile card into a clean, desktop-first Discord 3-column architecture (`w-full max-w-7xl`).
+  - Transformed `src/pages/campus/interiors/HeartDorm.tsx` into a clean, desktop-first Discord 3-column architecture (`w-full max-w-7xl`).
   - Added real-time 3D Three.js Hologram Chamber widget displaying rotating polyhedral core, astrolabe rings, and particle emitters dynamically themed to active mystery personas.
   - Implemented full Discord desktop architecture: Server & Channel sidebar on left (`#all-inquiries`, `#urgent-sos`, `#deep-inquiry`, `#creative-spark`, `#oracle-advice`), Discord forum stream in center with search bar and flame upvotes, and online Guild Master & active mystery scholars roster on right.
   - Updated `HoloPanel.tsx` dark glass surface dialog to `max-w-6xl xl:max-w-7xl` so PC screens enjoy proper desktop room ergonomics.
-- **Teacher Command Deck & Full Feature Unlocking**:
-  - Upgraded `TeacherCommandDeck.tsx` into a high-visibility RPG console with a prominent shortcut button to the Original Teacher Dashboard (`/teacher/dashboard`).
-  - Vertically stacked, scrollable command cards with real-time actionable badges ("เห็นสิ่งที่ต้องทำ": e.g., "⚠️ 5 คนยังไม่ส่งงาน", "✨ สัปดาห์ที่ 2: Hofstede", "🟢 พร้อมเปิดคลาส").
-  - Hovering any command smoothly triggers the high-definition `HoloPreview` projecting live snapshots of all web app features (Studio, Dashboard, Exams, Live, Roster, Community, Lounge, Library, Arena).
-  - Unlocked all campus buildings for teachers in `buildings.ts` and `interiors.ts` (`roles: both` on entry, library, arena, union), eliminating all locked screens for faculty.
+
+- **Teacher Command Deck & Transition Effects**:
+  - Upgraded `TeacherCommandDeck.tsx` into a clean RPG vertical console.
+  - Removed "Original Teacher Dashboard" banner and removed 2D Map button per user preference ("เอาส่วน view map 2 D ออกไปได้เลย เอาป้า oRIGINAL TEACHER DASHBOARD ออก").
+  - Hovering any command smoothly triggers the high-definition `HoloPreview` (720x440) centered in the remaining screen space.
+  - Soft Cloud Transition (`CloudTransition.tsx`): Replaced abrupt portal suction warp with smooth white drifting cloud cover and gradual reveal.
+  - Actionable badges: Clean, concise text badges showing attention needed without duplicate emojis ("5 คนยังไม่ส่งงาน", "สัปดาห์ที่ 2: Hofstede", "พร้อมเปิดคลาส").
+
+- **Attendance Feature (`/teacher/attendance`)**:
+  - Built full interactive attendance console `src/pages/teacher/Attendance.tsx` with live check-in toggle, QR code generator, real-time student check-in status (On Time, Late, Absent), and course switcher.
+  - Fully wired into `TeacherShell.tsx` and `teacherCommands.ts`.
+
+- **Campus 3D Labels, First-Person Interaction & SFX Toggle**:
+  - Floating Campus Labels: Hover state shows game snippet; click-to-walk text is separated as a faint, subtle label underneath ("คลิกเพื่อเดินไปที่นี่").
+  - Fixed First-Person Click & Waypoint Walking: Corrected camera yaw orientation (`Math.atan2(dx, -dz)`) and exempted `.campus-label`, `[role="button"]`, and `[data-interactive]` from pointer-lock interception.
+  - Audio SFX Toggle: Added accessible sound mute/unmute buttons (`Volume2` / `VolumeX`) with localStorage persistence across `Campus3D.tsx`, `TeacherShell.tsx`, and `BuildingInterior.tsx`.
+  - Emoji Deduplication: Cleaned all redundant/duplicate emojis across toasts, badges, dialog reward banners, Brain Gym explanations, Heart Dorm safeBadges/filters, and Arena battle tabs.
+
+- **Repo & Safety Rules**:
+  - Do NOT push without user review.
+  - Current working branch: `vscode/attendance` (synced with `feat/3d-campus`).
+  - Target remote: `neuroeducationlab/ClassLoop-Gamified.git`.
+  - Bilingual (`th` / `en`) must remain intact.
+  - Build (`tsc -b && vite build`) and lint (`oxlint`) must pass with 0 errors.
 

@@ -29,5 +29,6 @@ export const CONTENT: Record<ContentKey, Entry> = {
   'teacher-exams': light(() => import('@/pages/teacher/Exams')),
   'teacher-live': light(() => import('@/pages/teacher/Live')),
   'teacher-roster': light(() => import('@/pages/teacher/ClassRoster')),
+  'teacher-attendance': light(() => import('@/pages/teacher/Attendance')),
   'teacher-community': light(() => import('@/pages/teacher/Community')),
 }

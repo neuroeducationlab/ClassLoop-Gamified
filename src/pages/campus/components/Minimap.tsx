@@ -10,6 +10,7 @@ type MinimapProps = {
   onWalk: (x: number, z: number) => void
   onSelectBuilding: (b: Building) => void
   lang?: 'th' | 'en'
+  activeFilter?: (b: Building) => boolean
 }
 
 export default function Minimap({
@@ -19,6 +20,7 @@ export default function Minimap({
   onWalk,
   onSelectBuilding,
   lang = 'en',
+  activeFilter,
 }: MinimapProps) {
   const [collapsed, setCollapsed] = useState(false)
 
@@ -46,6 +48,7 @@ export default function Minimap({
             <div className="relative w-40 sm:w-48 overflow-hidden rounded-xl border border-white/10">
               <CampusMapSVG
                 className="block h-auto w-full"
+                activeFilter={activeFilter}
                 avatarPosition={avatarPosition}
                 avatarColor={avatarColor}
                 avatarRotation={avatarRotation}

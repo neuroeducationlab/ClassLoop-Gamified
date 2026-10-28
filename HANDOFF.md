@@ -98,7 +98,7 @@ The user picked a realistic, textured look in a **modern-university urban style,
 - [x] 7. Extra wow: holographic SPU logo, light-trail cars, 4-time-of-day sky (morning, midday, sunset, night stars) + thin drifting clouds.
 - [x] 8. SPU Universe Login & Art: 3D bird's-eye login screen with 4DX swoop landing, academic crosshair-free camera, and high-res SPU Universe diorama backgrounds (`public/spu/{morning,midday,sunset,night}.jpg`).
 
-## Phase 7: inside matches outside (28 Oct, user-approved)
+## Phase 7: inside matches outside (28 Oct, user-approved & updated)
 
 Every feature has a home building. Walking in lands in a 3D room in that building's colours; stations open the
 feature on a hologram panel. Teachers mostly don't walk: the **Command Deck** (top-left on the campus) lists every
@@ -106,30 +106,42 @@ tool as RPG text boxes; hovering one projects a live preview of the real page an
 
 | Building | Student stations | Teacher stations |
 |---|---|---|
-| Gate · MRT Exit 2 | Today's plan, wardrobe | (locked) |
-| Library (new) | Review desk, syllabus shelf | (locked) |
+| Gate · MRT Exit 2 | Today's plan, wardrobe | Settings & role switch |
+| Library | Review desk, syllabus shelf | Course syllabus, review centre & learning objectives |
 | Faculty Hall | Lecture screen, quest board | Live class console |
-| Arena | Battle screen (Brain Gym, Boss Rush, leaderboard), challenge kiosk | (locked) |
-| Student Union (new) | Community board, profile kiosk | (locked) |
+| Arena | Battle screen (Brain Gym, Boss Rush, leaderboard), challenge kiosk | Leaderboard, class performance & team challenges |
+| Student Union | Community board, profile kiosk | Student community discussions & achievements |
 | Wellness Lounge (dorm) | Anonymous corner | Anonymous corner, student voice |
-| Planning Studio | (locked) | Lesson design desk, exam builder |
-| Data Center | (locked) | Analytics wall, roster files |
-| Staff Lounge (new) | (locked: "Staff only") | All six commands as a wall of monitors |
+| Planning Studio | (locked for student) | Lesson design desk, exam builder |
+| Data Center | (locked for student) | Analytics wall, roster files |
+| Staff Lounge | (locked for student: "Staff only") | All six commands as a wall of monitors |
 
-Work split: **Claude** owns `data/interiors.ts`, `data/teacherCommands.ts`, `interior/*`, `BuildingInterior.tsx`,
-the Command Deck. **Antigravity** owns exteriors (`Building.tsx`: proper shapes for Library / Union / Staff Lounge,
-which reuse `hall` / `hub` / `office` for now), NPCs, and the games inside room contents (`interiors/*`). To split a
-room's content into more stations, export the section as its own component, add a `ContentKey` in
-`contentRegistry.tsx` and a station in `interiors.ts`.
+### Key System Updates & Refinements
+1. **Teacher Command Deck & Transition**:
+   - Clean, vertically scrollable RPG console with high-visibility actionable badges without emoji clutter ("5 คนยังไม่ส่งงาน", "สัปดาห์ที่ 2: Hofstede", "พร้อมเปิดคลาส").
+   - Center-stage Sci-Fi HoloPreview (720x440).
+   - Removed 2D Map button and Original Teacher Dashboard banner per user instructions.
+   - Smooth White Cloud transition (`CloudTransition.tsx`) replaces portal suction warp.
+2. **Attendance Management (`/teacher/attendance`)**:
+   - Fully functional attendance console with live session toggle, auto-generated QR code, student attendance records, filters, and toasts.
+3. **Heart Dorm (Student Wellness Lounge)**:
+   - Discord-style desktop 3-column architecture (`max-w-7xl`).
+   - Three.js 3D rotating hologram core with interactive particle rings.
+   - Cleaned floating nametag label: faint separate click-to-walk hint, fixed first-person camera yaw, exempted from pointer-lock.
+4. **Audio SFX Toggle**:
+   - Small toggle button (`Volume2` / `VolumeX`) added on campus HUD, TeacherShell, and room topbars with localStorage persistence.
+5. **Emoji Deduplication**:
+   - Removed redundant/duplicate emojis across toasts, badges, dialog rewards, Brain Gym explanation, and battle tabs.
 
 ## Verify before each push
 
 `npm run build && npm run lint`, then click through: landing → Student → campus → enter each building → open a
 station → Esc → back; landing → Faculty → hover every Command Deck item → open one; `/campus/lounge` as a student shows
-the lock. Watch the console: the target is **0 page errors**. Also check `/student` and `/teacher/dashboard` still work.
+the lock. Watch the console: the target is **0 page errors**. Also check `/student`, `/teacher/dashboard`, and `/teacher/attendance` still work.
 A headless browser renders without a GPU (~11 fps), so check **60 fps on the real filming laptop**.
 
 ## Deploy
 
 Vercel project `classloop-gamified` builds **`main` → https://classloop-gamified.vercel.app** (add `?hq` on the
 filming laptop). Several agents push here (Antigravity, Claude sessions): always fetch + merge first, never force.
+Do NOT run `git push` without user confirmation.
