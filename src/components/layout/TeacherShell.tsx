@@ -11,7 +11,6 @@ import {
   Menu,
   MessagesSquare,
   Radio,
-  RotateCcw,
   Settings,
   User,
   Users,
@@ -55,7 +54,7 @@ function Brand() {
 }
 
 export default function TeacherShell() {
-  const { teacherName, resetDemo, setRole, signOut, t, activeCourseId, setActiveCourseId, coursePacks } = useApp()
+  const { teacherName, setRole, signOut, t, activeCourseId, setActiveCourseId, coursePacks } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -185,14 +184,6 @@ export default function TeacherShell() {
           </div>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={resetDemo}
-              className="hidden items-center gap-1.5 rounded-lg border border-grey-300/70 px-2.5 py-1.5 text-xs text-grey-600 transition-colors hover:bg-canvas hover:text-ink sm:inline-flex"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              {t('resetDemo')}
-            </button>
 
             <Link
               to="/campus"
