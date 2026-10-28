@@ -8,9 +8,26 @@ import { CONTENT } from './contentRegistry'
  * rooms render straight onto the dark glass; the original app pages sit on a
  * light "screen" inside it so they stay as readable as on the web app.
  */
+function hexToHSL(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  if (max === min) return [0, 0, Math.round(l * 100)]
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max - min)
+  let h = 0
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+  else if (max === g) h = ((b - r) / d + 2) / 6
+  else h = ((r - g) / d + 4) / 6
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)]
+}
+
 export default function HoloPanel({ station, lang, color, onClose }: { station: Station; lang: 'th' | 'en'; color: string; onClose: () => void }) {
   const { Component, surface } = CONTENT[station.content]
   const [lit, setLit] = useState(false)
+  const [h, s, l] = hexToHSL(color)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setLit(true))
@@ -47,7 +64,11 @@ export default function HoloPanel({ station, lang, color, onClose }: { station: 
         <div className="flex-1 overflow-y-auto p-3 sm:p-5">
           <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-white/10" />}>
             {surface === 'light' ? (
-              <div className="rounded-2xl bg-canvas p-3 text-ink sm:p-6">
+              <div
+                className="rounded-2xl bg-canvas p-3 text-ink sm:p-6"
+                data-building-theme=""
+                style={{ '--b-h': h, '--b-s': `${s}%`, '--b-l': `${l}%` } as React.CSSProperties}
+              >
                 <Component />
               </div>
             ) : (
