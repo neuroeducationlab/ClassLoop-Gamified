@@ -29,6 +29,8 @@ const BuildingInterior = lazy(() => import('@/pages/campus/BuildingInterior'))
 const CampusMap2D = lazy(() => import('@/pages/campus/CampusMap2D'))
 const Landing = lazy(() => import('@/pages/landing/Landing'))
 
+import AdminDemoSwitcher from '@/components/layout/AdminDemoSwitcher'
+
 const campusFallback = <div className="min-h-screen bg-[#3A3D7A]" />
 /** The landing dive fades to cloud-white and Campus3D fades back out of it: no indigo flash in between. */
 const landingFallback = <div className="min-h-screen bg-[#F3EEE6]" />
@@ -40,6 +42,7 @@ export default function App() {
         <BrowserRouter>
           <AppNavigationBridge />
           <AutoTranslate />
+          <AdminDemoSwitcher />
           <Routes>
             <Route path="/" element={<Suspense fallback={<div className="min-h-screen bg-[#E9C9A8]" />}><Landing /></Suspense>} />
             <Route path="/login" element={<Login />} />

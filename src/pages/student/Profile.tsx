@@ -6,7 +6,7 @@ export default function Profile() {
   const { currentStudent, studentXP, lang } = useApp()
 
   return (
-    <div className="mx-auto w-full max-w-[390px] space-y-5 pb-12">
+    <div className="mx-auto w-full max-w-4xl space-y-5 pb-12">
       {/* Profile Card */}
       <div className="rounded-3xl border-2 border-pink-300/80 bg-paper p-6 text-center shadow-md space-y-4">
         {/* Large Playful Avatar Circle */}

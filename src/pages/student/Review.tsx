@@ -135,7 +135,7 @@ export default function Review() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[390px] space-y-5 pb-16">
+    <div className="mx-auto w-full max-w-4xl space-y-5 pb-16">
       {/* HEADER BANNER WITH LIVE XP STATUS */}
       <div className="rounded-3xl border-2 border-pink-300/80 bg-paper p-5 shadow-xs space-y-3">
         <div className="flex items-center justify-between">

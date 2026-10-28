@@ -40,7 +40,7 @@ export default function Syllabus() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[390px] space-y-6 pb-12">
+    <div className="mx-auto w-full max-w-4xl space-y-6 pb-12">
       {/* Header Banner */}
       <div className="rounded-3xl border-2 border-pink-300/80 bg-paper p-5 shadow-xs text-center space-y-2">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-100 text-pink-600 shadow-inner">

@@ -68,11 +68,11 @@ export function BrandMark({ className, animated = true }: { className?: string; 
 
 export function BrandLockup({ className, markClassName }: { className?: string; markClassName?: string }) {
   return (
-    <span className={cn('inline-flex items-center gap-2', className)}>
-      <BrandMark className={cn('h-6 w-12', markClassName)} />
-      <span className="font-campus text-lg leading-none">
-        <span className="font-semibold tracking-tight text-grey-400">SPU</span>{' '}
-        <span className="font-bold text-pink-600">ClassLoop</span>
+    <span className={cn('inline-flex items-center gap-2.5 select-none', className)}>
+      <BrandMark className={cn('h-7 w-14', markClassName)} />
+      <span className="flex flex-col font-campus leading-tight">
+        <span className="text-base sm:text-lg font-black tracking-tight text-pink-600">ClassLoop</span>
+        <span className="text-[10px] sm:text-[11px] font-semibold text-grey-400 tracking-wider">for SPU</span>
       </span>
     </span>
   )
