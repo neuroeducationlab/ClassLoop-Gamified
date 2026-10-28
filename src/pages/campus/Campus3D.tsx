@@ -216,7 +216,8 @@ const UI = {
 
 /** Student 3D campus: walk around, enter buildings, first-person immersive viewpoint. */
 export default function Campus3D() {
-  const { avatar, currentStudent, setRole, studentXP, addXP, addCoins, role, teacherName, studentCoins, lang, setLang } = useApp()
+  const { avatar, currentStudent, setRole, studentXP, addXP, addCoins, role, teacherName, studentCoins, lang, setLang, activeCoursePack } = useApp()
+  const course = activeCoursePack.course
   const navigate = useNavigate()
   const location = useLocation()
   const isTeacher = role === 'teacher'
@@ -667,10 +668,14 @@ export default function Campus3D() {
           <div className="min-w-[9rem]">
             <p className="text-sm font-bold leading-tight">{isTeacher ? (teacherName || 'อ.ดร.ธนพร') : me.nickname}</p>
             {isTeacher ? (
-              <p className="text-[11px] text-pink-300 font-medium">อาจารย์ผู้สอน · Faculty</p>
+              <>
+                <p className="text-[11px] text-pink-300 font-medium">{lang === 'th' ? 'อาจารย์ผู้สอน' : 'Instructor'} · {course.code}</p>
+                <p className="text-[10px] text-white/70 leading-tight max-w-[12rem] truncate">{course.name}</p>
+              </>
             ) : (
               <>
-                <p className="text-[11px] text-white/80">Lv.{level} · {studentXP} XP</p>
+                <p className="text-[11px] text-white/80">Lv.{level} · {studentXP} XP · {studentCoins} ⟡</p>
+                <p className="text-[10px] text-white/60 leading-tight truncate">{currentStudent.faculty} · {lang === 'th' ? `ปี ${currentStudent.year}` : `Yr ${currentStudent.year}`}</p>
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
                   <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: CAMPUS_PALETTE.path }} />
                 </div>

@@ -262,13 +262,30 @@ const HATS: Item[] = [
 
 const [ELX, ELY] = G.eyeL
 const [ERX, ERY] = G.eyeR
+/**
+ * Default face: big shiny iris with a sparkle (anime-stylised SPU student), a soft brow and
+ * a cute upper-lash curve. Reads as a young adult, not a toddler, without changing head size
+ * (so every hair and hat item still fits).
+ */
 function dotEyes(): Draw {
   return () => (
     <g>
-      <ellipse cx={ELX} cy={ELY} rx={6} ry={8} fill={OUT} />
-      <ellipse cx={ERX} cy={ERY} rx={6} ry={8} fill={OUT} />
-      <circle cx={ELX + 2} cy={ELY - 3} r={2.3} fill="#fff" />
-      <circle cx={ERX + 2} cy={ERY - 3} r={2.3} fill="#fff" />
+      {[[ELX, ELY], [ERX, ERY]].map(([x, y]) => (
+        <g key={x}>
+          {/* soft brow */}
+          <path d={`M${x - 10},${y - 15} Q${x},${y - 19} ${x + 10},${y - 15}`} fill="none" stroke={OUT} strokeWidth={2.6} strokeLinecap="round" />
+          {/* eye outline + upper lash accent */}
+          <ellipse cx={x} cy={y + 1} rx={8.5} ry={10} fill="#FFFFFF" stroke={OUT} strokeWidth={2.4} />
+          <path d={`M${x - 9},${y - 6} Q${x},${y - 11} ${x + 9},${y - 6}`} fill="none" stroke={OUT} strokeWidth={3.5} strokeLinecap="round" />
+          {/* iris: warm brown rim, violet inner */}
+          <ellipse cx={x} cy={y + 2} rx={6} ry={8.5} fill="#4F3B6A" />
+          <ellipse cx={x} cy={y + 4} rx={4.2} ry={6.5} fill="#8869C8" />
+          <ellipse cx={x} cy={y + 6} rx={2.6} ry={4} fill="#D4C0F2" />
+          {/* two highlights: a big one up-right, a tiny one lower-left */}
+          <circle cx={x + 2.5} cy={y - 2} r={2.6} fill="#FFFFFF" />
+          <circle cx={x - 2.5} cy={y + 5} r={1.4} fill="#FFFFFF" />
+        </g>
+      ))}
     </g>
   )
 }
@@ -754,16 +771,94 @@ const BGS: Item[] = [
       <ellipse cx={120} cy={268} rx={74} ry={16} fill="#F7A49B" />
     </g>
   ) },
-  { id: 'bg-campus', slot: 'bg', name: n('ลานแคมปัส SPU', 'SPU campus plaza'), rarity: 'common', unlock: free, edge: ['#BFE6FF', '#B8E39A'], back: () => (
+  { id: 'bg-campus', slot: 'bg', name: n('ลานแคมปัส SPU', 'SPU campus plaza'), rarity: 'common', unlock: free, edge: ['#A6D8F0', '#5FA847'], back: () => (
     <g>
-      <rect width={240} height={300} fill="#BFE6FF" />
-      <ellipse cx={60} cy={50} rx={26} ry={10} fill="#fff" />
-      <ellipse cx={176} cy={34} rx={20} ry={8} fill="#fff" />
-      <rect x={14} y={96} width={52} height={124} fill="#F7F3EA" {...S} />
-      <rect x={172} y={80} width={56} height={140} fill="#FFE4EC" {...S} />
-      {[106, 128, 150, 172, 194].map((y) => <path key={y} d={`M20,${y} L60,${y} M178,${y - 8} L222,${y - 8}`} stroke="#9FC6E8" strokeWidth={6} />)}
-      <rect y={214} width={240} height={86} fill="#B8E39A" />
-      <path d="M90,300 L110,214 L130,214 L150,300 Z" fill="#EADFCC" />
+      {/* Sky: soft blue, lighter at the horizon so the pink SPU building reads clean */}
+      <defs>
+        <linearGradient id="spu-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#8CC8E8" />
+          <stop offset="70%" stopColor="#C6E6F2" />
+          <stop offset="100%" stopColor="#E6F2E0" />
+        </linearGradient>
+        <linearGradient id="spu-ground" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#8CCE6A" />
+          <stop offset="100%" stopColor="#5FA847" />
+        </linearGradient>
+      </defs>
+      <rect width={240} height={300} fill="url(#spu-sky)" />
+
+      {/* Puffy clouds: three soft blobs each, like the landing deck */}
+      {[[42, 44, 1], [172, 32, 0.9], [120, 60, 0.75]].map(([cx, cy, s], i) => (
+        <g key={i} transform={`translate(${cx} ${cy}) scale(${s})`} fill="#FFFFFF" opacity={0.95}>
+          <ellipse rx={22} ry={9} />
+          <ellipse cx={-14} cy={-3} rx={13} ry={10} />
+          <ellipse cx={10} cy={-4} rx={15} ry={11} />
+        </g>
+      ))}
+
+      {/* Context towers behind: a tall concrete block + a glass block, both muted so SPU reads first */}
+      <g>
+        <rect x={-4} y={108} width={54} height={118} fill="#D7D0C4" stroke={OUT} strokeWidth={2} />
+        <rect x={6} y={120} width={10} height={10} fill="#A9B6C8" />
+        <rect x={22} y={120} width={10} height={10} fill="#A9B6C8" />
+        <rect x={38} y={120} width={10} height={10} fill="#A9B6C8" />
+        <rect x={6} y={138} width={10} height={10} fill="#8AA0BC" />
+        <rect x={22} y={138} width={10} height={10} fill="#A9B6C8" />
+        <rect x={38} y={138} width={10} height={10} fill="#A9B6C8" />
+        <rect x={6} y={156} width={10} height={10} fill="#A9B6C8" />
+        <rect x={22} y={156} width={10} height={10} fill="#8AA0BC" />
+        <rect x={38} y={156} width={10} height={10} fill="#A9B6C8" />
+        <rect x={6} y={174} width={10} height={10} fill="#A9B6C8" />
+        <rect x={22} y={174} width={10} height={10} fill="#A9B6C8" />
+        <rect x={38} y={174} width={10} height={10} fill="#8AA0BC" />
+      </g>
+
+      {/* The hero SPU tower on the right: signature pink glass with a crown and the SPU mark */}
+      <g>
+        <rect x={168} y={82} width={66} height={144} fill="#F7B7D1" stroke={OUT} strokeWidth={2.5} />
+        <rect x={168} y={78} width={66} height={8} fill="#E07AA8" stroke={OUT} strokeWidth={2.5} />
+        {/* window grid */}
+        {[94, 112, 130, 148, 166, 184, 202].map((y) => (
+          <g key={y}>
+            <rect x={174} y={y} width={11} height={11} fill="#FFF2E0" stroke={OUT} strokeWidth={1.4} />
+            <rect x={189} y={y} width={11} height={11} fill="#FFE7A8" stroke={OUT} strokeWidth={1.4} />
+            <rect x={204} y={y} width={11} height={11} fill="#FFF2E0" stroke={OUT} strokeWidth={1.4} />
+            <rect x={219} y={y} width={11} height={11} fill="#FFE7A8" stroke={OUT} strokeWidth={1.4} />
+          </g>
+        ))}
+        {/* "SPU" sign on the pink crown */}
+        <text x={201} y={76} fontSize={9} fontWeight={800} fill="#FFF" textAnchor="middle" fontFamily="Fredoka, Arial Rounded MT Bold, sans-serif" letterSpacing={0.5}>SPU</text>
+      </g>
+
+      {/* MRT viaduct crossing the middle distance: columns, deck, a lit coach rolling by */}
+      <g>
+        <rect x={54} y={178} width={6} height={48} fill="#C8C0B4" stroke={OUT} strokeWidth={1.5} />
+        <rect x={110} y={178} width={6} height={48} fill="#C8C0B4" stroke={OUT} strokeWidth={1.5} />
+        <rect x={44} y={168} width={120} height={14} rx={3} fill="#DAD2C4" stroke={OUT} strokeWidth={2} />
+        <rect x={66} y={154} width={54} height={16} rx={4} fill="#4A6BA8" stroke={OUT} strokeWidth={2} />
+        <rect x={70} y={158} width={10} height={8} rx={1.5} fill="#FFE27A" />
+        <rect x={86} y={158} width={10} height={8} rx={1.5} fill="#FFE27A" />
+        <rect x={102} y={158} width={10} height={8} rx={1.5} fill="#FFE27A" />
+      </g>
+
+      {/* Ground: lawn with a cream path along the front */}
+      <rect y={226} width={240} height={74} fill="url(#spu-ground)" />
+      <path d="M-6,278 Q120,260 246,282 L246,300 L-6,300 Z" fill="#F3E9D1" stroke={OUT} strokeWidth={2} />
+
+      {/* A cherry blossom tree for the plaza — SPU's signature pink puffs */}
+      <g>
+        <path d="M158,268 Q156,236 164,214 L172,214 Q180,236 174,268 Z" fill="#8E5A47" stroke={OUT} strokeWidth={2} />
+        {[[150, 212, 18], [172, 198, 22], [194, 212, 17], [162, 184, 17], [184, 184, 15]].map(([cx, cy, r], i) => (
+          <circle key={i} cx={cx} cy={cy} r={r} fill={i % 2 ? '#FFB3D2' : '#FFC9DC'} stroke={OUT} strokeWidth={2} />
+        ))}
+      </g>
+
+      {/* A banner stake with the SPU heart, so you know whose campus you're on */}
+      <g>
+        <rect x={28} y={226} width={2.5} height={44} fill={OUT} />
+        <path d="M31,228 L58,228 L54,236 L58,244 L31,244 Z" fill="#E89BC4" stroke={OUT} strokeWidth={2} />
+        <path d={heartPath(43, 236, 4)} fill="#FFF" />
+      </g>
     </g>
   ) },
   { id: 'bg-classroom', slot: 'bg', name: n('ห้องเรียน', 'Classroom'), rarity: 'common', unlock: free, edge: ['#EAF4E4', '#D8B48A'], back: () => (
@@ -855,7 +950,7 @@ export const DEFAULT_LOOK: Record<Slot, string> = {
   outfit: 'outfit-spu',
   held: 'held-none',
   aura: 'aura-none',
-  bg: 'bg-room',
+  bg: 'bg-campus',
 }
 
 export const RARITY: Record<Rarity, { th: string; en: string; color: string; glow: string }> = {
