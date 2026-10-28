@@ -83,11 +83,9 @@ function Block({ index, used, onOpen }: { index: number; used: boolean; onOpen: 
         onPointerOut={() => { setHover(false); document.body.style.cursor = '' }}
       >
         <boxGeometry args={[1.3, 1.3, 1.3]} />
-        <meshStandardMaterial map={map} emissive={used ? '#000000' : '#F7B733'} emissiveIntensity={used ? 0 : 0.35} roughness={0.5} />
+        {/* emissive only, no point light: five extra lights would cost every lit surface in the scene */}
+        <meshStandardMaterial map={map} emissiveMap={map} emissive={used ? '#000000' : '#FFFFFF'} emissiveIntensity={used ? 0 : 0.45} roughness={0.5} />
       </mesh>
-      {!used && (
-        <pointLight color="#FFD66B" intensity={4} distance={5} decay={2} />
-      )}
     </group>
   )
 }
