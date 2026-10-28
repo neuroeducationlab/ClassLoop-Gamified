@@ -8,6 +8,7 @@ import { BrandLockup } from '@/components/brand/BrandMark'
 import { useApp, type TranslationKey } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 import { GameIcon } from '@/components/icons/GameIcon'
+import { playCoinSound } from '@/pages/campus/soundEngine'
 
 type TabItem = { to: string; labelKey: TranslationKey; icon: typeof BookOpen; end?: boolean }
 
@@ -20,7 +21,7 @@ const TABS: TabItem[] = [
 ]
 
 export default function StudentShell() {
-  const { setRole, t } = useApp()
+  const { setRole, t, coursePacks, activeCourseId, setActiveCourseId } = useApp()
   const location = useLocation()
   // keep the role switcher honest when this shell is reached by direct URL
   useEffect(() => setRole('student'), [setRole])
@@ -42,6 +43,39 @@ export default function StudentShell() {
             <DarkModeToggle />
             <LanguageSwitcher />
             <RoleSwitcher />
+          </div>
+        </div>
+
+        {/* Course switcher: the student picks which class they're attending. */}
+        <div className="mx-auto w-full max-w-lg border-t border-grey-300/40 px-3 py-2 overflow-x-auto">
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            {coursePacks.map((pack) => {
+              const isActive = pack.course.id === activeCourseId
+              return (
+                <button
+                  key={pack.course.id}
+                  type="button"
+                  onClick={() => {
+                    if (pack.course.id !== activeCourseId) {
+                      playCoinSound()
+                      setActiveCourseId(pack.course.id)
+                    }
+                  }}
+                  aria-pressed={isActive}
+                  className={cn(
+                    'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer',
+                    isActive
+                      ? 'text-white shadow-xs'
+                      : 'border-grey-300/70 bg-paper text-grey-600 hover:border-grey-400 hover:text-ink',
+                  )}
+                  style={isActive ? { backgroundColor: pack.accent, borderColor: pack.accent } : undefined}
+                >
+                  <span className={cn('h-1.5 w-1.5 rounded-full', isActive ? 'bg-white/90' : '')} style={!isActive ? { backgroundColor: pack.accent } : undefined} />
+                  <span className="font-mono tracking-tight">{pack.course.code}</span>
+                  <span className="font-sans font-semibold max-w-[9rem] truncate">{pack.course.name}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
       </header>

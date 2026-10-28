@@ -1,8 +1,9 @@
 import { Award, Flame, Globe, Star, Trophy, Users, Zap } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { initials } from '@/components/AutoTranslate'
 
 export default function Profile() {
-  const { currentStudent, studentXP } = useApp()
+  const { currentStudent, studentXP, lang } = useApp()
 
   return (
     <div className="mx-auto w-full max-w-[390px] space-y-5 pb-12">
@@ -10,7 +11,7 @@ export default function Profile() {
       <div className="rounded-3xl border-2 border-pink-300/80 bg-paper p-6 text-center shadow-md space-y-4">
         {/* Large Playful Avatar Circle */}
         <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-pink-600 font-black text-3xl text-white shadow-xl shadow-pink-600/30">
-          {currentStudent.nickname.slice(0, 2)}
+          {initials(currentStudent.nickname, lang)}
           <span className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-white shadow-sm border-2 border-paper">
             <Star className="h-4 w-4 fill-white" />
           </span>

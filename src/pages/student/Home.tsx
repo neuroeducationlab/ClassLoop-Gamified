@@ -22,13 +22,16 @@ import {
   Zap,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { initials } from '@/components/AutoTranslate'
 import { useReveal } from '@/hooks/useReveal'
 import { cn } from '@/lib/utils'
 import { GameIcon } from '@/components/icons/GameIcon'
 
 export default function Home() {
   const navigate = useNavigate()
-  const { currentStudent } = useApp()
+  const { currentStudent, activeCoursePack, lang } = useApp()
+  const course = activeCoursePack.course
+  const currentTopic = activeCoursePack.topics[activeCoursePack.currentWeek - 1]
   const revealRef = useReveal(true)
 
   // Top 5 Leaderboard Data sorted by XP/spokeCount
@@ -51,12 +54,32 @@ export default function Home() {
 
   return (
     <div ref={revealRef} className="mx-auto w-full max-w-[390px] space-y-5 pb-12">
+      {/* Which class am I in — makes the course picker's choice obvious. */}
+      <div
+        className="reveal rounded-2xl border px-4 py-2.5 shadow-xs"
+        style={{ borderColor: `${activeCoursePack.accent}40`, backgroundColor: `${activeCoursePack.accent}0D` }}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: activeCoursePack.accent }} />
+            <span className="font-mono text-xs font-bold text-ink">{course.code}</span>
+            <span className="truncate text-xs font-semibold text-grey-700">{course.name}</span>
+          </div>
+          <span className="shrink-0 rounded-full bg-paper px-2 py-0.5 text-[10px] font-bold text-grey-600 border border-grey-300/60">
+            Week {activeCoursePack.currentWeek}
+          </span>
+        </div>
+        {currentTopic && (
+          <p className="mt-0.5 truncate pl-4 text-[11px] text-grey-500">{currentTopic.title}</p>
+        )}
+      </div>
+
       {/* Player Welcome Status Card */}
       <div className="reveal rounded-3xl border-2 border-pink-300/80 bg-paper p-5 shadow-xs space-y-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-600 font-black text-lg text-white shadow-md shadow-pink-600/20">
-              {currentStudent.nickname.slice(0, 2)}
+              {initials(currentStudent.nickname, lang)}
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -99,7 +122,7 @@ export default function Home() {
         <div className="space-y-1">
           <h2 className="text-xl font-bold text-ink">Speed Culture Quiz</h2>
           <p className="text-xs font-semibold text-pink-600">
-            หัวข้อ: Hofstede's Cultural Dimensions
+            {lang === 'th' ? 'หัวข้อ' : 'Topic'}: {currentTopic?.title ?? course.name}
           </p>
           <p className="text-xs text-grey-600 pt-1 leading-relaxed">
             ตอบคำถามวัดความรู้ 5 ข้อ สะสม XP ติดอันดับ Leaderboard ประจำคลาสเรียนข้ามคณะ!
@@ -268,7 +291,7 @@ export default function Home() {
         </div>
 
         <p className="text-xs text-grey-600 leading-relaxed">
-          ผลคะแนนของคุณในบท <strong className="text-ink">Hofstede's Cultural Dimensions</strong> อยู่ที่ 80%! เพื่ออัปสปีดความเข้าใจให้เต็ม 100% แนะนำช่องทางเสริมเพิ่มเติม:
+          ผลคะแนนของคุณในบท <strong className="text-ink">{currentTopic?.title ?? course.name}</strong> อยู่ที่ 80%! เพื่ออัปสปีดความเข้าใจให้เต็ม 100% แนะนำช่องทางเสริมเพิ่มเติม:
         </p>
 
         {/* YouTube Suggestion */}

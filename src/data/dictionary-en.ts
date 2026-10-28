@@ -1102,6 +1102,32 @@ export const DICTIONARY_EN: Record<string, string> = {
   'เข้าแคมปัส · Enter campus →': 'Enter campus →',
   'อ.ดร.ธนพร': 'Dr. Thanaporn',
   'รายงานกลุ่ม ธุรกิจข้ามชาติ': 'Group report: Multinational Business',
+
+  /* ------------------------------------------- teacher profile & settings -- */
+  'โปรไฟล์อาจารย์ผู้สอน': 'Instructor profile',
+  'อาจารย์ประจำหลักสูตรบริหารธุรกิจบัณฑิต': 'Faculty of the Business Administration programme',
+  'รหัสอาจารย์: SPU-FAC-8891': 'Faculty ID: SPU-FAC-8891',
+  'บริหารธุรกิจ (SPU)': 'Business Administration (SPU)',
+  สถานะระบบ: 'System status',
+  ปิดหน้าต่าง: 'Close',
+  ตั้งค่าระบบผู้สอน: 'Instructor settings',
+  'ภาษาของระบบ (Language)': 'Language',
+  สลับระหว่างภาษาไทยและภาษาอังกฤษ: 'Switch between Thai and English',
+  'ธีมแสดงผล (Dark / Light)': 'Theme (Dark / Light)',
+  โหมดมืดหรือสว่างสำหรับสอนหน้าห้อง: 'Dark or light mode for classroom teaching',
+  'สลับบทบาท (Role Switcher)': 'Role switcher',
+  ทดสอบมุมมองในฐานะนักศึกษา: 'Try the student view',
+  บันทึกการตั้งค่า: 'Save settings',
+  'Unmute Sound / เปิดเสียง': 'Unmute Sound',
+  'Mute Sound / ปิดเสียง': 'Mute Sound',
+
+  /* --------------------------------------------------------- attendance -- */
+  ส่งใบลา: 'Leave submitted',
+  ลากิจร่วมงานสโมสรนักศึกษา: 'Personal leave: student union event',
+
+  /* ------------------------------------------------- campus & defaults -- */
+  'กำลังเปิดประตูบทเรียน...': 'Opening the lesson doorway…',
+  ชานนท์: 'Chanon',
 }
 
 /**
@@ -1174,6 +1200,7 @@ export const PATTERN_RULES: { re: RegExp; to: string }[] = [
   /* --------------------------------------------- dashboard / roster -- */
   { re: /^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*น\.$/, to: '$1–$2' },
   { re: /^(\d{1,2}:\d{2})\s*น\.$/, to: '$1' },
+  { re: /^กลุ่มเรียน\s+(ALL|SEC\d+)$/i, to: 'Section $1' },
   { re: /^ห้อง\s+(\d+-\d+)$/, to: 'Room $1' },
   { re: /^(\d{1,2})\s*ส\.ค\.$/, to: '$1 Aug' },
   { re: /^Sec\s*(\d+)\s*\((\d+)\s*คน\)$/, to: 'Sec $1 ($2 students)' },

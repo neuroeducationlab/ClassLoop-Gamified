@@ -13,6 +13,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { initials } from '@/components/AutoTranslate'
 import { cn } from '@/lib/utils'
 import type { PretestQuestion } from '@/data/seed-data'
 
@@ -58,7 +59,9 @@ type Challenge = (typeof CHALLENGES)[number]
 
 export default function Join() {
   const navigate = useNavigate()
-  const { currentStudent, generatedContent } = useApp()
+  const { currentStudent, generatedContent, activeCoursePack, lang } = useApp()
+  const course = activeCoursePack.course
+  const currentTopic = activeCoursePack.topics[activeCoursePack.currentWeek - 1]
 
   // 1 = challenge selection, 2 = question screen, 3 = results
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -144,14 +147,14 @@ export default function Join() {
             <div>
               <h1 className="text-xl font-bold text-ink">เลือกชาเลนจ์ที่อยากลุย</h1>
               <p className="mt-0.5 text-xs text-grey-600">
-                หัวข้อ: Hofstede's Cultural Dimensions
+                {course.code} · {lang === 'th' ? 'หัวข้อ' : 'Topic'}: {currentTopic?.title ?? course.name}
               </p>
             </div>
 
             {/* Identity comes from the signed-in session — no name picking */}
             <div className="flex items-center justify-center gap-2 rounded-xl border border-pink-200 bg-pink-50 px-3.5 py-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pink-600 text-[11px] font-bold text-paper">
-                {currentStudent.nickname.slice(0, 2)}
+                {initials(currentStudent.nickname, lang)}
               </span>
               <span className="text-xs font-semibold text-ink">
                 เข้าแข่งในชื่อ {currentStudent.name} ({currentStudent.nickname})
@@ -216,7 +219,7 @@ export default function Join() {
           <div className="flex items-center justify-between rounded-2xl border border-pink-200 bg-pink-50 p-3 shadow-2xs">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-600 text-xs font-bold text-white">
-                {currentStudent.nickname.slice(0, 2)}
+                {initials(currentStudent.nickname, lang)}
               </div>
               <div>
                 <p className="text-xs font-bold text-ink">{currentStudent.nickname}</p>
