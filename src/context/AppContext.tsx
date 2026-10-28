@@ -313,10 +313,13 @@ type AppState = {
   topics: Topic[]
   generatedContent: GeneratedContent
   updateActivity: (index: number, partial: Partial<Activity>) => void
+  addActivity: (activity: Activity) => void
   deleteActivity: (index: number) => void
   updateFlashcard: (index: number, partial: Partial<Flashcard>) => void
+  addFlashcard: (flashcard: Flashcard) => void
   deleteFlashcard: (index: number) => void
   updatePretestQuestion: (id: string, partial: Partial<PretestQuestion>) => void
+  addPretestQuestion: (question: PretestQuestion) => void
   deletePretestQuestion: (id: string) => void
   resetGeneratedContent: () => void
   gapAnalysis: GapAnalysis
@@ -983,6 +986,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }, [activeCourseId])
 
+  const addActivity = useCallback((activity: Activity) => {
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          activities: [...cur.activities, activity],
+        },
+      }
+    })
+  }, [activeCourseId])
+
+  const addFlashcard = useCallback((flashcard: Flashcard) => {
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          flashcards: [...cur.flashcards, flashcard],
+        },
+      }
+    })
+  }, [activeCourseId])
+
+  const addPretestQuestion = useCallback((question: PretestQuestion) => {
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          pretest: [...cur.pretest, question],
+        },
+      }
+    })
+  }, [activeCourseId])
+
   const deletePretestQuestion = useCallback((id: string) => {
     setContentPacks((prev) => {
       const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
@@ -1022,10 +1064,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     topics,
     generatedContent,
     updateActivity,
+    addActivity,
     deleteActivity,
     updateFlashcard,
+    addFlashcard,
     deleteFlashcard,
     updatePretestQuestion,
+    addPretestQuestion,
     deletePretestQuestion,
     resetGeneratedContent,
     gapAnalysis: GAP_ANALYSIS,

@@ -36,8 +36,8 @@ import type { ActivityFormat, PretestQuestion } from '@/data/seed-data'
 export default function Studio() {
   const {
     topics, generatedContent, startGeneration, isGenerating, activeActivity, setActiveActivity,
-    updateActivity, deleteActivity, updateFlashcard, deleteFlashcard,
-    updatePretestQuestion, deletePretestQuestion, lang,
+    updateActivity, addActivity, deleteActivity, updateFlashcard, addFlashcard, deleteFlashcard,
+    updatePretestQuestion, addPretestQuestion, deletePretestQuestion, lang,
   } = useApp()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -78,6 +78,8 @@ export default function Studio() {
     { id: 'Engineering', name: 'วิศวกรรมศาสตร์' },
     { id: 'Business Admin', name: 'บริหารธุรกิจ' },
     { id: 'Digital Media', name: 'ดิจิทัลมีเดีย' },
+    { id: 'Information Technology', name: 'เทคโนโลยีสารสนเทศ' },
+    { id: 'Law', name: 'นิติศาสตร์' },
   ]
 
   // Start with empty faculties selection as user will choose manually
@@ -204,6 +206,102 @@ export default function Studio() {
     updatePretestQuestion(editingPretestId, pretestForm)
     setEditingPretestId(null)
     showToast('Question saved')
+  }
+
+  // Creator form state for custom user-created items
+  const [isAddingActivity, setIsAddingActivity] = useState(false)
+  const [newActivityForm, setNewActivityForm] = useState({
+    name: '',
+    format: 'debate' as ActivityFormat,
+    durationMin: 15,
+    steps: ['นักศึกษาแบ่งกลุ่มย่อยแลกเปลี่ยนความคิดเห็น', 'ร่วมกันสรุปประเด็นสำคัญและนำเสนอ'],
+    whyItWorks: '',
+    materialsNeeded: '',
+  })
+
+  const [isAddingFlashcard, setIsAddingFlashcard] = useState(false)
+  const [newFlashcardForm, setNewFlashcardForm] = useState({
+    front: '',
+    back: '',
+    hint: '',
+  })
+
+  const [isAddingPretest, setIsAddingPretest] = useState(false)
+  const [newPretestForm, setNewPretestForm] = useState({
+    stem: '',
+    options: ['', '', '', ''],
+    answerIndex: 0,
+    misconception: '',
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+  })
+
+  const handleCreateActivity = () => {
+    if (!newActivityForm.name.trim()) {
+      showToast('กรุณาระบุชื่อกิจกรรม')
+      return
+    }
+    const cleanSteps = newActivityForm.steps.filter((s) => s.trim().length > 0)
+    addActivity({
+      name: newActivityForm.name.trim(),
+      format: newActivityForm.format,
+      durationMin: newActivityForm.durationMin || 15,
+      steps: cleanSteps.length > 0 ? cleanSteps : ['ดำเนินกิจกรรมร่วมกันในห้องเรียน'],
+      whyItWorks: newActivityForm.whyItWorks.trim() || 'กิจกรรมออกแบบเฉพาะโดยอาจารย์ผู้สอนเพื่อเสริมทักษะเชิงลึก',
+      materialsNeeded: newActivityForm.materialsNeeded.trim(),
+    })
+    setIsAddingActivity(false)
+    setNewActivityForm({
+      name: '',
+      format: 'debate',
+      durationMin: 15,
+      steps: ['นักศึกษาแบ่งกลุ่มย่อยแลกเปลี่ยนความคิดเห็น', 'ร่วมกันสรุปประเด็นสำคัญและนำเสนอ'],
+      whyItWorks: '',
+      materialsNeeded: '',
+    })
+    showToast('เพิ่มกิจกรรมใหม่เรียบร้อยแล้ว!')
+  }
+
+  const handleCreateFlashcard = () => {
+    if (!newFlashcardForm.front.trim() || !newFlashcardForm.back.trim()) {
+      showToast('กรุณากรอกข้อมูลด้านหน้าและด้านหลังแฟลชการ์ด')
+      return
+    }
+    addFlashcard({
+      front: newFlashcardForm.front.trim(),
+      back: newFlashcardForm.back.trim(),
+      hint: newFlashcardForm.hint.trim(),
+    })
+    setIsAddingFlashcard(false)
+    setNewFlashcardForm({ front: '', back: '', hint: '' })
+    showToast('เพิ่มแฟลชการ์ดใหม่เรียบร้อยแล้ว!')
+  }
+
+  const handleCreatePretest = () => {
+    if (!newPretestForm.stem.trim()) {
+      showToast('กรุณาระบุโจทย์คำถาม')
+      return
+    }
+    if (newPretestForm.options.some((o) => !o.trim())) {
+      showToast('กรุณากรอกตัวเลือกคำตอบให้ครบ 4 ข้อ')
+      return
+    }
+    addPretestQuestion({
+      id: `custom-q-${Date.now()}`,
+      stem: newPretestForm.stem.trim(),
+      options: newPretestForm.options.map((o) => o.trim()),
+      answerIndex: newPretestForm.answerIndex,
+      misconception: newPretestForm.misconception.trim() || 'คำถามนี้ออกแบบโดยอาจารย์ผู้สอนเพื่อวัดความเข้าใจเชิงลึก',
+      difficulty: newPretestForm.difficulty,
+    })
+    setIsAddingPretest(false)
+    setNewPretestForm({
+      stem: '',
+      options: ['', '', '', ''],
+      answerIndex: 0,
+      misconception: '',
+      difficulty: 'medium',
+    })
+    showToast('เพิ่มข้อสอบใหม่เรียบร้อยแล้ว!')
   }
 
   const generationStepTexts = [
@@ -458,14 +556,9 @@ export default function Studio() {
 
               {/* Exact Number Input for Student Count (No overlapping text) */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-grey-600">
-                    {lang === 'th' ? 'จำนวนผู้เรียนในคลาส:' : 'Number of students:'}
-                  </label>
-                  <span className="text-xs font-black text-pink-600 font-mono">
-                    {studentCount || 24} {lang === 'th' ? 'คน' : 'students'}
-                  </span>
-                </div>
+                <label className="block text-xs font-bold text-grey-600 mb-1.5">
+                  {lang === 'th' ? 'จำนวนผู้เรียนในคลาส:' : 'Number of students:'}
+                </label>
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -510,11 +603,7 @@ export default function Studio() {
                 <label className="block text-xs font-bold text-grey-600">
                   {lang === 'th' ? 'คณะในคลาสเรียนนี้ (เลือกเองได้อิสระ):' : 'Faculties in this class:'}
                 </label>
-                {selectedFaculties.length === 0 ? (
-                  <span className="text-[11px] font-bold text-pink-500 animate-pulse">
-                    {lang === 'th' ? '(ยังไม่ได้เลือก — กรุณาคลิกเลือกคณะ)' : '(Click to select faculties)'}
-                  </span>
-                ) : (
+                {selectedFaculties.length > 0 && (
                   <span className="text-[11px] font-bold text-pink-600">
                     {lang === 'th' ? `เลือกแล้ว ${selectedFaculties.length} คณะ` : `${selectedFaculties.length} selected`}
                   </span>
@@ -818,6 +907,190 @@ export default function Studio() {
                         </div>
                       )
                     })}
+
+                    {/* Bottom Creator: Add Custom Activity */}
+                    {!isAddingActivity ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingActivity(true)}
+                        className="w-full flex items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-pink-300 bg-pink-50/40 p-4 text-xs font-black text-pink-600 hover:bg-pink-50 hover:border-pink-500 transition-all cursor-pointer group shadow-2xs"
+                      >
+                        <Plus className="h-4 w-4 transition-transform group-hover:scale-125" />
+                        <span>+ ออกแบบและเพิ่มกิจกรรมด้วยตนเอง (Add Custom Activity)</span>
+                      </button>
+                    ) : (
+                      <div className="rounded-3xl border-2 border-pink-500 bg-pink-50/70 p-6 shadow-md space-y-4 animate-fadeIn">
+                        <div className="flex items-center justify-between border-b border-pink-200/80 pb-2">
+                          <span className="text-sm font-extrabold text-pink-700 flex items-center gap-1.5">
+                            <Sparkles className="h-4 w-4 text-pink-600" />
+                            สร้างสรรค์กิจกรรมใหม่ด้วยตนเอง
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingActivity(false)}
+                            className="text-xs text-grey-500 hover:underline cursor-pointer"
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-bold text-ink mb-1">
+                              ชื่อกิจกรรม:
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="เช่น Debate: กลยุทธ์การขยายธุรกิจข้ามพรมแดน"
+                              value={newActivityForm.name}
+                              onChange={(e) =>
+                                setNewActivityForm((p) => ({ ...p, name: e.target.value }))
+                              }
+                              className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-sm text-ink outline-none focus:border-pink-500 font-medium"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-ink mb-1">
+                              รูปแบบ:
+                            </label>
+                            <select
+                              value={newActivityForm.format}
+                              onChange={(e) =>
+                                setNewActivityForm((p) => ({
+                                  ...p,
+                                  format: e.target.value as ActivityFormat,
+                                }))
+                              }
+                              className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-sm text-ink outline-none focus:border-pink-500 font-medium"
+                            >
+                              <option value="debate">Debate (อภิปรายโต้แย้ง)</option>
+                              <option value="case-based">Case Study (กรณีศึกษา)</option>
+                              <option value="quick-game">Quick Game (เกมสปีด)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-ink mb-1">
+                              ระยะเวลา (นาที):
+                            </label>
+                            <input
+                              type="number"
+                              min={5}
+                              max={180}
+                              value={newActivityForm.durationMin}
+                              onChange={(e) =>
+                                setNewActivityForm((p) => ({
+                                  ...p,
+                                  durationMin: parseInt(e.target.value) || 15,
+                                }))
+                              }
+                              className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-sm text-ink outline-none focus:border-pink-500 font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-ink mb-1">
+                            ขั้นตอนการทำกิจกรรม:
+                          </label>
+                          <div className="space-y-2">
+                            {newActivityForm.steps.map((step, sIdx) => (
+                              <div key={sIdx} className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-grey-500 w-5 text-right">
+                                  {sIdx + 1}.
+                                </span>
+                                <input
+                                  type="text"
+                                  placeholder={`ระบุขั้นตอนที่ ${sIdx + 1}`}
+                                  value={step}
+                                  onChange={(e) => {
+                                    const next = [...newActivityForm.steps]
+                                    next[sIdx] = e.target.value
+                                    setNewActivityForm((p) => ({ ...p, steps: next }))
+                                  }}
+                                  className="flex-1 rounded-lg border border-grey-300 bg-paper p-2 text-xs outline-none focus:border-pink-500 font-medium"
+                                />
+                                {newActivityForm.steps.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setNewActivityForm((p) => ({
+                                        ...p,
+                                        steps: p.steps.filter((_, i) => i !== sIdx),
+                                      }))
+                                    }
+                                    className="text-grey-400 hover:text-red-500"
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setNewActivityForm((p) => ({ ...p, steps: [...p.steps, ''] }))
+                              }
+                              className="flex items-center gap-1 text-xs font-bold text-pink-600 hover:underline cursor-pointer pt-1"
+                            >
+                              <Plus className="h-3 w-3" /> เพิ่มขั้นตอน
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-xs font-bold text-ink mb-1">
+                              ทำไมถึงได้ผล (Why it works):
+                            </label>
+                            <textarea
+                              rows={2}
+                              placeholder="ช่วยให้ผู้เรียนเชื่อมโยงทฤษฎีเข้ากับการปฏิบัติจริง..."
+                              value={newActivityForm.whyItWorks}
+                              onChange={(e) =>
+                                setNewActivityForm((p) => ({ ...p, whyItWorks: e.target.value }))
+                              }
+                              className="w-full rounded-xl border border-grey-300 bg-paper p-2 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-ink mb-1">
+                              สื่อ / อุปกรณ์ที่ต้องใช้:
+                            </label>
+                            <textarea
+                              rows={2}
+                              placeholder="ใบงานกรณีศึกษา, ปากกาเคมี, กระดาษฟลิปชาร์ท..."
+                              value={newActivityForm.materialsNeeded}
+                              onChange={(e) =>
+                                setNewActivityForm((p) => ({
+                                  ...p,
+                                  materialsNeeded: e.target.value,
+                                }))
+                              }
+                              className="w-full rounded-xl border border-grey-300 bg-paper p-2 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2 border-t border-pink-200/60">
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingActivity(false)}
+                            className="rounded-xl border border-grey-300 px-3.5 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer"
+                          >
+                            ยกเลิก
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCreateActivity}
+                            className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer"
+                          >
+                            + บันทึกกิจกรรมใหม่
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -927,6 +1200,96 @@ export default function Studio() {
                         )
                       })}
                     </div>
+
+                    {/* Bottom Creator: Add Custom Flashcard */}
+                    {!isAddingFlashcard ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingFlashcard(true)}
+                        className="w-full flex items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-pink-300 bg-pink-50/40 p-4 text-xs font-black text-pink-600 hover:bg-pink-50 hover:border-pink-500 transition-all cursor-pointer group shadow-2xs mt-2"
+                      >
+                        <Plus className="h-4 w-4 transition-transform group-hover:scale-125" />
+                        <span>+ เพิ่มแฟลชการ์ดที่คุณกำหนดเอง (Add Custom Flashcard)</span>
+                      </button>
+                    ) : (
+                      <div className="rounded-3xl border-2 border-pink-500 bg-pink-50/70 p-5 shadow-md space-y-3 animate-fadeIn mt-2">
+                        <div className="flex items-center justify-between border-b border-pink-200/80 pb-2">
+                          <span className="text-xs font-extrabold text-pink-700 flex items-center gap-1.5">
+                            <Sparkles className="h-4 w-4 text-pink-600" />
+                            สร้างสรรค์แฟลชการ์ดใหม่ด้วยตนเอง
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingFlashcard(false)}
+                            className="text-xs text-grey-500 hover:underline cursor-pointer"
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-ink mb-1">
+                            ด้านหน้า (คำถาม / หัวข้อคำศัพท์):
+                          </label>
+                          <textarea
+                            rows={2}
+                            placeholder="เช่น Cultural Dimensions ของ Hofstede มีกี่มิติหลัก?"
+                            value={newFlashcardForm.front}
+                            onChange={(e) =>
+                              setNewFlashcardForm((p) => ({ ...p, front: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-ink mb-1">
+                            ด้านหลัง (คำอธิบาย / เฉลยแนวคิด):
+                          </label>
+                          <textarea
+                            rows={2}
+                            placeholder="เช่น 6 มิติหลัก: Power Distance, Individualism, Masculinity, Uncertainty Avoidance, Long-Term Orientation, Indulgence"
+                            value={newFlashcardForm.back}
+                            onChange={(e) =>
+                              setNewFlashcardForm((p) => ({ ...p, back: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-ink mb-1">
+                            คำใบ้ (Hint - ตัวช่วยจำ):
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="เช่น นึกถึงงานวิจัยพนักงาน IBM ทั่วโลก..."
+                            value={newFlashcardForm.hint}
+                            onChange={(e) =>
+                              setNewFlashcardForm((p) => ({ ...p, hint: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                          />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-1 border-t border-pink-200/60">
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingFlashcard(false)}
+                            className="rounded-xl border border-grey-300 px-3.5 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer"
+                          >
+                            ยกเลิก
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCreateFlashcard}
+                            className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer"
+                          >
+                            + บันทึกแฟลชการ์ดใหม่
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1076,6 +1439,144 @@ export default function Studio() {
                         </div>
                       )
                     })}
+
+                    {/* Bottom Creator: Add Custom Question */}
+                    {!isAddingPretest ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingPretest(true)}
+                        className="w-full flex items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-pink-300 bg-pink-50/40 p-4 text-xs font-black text-pink-600 hover:bg-pink-50 hover:border-pink-500 transition-all cursor-pointer group shadow-2xs mt-4"
+                      >
+                        <Plus className="h-4 w-4 transition-transform group-hover:scale-125" />
+                        <span>+ ออกแบบและเพิ่มข้อสอบใหม่ด้วยตนเอง (Add Custom Question)</span>
+                      </button>
+                    ) : (
+                      <div className="rounded-3xl border-2 border-pink-500 bg-pink-50/70 p-6 shadow-md space-y-4 animate-fadeIn mt-4">
+                        <div className="flex items-center justify-between border-b border-pink-200/80 pb-2">
+                          <span className="text-sm font-extrabold text-pink-700 flex items-center gap-1.5">
+                            <Sparkles className="h-4 w-4 text-pink-600" />
+                            สร้างสรรค์ข้อสอบ / คำถามใหม่ด้วยตนเอง
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingPretest(false)}
+                            className="text-xs text-grey-500 hover:underline cursor-pointer"
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-ink mb-1">
+                            โจทย์คำถาม:
+                          </label>
+                          <textarea
+                            rows={2}
+                            placeholder="เช่น ปัจจัยใดสำคัญที่สุดในการเลือกลงทุนตั้งโรงงานผลิตในต่างประเทศ?"
+                            value={newPretestForm.stem}
+                            onChange={(e) =>
+                              setNewPretestForm((p) => ({ ...p, stem: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-ink">
+                            ตัวเลือกคำตอบ 4 ข้อ (คลิกเลือกปุ่มวงกลมข้อที่ถูกต้อง):
+                          </label>
+                          {newPretestForm.options.map((optText, optIdx) => (
+                            <div key={optIdx} className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name="studio-new-correct"
+                                checked={newPretestForm.answerIndex === optIdx}
+                                onChange={() =>
+                                  setNewPretestForm((p) => ({ ...p, answerIndex: optIdx }))
+                                }
+                                className="h-4 w-4 accent-pink-600 cursor-pointer"
+                              />
+                              <span className="text-xs font-bold text-grey-500 w-4">
+                                {String.fromCharCode(65 + optIdx)}.
+                              </span>
+                              <input
+                                type="text"
+                                placeholder={`ตัวเลือก ${String.fromCharCode(65 + optIdx)}`}
+                                value={optText}
+                                onChange={(e) => {
+                                  const next = [...newPretestForm.options]
+                                  next[optIdx] = e.target.value
+                                  setNewPretestForm((p) => ({ ...p, options: next }))
+                                }}
+                                className={cn(
+                                  'w-full rounded-lg border p-2 text-xs outline-none font-medium',
+                                  newPretestForm.answerIndex === optIdx
+                                    ? 'border-pink-500 bg-pink-50 font-bold'
+                                    : 'border-grey-300 bg-paper'
+                                )}
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-xs font-bold text-ink mb-1">
+                              ระดับความยาก:
+                            </label>
+                            <select
+                              value={newPretestForm.difficulty}
+                              onChange={(e) =>
+                                setNewPretestForm((p) => ({
+                                  ...p,
+                                  difficulty: e.target.value as 'easy' | 'medium' | 'hard',
+                                }))
+                              }
+                              className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                            >
+                              <option value="easy">ง่าย (Easy)</option>
+                              <option value="medium">ปานกลาง (Medium)</option>
+                              <option value="hard">ยาก (Hard)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-ink mb-1">
+                              ข้อควรระวังสำหรับเด็กต่างคณะ:
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="เช่น เด็กวิศวะมักมองเฉพาะเทคนิค แต่ลืมบริบททางกฎหมาย..."
+                              value={newPretestForm.misconception}
+                              onChange={(e) =>
+                                setNewPretestForm((p) => ({
+                                  ...p,
+                                  misconception: e.target.value,
+                                }))
+                              }
+                              className="w-full rounded-xl border border-grey-300 bg-paper p-2.5 text-xs text-ink outline-none focus:border-pink-500 font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2 border-t border-pink-200/60">
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingPretest(false)}
+                            className="rounded-xl border border-grey-300 px-3.5 py-1.5 text-xs font-bold text-grey-600 hover:bg-grey-100 cursor-pointer"
+                          >
+                            ยกเลิก
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCreatePretest}
+                            className="rounded-xl bg-pink-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-pink-700 cursor-pointer"
+                          >
+                            + บันทึกข้อสอบใหม่
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
