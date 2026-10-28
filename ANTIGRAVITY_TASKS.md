@@ -69,5 +69,14 @@ props in the rooms.
   - Added shapes `'library'`, `'union'`, `'lounge'` in `src/data/buildings.ts`, `src/pages/campus/geometry.ts`, `src/pages/campus/components/CampusMapSVG.tsx`, and `src/pages/campus/components/Building.tsx`.
   - All 3 buildings have distinct procedural geometry that matches their interiors (visible bookshelves, café pergola string lights, monitor wall, and Staff Only security sign).
   - Walkways and avenues are completely unblocked: `npc-mind` at `[-4.8, 0, 7.8]`, `npc-guide` at `[-2.2, 0, 14.0]`, and `SPURestPavilion` at `[14.5, 0, 11.5]`.
-  - Teacher 2D map labels for Staff Lounge and Data Center no longer collide, and each building in the quick-jump list now displays a distinct subtitle in both English and Thai.
+- **Heart Dorm Redesign (Discord 3D Holographic Cyber Sanctuary)**:
+  - Transformed `src/pages/campus/interiors/HeartDorm.tsx` from narrow 2D mobile card into a clean, desktop-first Discord 3-column architecture (`w-full max-w-7xl`).
+  - Added real-time 3D Three.js Hologram Chamber widget displaying rotating polyhedral core, astrolabe rings, and particle emitters dynamically themed to active mystery personas.
+  - Implemented full Discord desktop architecture: Server & Channel sidebar on left (`#all-inquiries`, `#urgent-sos`, `#deep-inquiry`, `#creative-spark`, `#oracle-advice`), Discord forum stream in center with search bar and flame upvotes, and online Guild Master & active mystery scholars roster on right.
+  - Updated `HoloPanel.tsx` dark glass surface dialog to `max-w-6xl xl:max-w-7xl` so PC screens enjoy proper desktop room ergonomics.
+- **Teacher Command Deck & Full Feature Unlocking**:
+  - Upgraded `TeacherCommandDeck.tsx` into a high-visibility RPG console with a prominent shortcut button to the Original Teacher Dashboard (`/teacher/dashboard`).
+  - Vertically stacked, scrollable command cards with real-time actionable badges ("เห็นสิ่งที่ต้องทำ": e.g., "⚠️ 5 คนยังไม่ส่งงาน", "✨ สัปดาห์ที่ 2: Hofstede", "🟢 พร้อมเปิดคลาส").
+  - Hovering any command smoothly triggers the high-definition `HoloPreview` projecting live snapshots of all web app features (Studio, Dashboard, Exams, Live, Roster, Community, Lounge, Library, Arena).
+  - Unlocked all campus buildings for teachers in `buildings.ts` and `interiors.ts` (`roles: both` on entry, library, arena, union), eliminating all locked screens for faculty.
 

@@ -23,8 +23,8 @@ export default function HoloPanel({ station, lang, color, onClose }: { station: 
         role="dialog"
         aria-label={station.label[lang]}
         onClick={(e) => e.stopPropagation()}
-        className={`relative flex max-h-full w-full flex-col overflow-hidden rounded-3xl border border-[#7FE3FF]/50 bg-[#0D1030]/85 text-white shadow-[0_0_60px_rgba(127,227,255,0.3)] backdrop-blur-xl transition-all duration-300 sm:max-h-[86vh] ${
-          surface === 'light' ? 'max-w-5xl' : 'max-w-3xl'
+        className={`relative flex max-h-full w-full flex-col overflow-hidden rounded-3xl border border-[#7FE3FF]/50 bg-[#0D1030]/85 text-white shadow-[0_0_60px_rgba(127,227,255,0.3)] backdrop-blur-xl transition-all duration-300 sm:max-h-[90vh] ${
+          surface === 'light' ? 'max-w-5xl' : 'max-w-6xl xl:max-w-7xl w-full'
         } ${lit ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-3 scale-[0.98] opacity-0'}`}
       >
         {/* top edge glows in the building's colour */}
