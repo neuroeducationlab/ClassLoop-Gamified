@@ -4,6 +4,7 @@ import { ChevronRight, LayoutGrid } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { BUILDINGS, CAMPUS_PALETTE, type Building } from '@/data/buildings'
 import CampusMapSVG from './components/CampusMapSVG'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 const isTeacherRoom = (b: Building) => b.teacherSees !== null
 
@@ -63,7 +64,7 @@ export default function CampusMap2D() {
               to="/campus"
               className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 px-3.5 py-2 text-sm font-bold text-white shadow-md hover:brightness-110 transition-all"
             >
-              <span>🎮</span> {lang === 'th' ? 'เข้าแคมปัส 3D' : '3D Campus'}
+              <GameIcon name="gamepad" /> {lang === 'th' ? 'เข้าแคมปัส 3D' : '3D Campus'}
             </Link>
             <Link
               to="/teacher"
@@ -94,7 +95,7 @@ export default function CampusMap2D() {
               className="flex w-full items-center gap-3 rounded-2xl border border-grey-300/60 bg-paper p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl" style={{ backgroundColor: b.color }}>
-                {b.emoji}
+                <GameIcon name={b.icon} className="text-white" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-bold text-ink">{b.name[lang]}</span>

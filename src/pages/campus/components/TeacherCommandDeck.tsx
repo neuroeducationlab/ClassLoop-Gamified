@@ -65,8 +65,8 @@ export default function TeacherCommandDeck({
               <LayoutDashboard className="h-4 w-4 text-amber-400 group-hover:rotate-6 transition-transform" />
               <span>
                 {lang === 'th'
-                  ? '⚡ หน้าเว็บหลักครู (Original Dashboard)'
-                  : '⚡ Original Teacher Dashboard'}
+                  ? 'หน้าเว็บหลักครู (Original Dashboard)'
+                  : 'Original Teacher Dashboard'}
               </span>
             </span>
             <span className="flex items-center gap-1 text-[10px] font-bold text-amber-200/80 group-hover:translate-x-0.5 transition-transform">
@@ -117,7 +117,7 @@ export default function TeacherCommandDeck({
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-xs font-black text-[#7FE3FF]">
                       <Sparkles className="h-3.5 w-3.5 text-[#7FE3FF]" />
-                      {home?.emoji} {home?.name[lang]} (SPU · {home?.spuRef})
+                      {home?.name[lang]} (SPU · {home?.spuRef})
                     </span>
                     {command.actionBadge && (
                       <span

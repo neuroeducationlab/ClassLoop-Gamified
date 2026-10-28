@@ -14,6 +14,7 @@ import Ground from '@/pages/campus/components/Ground'
 import { isLowPower } from '@/pages/campus/lowPower'
 import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from '@/pages/campus/components/SPUUniverse'
 import { cn } from '@/lib/utils'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 const GATE = BUILDINGS.find((b) => b.id === 'entry') ?? BUILDINGS[0]
 const DIVE_DURATION_SECONDS = 2.0
@@ -230,7 +231,7 @@ export default function Login() {
       {isDiving && (
         <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-end pb-20 gap-3 text-center animate-in fade-in duration-500">
           <div className="flex items-center gap-2 rounded-full border border-white/30 bg-black/60 px-5 py-2 text-white backdrop-blur-md shadow-2xl">
-            <span className="animate-spin text-lg">⚡</span>
+            <GameIcon name="zap" className="animate-pulse text-lg text-amber-300" />
             <span className="text-sm font-bold tracking-wide">4DX CAMPUS LANDING</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
@@ -274,7 +275,10 @@ export default function Login() {
                 className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 backdrop-blur hover:bg-white/20 transition-colors shadow-xs cursor-pointer"
                 title="Switch between Cinematic Artwork and 3D Real-time"
               >
-                <span className="text-[11px] font-bold">{viewMode === 'cinematic' ? '🖼️ HD Art' : '🎮 3D'}</span>
+                <span className="flex items-center gap-1 text-[11px] font-bold">
+                  <GameIcon name={viewMode === 'cinematic' ? 'image' : 'gamepad'} />
+                  {viewMode === 'cinematic' ? 'HD Art' : '3D'}
+                </span>
               </button>
               <button
                 type="button"
@@ -282,7 +286,7 @@ export default function Login() {
                 className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/90 backdrop-blur hover:bg-white/20 transition-colors shadow-xs cursor-pointer"
                 title={`Time of day: ${SKY_PRESETS[timeOfDay].label.en} (${SKY_PRESETS[timeOfDay].label.th})`}
               >
-                <span>{SKY_PRESETS[timeOfDay].icon}</span>
+                <GameIcon name={SKY_PRESETS[timeOfDay].icon} />
                 <span className="text-[11px] font-bold">{SKY_PRESETS[timeOfDay].label[lang]}</span>
               </button>
               <LanguageSwitcher />

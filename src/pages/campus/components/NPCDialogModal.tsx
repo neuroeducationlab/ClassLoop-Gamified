@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ChevronRight, MessageSquare, Sparkles, X } from 'lucide-react'
 import type { CampusNPC } from './CampusNPCs'
 import { playClickSound, playCoinSound, playDialogBlip, playXPSparkle } from '../soundEngine'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 export default function NPCDialogModal({
   npc,
@@ -90,7 +91,7 @@ export default function NPCDialogModal({
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-white/30 text-2xl shadow-lg backdrop-blur"
               style={{ backgroundColor: npc.color }}
             >
-              🧑‍🎓
+              <GameIcon name="gradCap" className="text-white" />
             </span>
             <div>
               <div className="flex items-center gap-2">
@@ -132,8 +133,18 @@ export default function NPCDialogModal({
               <Sparkles className="h-4 w-4 text-amber-400" />
               <span>
                 {lang === 'th' ? 'ภารกิจสำเร็จ! ได้รับ' : 'Quest Reward Claimed!'}
-                {rewardClaimed.xp && ` ✨ +${rewardClaimed.xp} XP`}
-                {rewardClaimed.coins && ` 🪙 +${rewardClaimed.coins} Coins`}
+                {rewardClaimed.xp && (
+                  <>
+                    {' '}
+                    <GameIcon name="sparkles" /> +{rewardClaimed.xp} XP
+                  </>
+                )}
+                {rewardClaimed.coins && (
+                  <>
+                    {' '}
+                    <GameIcon name="coin" /> +{rewardClaimed.coins} Coins
+                  </>
+                )}
               </span>
             </div>
           )}
@@ -147,7 +158,10 @@ export default function NPCDialogModal({
               onClick={() => handleOptionClick(opt)}
               className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3 text-left text-xs sm:text-sm font-semibold text-white/90 transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:text-white cursor-pointer group"
             >
-              <span>{lang === 'th' ? opt.label : opt.labelEn}</span>
+              <span className="flex items-center gap-2">
+                <GameIcon name={opt.icon} className="text-base text-pink-300" />
+                {lang === 'th' ? opt.label : opt.labelEn}
+              </span>
               <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-pink-300 group-hover:translate-x-0.5 transition-all" />
             </button>
           ))}

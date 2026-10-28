@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type TouchEvent, type MouseEvent } from 'react'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 type TouchJoystickProps = {
   onMove: (vector: [dx: number, dz: number]) => void
@@ -104,8 +105,8 @@ export default function TouchJoystick({ onMove, onEnd }: TouchJoystickProps) {
       {/* Direction Cross Guides */}
       <span className="pointer-events-none absolute top-1.5 text-[9px] font-bold text-white/40">▲</span>
       <span className="pointer-events-none absolute bottom-1.5 text-[9px] font-bold text-white/40">▼</span>
-      <span className="pointer-events-none absolute left-1.5 text-[9px] font-bold text-white/40">◀</span>
-      <span className="pointer-events-none absolute right-1.5 text-[9px] font-bold text-white/40">▶</span>
+      <GameIcon name="chevronLeft" className="pointer-events-none absolute left-1 text-[11px] text-white/40" />
+      <GameIcon name="chevronRight" className="pointer-events-none absolute right-1 text-[11px] text-white/40" />
 
       {/* Thumb Knob */}
       <div

@@ -8,6 +8,7 @@ import type { InteriorConfig, Station, StationKind } from '@/data/interiors'
 import { smootherstep } from '../ease'
 import { getConcreteTexture } from '../textures'
 import RoomDressing from './RoomDressing'
+import { drawGameIcon } from '@/components/icons/drawGameIcon'
 
 export type LabelMap = Map<string, HTMLDivElement>
 
@@ -71,8 +72,7 @@ function screenTexture(s: Station, color: string, lang: 'th' | 'en') {
   for (let x = 0; x < 512; x += 32) g.strokeRect(x, 0, 0.5, 288)
   for (let y = 0; y < 288; y += 32) g.strokeRect(0, y, 512, 0.5)
   g.textAlign = 'center'
-  g.font = '96px sans-serif'
-  g.fillText(s.icon, 256, 140)
+  drawGameIcon(g, s.icon, 256, 102, 84, '#FFFFFF')
   g.fillStyle = '#FFFFFF'
   g.font = 'bold 38px sans-serif'
   g.fillText(s.label[lang], 256, 210, 470)

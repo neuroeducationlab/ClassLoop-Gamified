@@ -25,13 +25,14 @@ import {
   playXPSparkle,
   playLevelUpSound,
 } from '../soundEngine'
+import { GameIcon, type IconName } from '@/components/icons/GameIcon'
 
 const MYSTERY_AVATARS = [
   {
     id: 'fox',
-    label: '🦊 Fox Sage #42',
+    label: 'Fox Sage #42',
     name: 'Fox Sage #42',
-    emoji: '🦊',
+    icon: 'fox' as IconName,
     color: '#F59E0B',
     accent: 'from-amber-500 to-orange-600',
     faculty: { th: 'คณะสถาปัตยกรรมศาสตร์', en: 'Faculty of Architecture' },
@@ -39,9 +40,9 @@ const MYSTERY_AVATARS = [
   },
   {
     id: 'owl',
-    label: '🦉 Night Owl #17',
+    label: 'Night Owl #17',
     name: 'Night Owl #17',
-    emoji: '🦉',
+    icon: 'owl' as IconName,
     color: '#8B5CF6',
     accent: 'from-purple-500 to-indigo-600',
     faculty: { th: 'คณะวิศวกรรมศาสตร์ (คอมฯ)', en: 'Faculty of Computer Eng.' },
@@ -49,9 +50,9 @@ const MYSTERY_AVATARS = [
   },
   {
     id: 'dolphin',
-    label: '🐬 Cyber Dolphin #88',
+    label: 'Cyber Dolphin #88',
     name: 'Cyber Dolphin #88',
-    emoji: '🐬',
+    icon: 'dolphin' as IconName,
     color: '#06B6D4',
     accent: 'from-cyan-500 to-teal-600',
     faculty: { th: 'คณะดิจิทัลมีเดีย', en: 'Faculty of Digital Media' },
@@ -59,9 +60,9 @@ const MYSTERY_AVATARS = [
   },
   {
     id: 'raccoon',
-    label: '🦝 Shadow Raccoon #05',
+    label: 'Shadow Raccoon #05',
     name: 'Shadow Raccoon #05',
-    emoji: '🦝',
+    icon: 'raccoon' as IconName,
     color: '#10B981',
     accent: 'from-emerald-500 to-green-600',
     faculty: { th: 'คณะบริหารธุรกิจ', en: 'Faculty of Business Admin' },
@@ -69,9 +70,9 @@ const MYSTERY_AVATARS = [
   },
   {
     id: 'lion',
-    label: '🦁 Brave Lion #99',
+    label: 'Brave Lion #99',
     name: 'Brave Lion #99',
-    emoji: '🦁',
+    icon: 'lion' as IconName,
     color: '#EF4444',
     accent: 'from-rose-500 to-red-600',
     faculty: { th: 'คณะนิเทศศาสตร์', en: 'Faculty of Comm. Arts' },
@@ -103,7 +104,7 @@ const TEXT = {
     submittingAs: 'กำลังส่งในนาม',
     sendBtn: 'ส่งข้อความนิรนาม',
     sentSuccess: '✓ ส่งคำถามลึกลับสำเร็จแล้ว! (รับ +15 XP)',
-    safeBadge: '🔒 ส่งผ่านม่านเวทมนตร์ ปลอดภัย 100%',
+    safeBadge: 'ส่งผ่านม่านเวทมนตร์ ปลอดภัย 100%',
     sameQuestion: 'สงสัยเหมือนกัน',
     teacherAdvice: 'คำตอบจากกิลด์มาสเตอร์ (อาจารย์ผู้สอน):',
     teacherPlaceholder: 'ตอบคำถามของนักศึกษาในฐานะกิลด์มาสเตอร์…',
@@ -119,7 +120,7 @@ const TEXT = {
     rule3: '3. รับค่าประสบการณ์: ถามได้ +15 XP, กดเห็นด้วยได้ +5 XP',
     searchPlaceholder: 'ค้นหาคำถามในห้อง...',
     filterAll: 'ทั้งหมด',
-    filterAnswered: 'ตอบแล้ว ⭐',
+    filterAnswered: 'ตอบแล้ว',
     filterUnanswered: 'รอคำตอบ',
     noQuestions: 'ยังไม่มีคำถามในหมวดหมู่นี้ เป็นคนแรกที่เริ่มเปิดประเด็นเลย!',
   },
@@ -143,7 +144,7 @@ const TEXT = {
     submittingAs: 'Posting as',
     sendBtn: 'Send Secret Inquiry',
     sentSuccess: '✓ Secret inquiry submitted successfully! (+15 XP)',
-    safeBadge: '🔒 100% Encrypted & Anonymous',
+    safeBadge: '100% Encrypted & Anonymous',
     sameQuestion: 'Wondering too',
     teacherAdvice: 'Guild Master Wisdom (Instructor):',
     teacherPlaceholder: 'Answer this inquiry as Guild Master…',
@@ -159,7 +160,7 @@ const TEXT = {
     rule3: '3. Earn XP Rewards: +15 XP for asking, +5 XP per upvote.',
     searchPlaceholder: 'Search inquiries in this room...',
     filterAll: 'All Threads',
-    filterAnswered: 'Answered ⭐',
+    filterAnswered: 'Answered',
     filterUnanswered: 'Unanswered',
     noQuestions: 'No questions in this channel yet. Be the first to spark the fire!',
   },
@@ -366,15 +367,15 @@ export default function HeartDorm() {
     const prefix =
       category === 'sos'
         ? lang === 'en'
-          ? '[🔴 Urgent / SOS] '
-          : '[🔴 SOS เร่งด่วน] '
+          ? '[Urgent / SOS] '
+          : '[SOS เร่งด่วน] '
         : category === 'quest'
         ? lang === 'en'
-          ? '[🟡 Deep Inquiry] '
-          : '[🟡 ข้อสงสัยลึกซึ้ง] '
+          ? '[Deep Inquiry] '
+          : '[ข้อสงสัยลึกซึ้ง] '
         : lang === 'en'
-        ? '[🟢 Creative Spark] '
-        : '[🟢 ไอเดียสร้างสรรค์] '
+        ? '[Creative Spark] '
+        : '[ไอเดียสร้างสรรค์] '
 
     const facultyStr = selectedPersona.shortFaculty[lang] || selectedPersona.shortFaculty.en
     const senderSuffix =
@@ -423,7 +424,7 @@ export default function HeartDorm() {
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-teal-400/40 bg-teal-500/20 text-2xl shadow-inner shadow-teal-500/30">
-              💬
+              <GameIcon name="chat" className="text-teal-200" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -448,7 +449,7 @@ export default function HeartDorm() {
 
           {/* Active Disguise Pill */}
           <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-2 px-3 self-start md:self-auto backdrop-blur-md">
-            <span className="text-2xl">{selectedPersona.emoji}</span>
+            <GameIcon name={selectedPersona.icon} className="text-2xl" style={{ color: selectedPersona.color }} />
             <div className="text-left">
               <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">
                 {t.submittingAs}
@@ -479,7 +480,7 @@ export default function HeartDorm() {
           <div className="rounded-2xl border border-white/10 bg-[#1e1f22]/90 p-3.5 shadow-xl backdrop-blur-md">
             <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500/20 text-lg border border-teal-400/30">
-                🛡️
+                <GameIcon name="shield" className="text-teal-200" />
               </div>
               <div className="min-w-0 flex-1">
                 <h2 className="text-xs font-black text-white truncate flex items-center gap-1">
@@ -559,7 +560,7 @@ export default function HeartDorm() {
                         : 'border border-white/5 bg-white/5 hover:bg-white/10 text-white/70'
                     }`}
                   >
-                    <span className="text-xl shrink-0">{m.emoji}</span>
+                    <GameIcon name={m.icon} className="text-xl" style={{ color: m.color }} />
                     <div className="min-w-0 flex-1">
                       <p className={`text-xs font-bold leading-tight ${isSelected ? 'text-teal-200' : 'text-white'}`}>
                         {m.name}
@@ -671,7 +672,7 @@ export default function HeartDorm() {
               </div>
             ) : (
               filteredPosts.map((p) => {
-                const votes = (upvotes[p.id] || 0) + (p.reactions?.['💡'] || 2)
+                const votes = (upvotes[p.id] || 0) + (p.reactions?.idea || 2)
                 const hasOracleReply = p.replies && p.replies.length > 0
 
                 // Guess category icon from title
@@ -688,17 +689,22 @@ export default function HeartDorm() {
                     <div className="flex items-start justify-between gap-3 border-b border-white/5 pb-2.5">
                       <div className="flex items-center gap-2.5">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500/20 to-purple-500/20 text-lg border border-teal-400/30 shadow-inner">
-                          {p.alias?.includes('Fox')
-                            ? '🦊'
-                            : p.alias?.includes('Owl')
-                            ? '🦉'
-                            : p.alias?.includes('Dolphin')
-                            ? '🐬'
-                            : p.alias?.includes('Raccoon')
-                            ? '🦝'
-                            : p.alias?.includes('Lion')
-                            ? '🦁'
-                            : '🎭'}
+                          <GameIcon
+                            className="text-teal-200"
+                            name={
+                              p.alias?.includes('Fox')
+                                ? 'fox'
+                                : p.alias?.includes('Owl')
+                                  ? 'owl'
+                                  : p.alias?.includes('Dolphin')
+                                    ? 'dolphin'
+                                    : p.alias?.includes('Raccoon')
+                                      ? 'raccoon'
+                                      : p.alias?.includes('Lion')
+                                        ? 'lion'
+                                        : 'mask'
+                            }
+                          />
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -707,17 +713,20 @@ export default function HeartDorm() {
                             </span>
                             {isSos && (
                               <span className="rounded-md bg-rose-500/20 px-1.5 py-0.2 text-[9px] font-bold text-rose-300 border border-rose-500/30">
-                                🔴 SOS
+                                <GameIcon name="dot" className="mr-0.5 fill-current" />
+                                SOS
                               </span>
                             )}
                             {isQuest && (
                               <span className="rounded-md bg-amber-500/20 px-1.5 py-0.2 text-[9px] font-bold text-amber-300 border border-amber-500/30">
-                                🟡 Deep Inquiry
+                                <GameIcon name="dot" className="mr-0.5 fill-current" />
+                                Deep Inquiry
                               </span>
                             )}
                             {isSpark && (
                               <span className="rounded-md bg-emerald-500/20 px-1.5 py-0.2 text-[9px] font-bold text-emerald-300 border border-emerald-500/30">
-                                🟢 Creative Spark
+                                <GameIcon name="dot" className="mr-0.5 fill-current" />
+                                Creative Spark
                               </span>
                             )}
                             <span className="text-[10px] text-white/40">
@@ -761,7 +770,8 @@ export default function HeartDorm() {
                                 {r.authorRole === 'teacher' ? t.teacherAdvice : r.authorName}
                               </span>
                               <span className="rounded-md bg-amber-400/20 px-2 py-0.5 text-[9px] font-black text-amber-300 border border-amber-400/30">
-                                ⭐ Verified Guild Master
+                                <GameIcon name="star" className="mr-0.5 fill-current" />
+                                Verified Guild Master
                               </span>
                             </div>
                             <p className="text-xs text-white/95 leading-relaxed pl-3.5 border-l-2 border-amber-400/60">
@@ -940,7 +950,7 @@ export default function HeartDorm() {
                 <span className="text-white/40">· 1</span>
               </p>
               <div className="flex items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2">
-                <span className="text-xl">🧑‍🏫</span>
+                <GameIcon name="teacher" className="text-xl text-amber-300" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-black text-amber-300 truncate">
                     อ.ดร.ธนพร (Guild Master)
@@ -970,7 +980,7 @@ export default function HeartDorm() {
                         isYou ? 'bg-white/10 text-white font-bold' : 'text-white/60'
                       }`}
                     >
-                      <span className="text-sm">{m.emoji}</span>
+                      <GameIcon name={m.icon} className="text-sm" style={{ color: m.color }} />
                       <span className="truncate flex-1 text-[11px]">
                         {m.name} {isYou && <span className="text-teal-300 text-[10px]">(You)</span>}
                       </span>

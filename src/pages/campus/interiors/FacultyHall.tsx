@@ -23,6 +23,7 @@ import {
   playWrongSound,
   playXPSparkle,
 } from '../soundEngine'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 const XP_VIDEO = 15
 const XP_CORRECT = 10
@@ -358,7 +359,7 @@ function QuizTerminal({ onCorrect, lang }: { onCorrect: () => void; lang: 'th' |
     return (
       <div className="rounded-2xl border border-white/15 bg-gradient-to-b from-white/10 to-transparent p-6 text-center backdrop-blur-md animate-in zoom-in-95">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/20 text-3xl border border-amber-400/40 text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.3)]">
-          🏆
+          <GameIcon name="trophy" />
         </div>
         <h3 className="mt-3 text-lg font-black text-white">
           {lang === 'th' ? 'ทำแบบทดสอบครบถ้วนแล้ว!' : 'Assessment Completed!'}

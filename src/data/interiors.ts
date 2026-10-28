@@ -1,6 +1,7 @@
 import type { Role } from '@/context/AppContext'
 import type { BuildingId } from './buildings'
 import { TEACHER_COMMANDS } from './teacherCommands'
+import type { IconName } from '@/components/icons/GameIcon'
 
 /**
  * What is inside each building: a small 3D room dressed in the building's own
@@ -33,7 +34,7 @@ export type StationKind = 'screen' | 'kiosk' | 'desk' | 'board' | 'shelf'
 
 export type Station = {
   id: string
-  icon: string
+  icon: IconName
   label: { th: string; en: string }
   /** What you do there, in plain words (shown under the label). */
   does: { th: string; en: string }
@@ -69,7 +70,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'today',
-        icon: '🗓️',
+        icon: 'calendar',
         label: { th: 'แผนวันนี้', en: 'Today’s plan' },
         does: { th: 'บทเรียนต่อไป เป้าหมาย และสตรีคของคุณ', en: 'Your next lesson, goals and streak' },
         kind: 'board',
@@ -79,7 +80,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'wardrobe',
-        icon: '👕',
+        icon: 'shirt',
         label: { th: 'ตู้เสื้อผ้า & ตั้งค่า', en: 'Wardrobe & settings' },
         does: { th: 'แต่งตัวละคร สลับบทบาทเดโม', en: 'Dress your character, switch demo role' },
         kind: 'kiosk',
@@ -96,7 +97,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'lecture',
-        icon: '🎬',
+        icon: 'clapper',
         label: { th: 'จอบรรยาย', en: 'Lecture screen' },
         does: { th: 'วิดีโอก่อนเรียน โน้ตสรุป และควิซ', en: 'Pre-class video, notes and a quick quiz' },
         kind: 'screen',
@@ -106,7 +107,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'quests',
-        icon: '📌',
+        icon: 'pin',
         label: { th: 'บอร์ดภารกิจ', en: 'Quest board' },
         does: { th: 'งานที่ต้องส่ง และส่งงานได้ที่นี่', en: 'Assignments due — hand them in here' },
         kind: 'board',
@@ -116,7 +117,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'live',
-        icon: '📡',
+        icon: 'broadcast',
         label: { th: 'แท่นสอนสด', en: 'Live class console' },
         does: { th: 'เปิดคลาสสด ถามตอบและควิซแบบเรียลไทม์', en: 'Run a live class with real-time Q&A' },
         kind: 'desk',
@@ -133,7 +134,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'review',
-        icon: '🧠',
+        icon: 'brain',
         label: { th: 'โต๊ะทบทวน', en: 'Review desk' },
         does: { th: 'ทบทวนเนื้อหาที่ใกล้ลืม ก่อนสอบ', en: 'Revise what you’re about to forget, before the test' },
         kind: 'desk',
@@ -143,7 +144,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'syllabus',
-        icon: '📖',
+        icon: 'book',
         label: { th: 'ชั้นหลักสูตร', en: 'Syllabus shelf' },
         does: { th: 'เป้าหมายรายสัปดาห์และสิ่งที่ต้องรู้', en: 'Weekly goals and what you’re expected to know' },
         kind: 'shelf',
@@ -160,7 +161,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'battle',
-        icon: '⚔️',
+        icon: 'swords',
         label: { th: 'จอประลอง', en: 'Battle screen' },
         does: { th: 'Brain Gym, Boss Rush และอันดับห้อง', en: 'Brain Gym, Boss Rush and the class leaderboard' },
         kind: 'screen',
@@ -170,7 +171,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'challenges',
-        icon: '🎯',
+        icon: 'target',
         label: { th: 'ตู้ชาเลนจ์', en: 'Challenge kiosk' },
         does: { th: 'เลือกชาเลนจ์ที่อยากลุย', en: 'Pick the next challenge to take on' },
         kind: 'kiosk',
@@ -187,7 +188,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'community',
-        icon: '🗣️',
+        icon: 'speech',
         label: { th: 'บอร์ดชุมชน', en: 'Community board' },
         does: { th: 'ถาม-ตอบ แชร์โน้ตกับเพื่อน', en: 'Ask, answer and share notes with classmates' },
         kind: 'board',
@@ -197,7 +198,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'profile',
-        icon: '🏅',
+        icon: 'medal',
         label: { th: 'ตู้โปรไฟล์', en: 'Profile kiosk' },
         does: { th: 'เลเวล เหรียญ และความสำเร็จของคุณ', en: 'Your level, badges and achievements' },
         kind: 'kiosk',
@@ -214,7 +215,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'anonymous',
-        icon: '💬',
+        icon: 'chat',
         label: { th: 'มุมคุยนิรนาม', en: 'Anonymous corner' },
         does: { th: 'คุยกับอาจารย์ได้โดยไม่เปิดเผยชื่อ', en: 'Talk to your teacher without giving your name' },
         kind: 'desk',
@@ -224,7 +225,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'voice',
-        icon: '📣',
+        icon: 'megaphone',
         label: { th: 'เสียงนักศึกษา', en: 'Student voice' },
         does: { th: 'อ่านคำถามและฟีดแบคทั้งหมด แล้วตอบกลับ', en: 'Read all questions and feedback, and reply' },
         kind: 'screen',
@@ -241,7 +242,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'studio',
-        icon: '🪄',
+        icon: 'wand',
         label: { th: 'โต๊ะออกแบบบทเรียน', en: 'Lesson design desk' },
         does: { th: 'วางซิลลาบัส → AI เสนอกิจกรรม → เลือกใช้', en: 'Drop in a syllabus → AI suggests activities → pick' },
         kind: 'desk',
@@ -251,7 +252,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'exams',
-        icon: '📝',
+        icon: 'notepad',
         label: { th: 'จอข้อสอบ', en: 'Exam builder' },
         does: { th: 'สร้างและจัดการข้อสอบ ตรวจผลอัตโนมัติ', en: 'Build and manage exams, auto-graded' },
         kind: 'screen',
@@ -268,7 +269,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
     stations: [
       {
         id: 'dashboard',
-        icon: '📊',
+        icon: 'chart',
         label: { th: 'ผนังสถิติ', en: 'Analytics wall' },
         does: { th: 'ดูว่าใครตามไม่ทัน และหัวข้อไหนต้องสอนซ้ำ', en: 'See who is falling behind and what to re-teach' },
         kind: 'screen',
@@ -278,7 +279,7 @@ export const INTERIORS: Record<BuildingId, InteriorConfig> = {
       },
       {
         id: 'roster',
-        icon: '👥',
+        icon: 'users',
         label: { th: 'แฟ้มรายชื่อ', en: 'Roster files' },
         does: { th: 'ความคืบหน้าและการเข้าเรียนของแต่ละคน', en: 'Every student’s progress and attendance' },
         kind: 'shelf',

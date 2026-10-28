@@ -20,6 +20,7 @@ import {
   playWrongSound,
   playXPSparkle,
 } from '../soundEngine'
+import { GameIcon, type IconName } from '@/components/icons/GameIcon'
 
 const XP_CORRECT = 15
 const BOSS_TOTAL_XP = 150
@@ -163,7 +164,7 @@ export default function Arena() {
           )}
         >
           <Swords className="h-4 w-4" />
-          <span>{lang === 'th' ? '⚡ ลานฝึกคำศัพท์ (Flashcards)' : '⚡ Flashcard Arena'}</span>
+          <span>{lang === 'th' ? 'ลานฝึกคำศัพท์ (Flashcards)' : 'Flashcard Arena'}</span>
         </button>
         <button
           onClick={() => setActiveTab('boss')}
@@ -175,7 +176,7 @@ export default function Arena() {
           )}
         >
           <ShieldAlert className="h-4 w-4 text-amber-300 animate-pulse" />
-          <span>{lang === 'th' ? '👹 บอสข้อสอบปลายภาค (Boss Rush)' : '👹 Boss Rush Exam'}</span>
+          <span>{lang === 'th' ? 'บอสข้อสอบปลายภาค (Boss Rush)' : 'Boss Rush Exam'}</span>
         </button>
       </div>
 
@@ -284,7 +285,11 @@ function StatPod({
   )
 }
 
-const MEDALS = ['👑', '🥈', '🥉']
+const MEDALS: { name: IconName; className: string }[] = [
+  { name: 'crown', className: 'text-amber-300' },
+  { name: 'medal', className: 'text-slate-200' },
+  { name: 'medal', className: 'text-orange-300' },
+]
 
 function Row({
   rank,
@@ -314,7 +319,7 @@ function Row({
     >
       {/* Rank Medal / Number */}
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-sm font-black">
-        {MEDALS[rank - 1] ?? rank}
+        {MEDALS[rank - 1] ? <GameIcon name={MEDALS[rank - 1].name} className={MEDALS[rank - 1].className} /> : rank}
       </span>
 
       {/* Name & Faculty */}
@@ -554,7 +559,7 @@ function BossRushExam({
     return (
       <div className="rounded-2xl border border-amber-400/50 bg-gradient-to-b from-amber-500/20 via-[#16182E] to-purple-950/40 p-6 text-center text-white shadow-2xl animate-in zoom-in-95">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-500/30 text-4xl border-2 border-amber-400/60 shadow-[0_0_30px_rgba(251,191,36,0.5)] animate-bounce">
-          👑
+          <GameIcon name="crown" className="text-amber-300" />
         </div>
         <h3 className="mt-4 text-2xl font-black text-amber-300">
           {lang === 'th' ? 'พิชิตบอสข้อสอบปลายภาคสำเร็จ!' : 'FINAL BOSS DEFEATED!'}
@@ -585,7 +590,7 @@ function BossRushExam({
     return (
       <div className="rounded-2xl border border-rose-500/40 bg-gradient-to-b from-rose-950/40 via-[#16182E] to-black/60 p-6 text-center text-white shadow-2xl animate-in zoom-in-95">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/20 text-3xl border border-rose-400/40 text-rose-300">
-          ⏳
+          <GameIcon name="hourglass" />
         </div>
         <h3 className="mt-3 text-lg font-black text-rose-300">
           {lang === 'th' ? 'หมดเวลาการสอบ!' : 'Time Expired!'}
@@ -611,7 +616,7 @@ function BossRushExam({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2.5">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/20 text-xl border border-rose-400/40 text-rose-300">
-              👹
+              <GameIcon name="boss" />
             </span>
             <div>
               <div className="flex items-center gap-2">

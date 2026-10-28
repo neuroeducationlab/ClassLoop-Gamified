@@ -2,6 +2,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import type { Station } from '@/data/interiors'
 import { CONTENT } from './contentRegistry'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 /**
  * A station's feature, projected as a hologram panel over the room. Campus
@@ -47,7 +48,7 @@ export default function HoloPanel({ station, lang, color, onClose }: { station: 
         {/* top edge glows in the building's colour */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
         <header className="flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
-          <span className="text-2xl">{station.icon}</span>
+          <GameIcon name={station.icon} className="text-2xl" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold leading-tight sm:text-lg">{station.label[lang]}</p>
             <p className="truncate text-xs text-white/65">{station.does[lang]}</p>

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
+import { GameIcon } from '@/components/icons/GameIcon'
+import type { Reactions } from '@/data/seed-data'
 
 export default function StudentCommunity() {
   const { posts, students, addPost, addReply } = useApp()
@@ -209,12 +211,12 @@ export default function StudentCommunity() {
 
               {/* Static Reaction Counts */}
               <div className="flex items-center gap-2 pt-1 text-xs">
-                {Object.entries(post.reactions).map(([emoji, count]) => (
+                {(Object.entries(post.reactions) as [keyof Reactions, number][]).map(([emoji, count]) => (
                   <span
                     key={emoji}
                     className="flex items-center gap-1 rounded-full bg-canvas px-2.5 py-0.5 text-[11px] font-semibold text-grey-600 border border-grey-300/40"
                   >
-                    <span>{emoji}</span>
+                    <GameIcon name={emoji} />
                     <span>{count}</span>
                   </span>
                 ))}

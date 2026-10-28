@@ -393,7 +393,7 @@ export default function Studio() {
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-extrabold text-ink group-hover:text-pink-600 transition-colors">Course_Syllabus_MKT201</p>
-                  <p className="text-xs font-bold text-grey-500 mt-0.5">📂 วิชาการตลาดดิจิทัล • ลากไปวางได้เลย</p>
+                  <p className="text-xs font-bold text-grey-500 mt-0.5">วิชาการตลาดดิจิทัล • ลากไปวางได้เลย</p>
                 </div>
               </div>
             </div>

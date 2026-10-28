@@ -114,10 +114,10 @@ export type Remediation = {
 export type PostKind = 'คำถาม' | 'ฟีดแบค' | 'ไอเดีย'
 
 export type Reactions = {
-  '👍': number
-  '🤔': number
-  '❤️': number
-  '💡': number
+  like: number
+  think: number
+  love: number
+  idea: number
 }
 
 export type PostReply = {
@@ -777,7 +777,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     alias: 'อ.ดร.ธนพร (ผู้สอน)',
     body: 'อาจารย์ขอ ฟีดแบคการเรียน คาบ Hofstede\'s Cultural Dimensions สัปดาห์นี้หน่อยครับ ชอบกิจกรรมไหน หรืออยากให้ปรับตรงไหนบ้าง?',
     kind: 'ฟีดแบค',
-    reactions: { '👍': 12, '🤔': 1, '❤️': 6, '💡': 4 },
+    reactions: { like: 12, think: 1, love: 6, idea: 4 },
     createdAt: '1 ชม. ที่แล้ว',
     replies: [
       {
@@ -813,7 +813,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     alias: 'หมีขั้วโลก #4',
     body: 'Hofstede ยังใช้ได้จริงไหมครับ ข้อมูลเก่ามากแล้ว',
     kind: 'คำถาม',
-    reactions: { '👍': 5, '🤔': 3, '❤️': 0, '💡': 2 },
+    reactions: { like: 5, think: 3, love: 0, idea: 2 },
     createdAt: '2 ชม. ที่แล้ว',
     replies: [
       {
@@ -832,7 +832,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     isAnonymous: false,
     body: 'มีใครมี case study เรื่อง Netflix ข้ามวัฒนธรรมไหมครับ',
     kind: 'คำถาม',
-    reactions: { '👍': 3, '🤔': 1, '❤️': 0, '💡': 4 },
+    reactions: { like: 3, think: 1, love: 0, idea: 4 },
     createdAt: '3 ชม. ที่แล้ว',
   },
   {
@@ -842,7 +842,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     alias: 'เพนกวิน #7',
     body: 'คาบที่แล้วสนุกมาก อยากให้มี debate อีก',
     kind: 'ฟีดแบค',
-    reactions: { '👍': 8, '🤔': 0, '❤️': 4, '💡': 1 },
+    reactions: { like: 8, think: 0, love: 4, idea: 1 },
     createdAt: '5 ชม. ที่แล้ว',
   },
   {
@@ -851,7 +851,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     isAnonymous: false,
     body: 'ช่วยอธิบาย Masculinity vs Femininity อีกทีได้ไหมคะ งงอยู่',
     kind: 'คำถาม',
-    reactions: { '👍': 6, '🤔': 2, '❤️': 1, '💡': 0 },
+    reactions: { like: 6, think: 2, love: 1, idea: 0 },
     createdAt: 'เมื่อวาน',
   },
   {
@@ -860,7 +860,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     isAnonymous: false,
     body: 'Power Distance ในบริษัท startup กับ corporate ต่างกันไหม',
     kind: 'คำถาม',
-    reactions: { '👍': 4, '🤔': 5, '❤️': 0, '💡': 3 },
+    reactions: { like: 4, think: 5, love: 0, idea: 3 },
     createdAt: 'เมื่อวาน',
   },
   {
@@ -870,7 +870,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     alias: 'แมวน้ำ #2',
     body: 'ข้อสอบกลางภาคออกถึงบทไหนครับ',
     kind: 'คำถาม',
-    reactions: { '👍': 12, '🤔': 0, '❤️': 0, '💡': 0 },
+    reactions: { like: 12, think: 0, love: 0, idea: 0 },
     createdAt: 'เมื่อวาน',
   },
   {
@@ -879,7 +879,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     isAnonymous: false,
     body: 'อาจารย์มี recommended reading เพิ่มไหมคะ',
     kind: 'คำถาม',
-    reactions: { '👍': 3, '🤔': 0, '❤️': 2, '💡': 1 },
+    reactions: { like: 3, think: 0, love: 2, idea: 1 },
     createdAt: '2 วัน ที่แล้ว',
   },
   {
@@ -888,7 +888,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     isAnonymous: false,
     body: 'ลองเปรียบเทียบ Hofstede กับ GLOBE framework ดูก็น่าสนใจ',
     kind: 'ไอเดีย',
-    reactions: { '👍': 7, '🤔': 2, '❤️': 1, '💡': 6 },
+    reactions: { like: 7, think: 2, love: 1, idea: 6 },
     createdAt: '2 วัน ที่แล้ว',
   },
 ]

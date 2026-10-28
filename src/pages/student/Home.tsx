@@ -24,6 +24,7 @@ import {
 import { useApp } from '@/context/AppContext'
 import { useReveal } from '@/hooks/useReveal'
 import { cn } from '@/lib/utils'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -32,9 +33,9 @@ export default function Home() {
 
   // Top 5 Leaderboard Data sorted by XP/spokeCount
   const leaderboardData = [
-    { rank: 1, name: 'ณัฐ', nickname: 'นัท', faculty: 'Digital Media', xp: 240, badge: '🥇' },
-    { rank: 2, name: 'วรรณา', nickname: 'นุ้ย', faculty: 'Accounting', xp: 210, badge: '🥈' },
-    { rank: 3, name: 'ธีรวัฒน์', nickname: 'ต้น', faculty: 'Engineering', xp: 190, badge: '🥉' },
+    { rank: 1, name: 'ณัฐ', nickname: 'นัท', faculty: 'Digital Media', xp: 240, badge: '1' },
+    { rank: 2, name: 'วรรณา', nickname: 'นุ้ย', faculty: 'Accounting', xp: 210, badge: '2' },
+    { rank: 3, name: 'ธีรวัฒน์', nickname: 'ต้น', faculty: 'Engineering', xp: 190, badge: '3' },
     { rank: 4, name: 'พรรณี', nickname: 'พลอย', faculty: 'Business Admin', xp: 160, badge: '4' },
     { rank: 5, name: 'สมชาย', nickname: 'แมน', faculty: 'Law', xp: 140, badge: '5' },
   ]
@@ -288,7 +289,8 @@ export default function Home() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:underline pt-0.5 cursor-pointer"
           >
-            <span>▶️ เปิดดูบน YouTube</span>
+            <GameIcon name="play" />
+                  <span>เปิดดูบน YouTube</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
@@ -310,7 +312,8 @@ export default function Home() {
             onClick={() => navigate('/student/review')}
             className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline pt-0.5 cursor-pointer"
           >
-            <span>📖 อ่านสรุปย่อในศูนย์ทบทวน</span>
+            <GameIcon name="book" />
+                  <span>อ่านสรุปย่อในศูนย์ทบทวน</span>
             <ExternalLink className="h-3 w-3" />
           </button>
         </div>

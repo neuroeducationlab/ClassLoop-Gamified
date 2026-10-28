@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 /** Card wrapper shared by every building interior with high-tech glassmorphism styling. */
 export default function Section({
@@ -47,7 +48,7 @@ export default function Section({
 export function XPChip({ amount, label }: { amount: number; label?: string }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-gradient-to-r from-amber-500/25 to-yellow-500/25 px-2.5 py-0.5 text-xs font-extrabold text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)] animate-in zoom-in-50 fade-in duration-300">
-      <span>✨</span>
+      <GameIcon name="sparkles" />
       <span>+{amount} XP</span>
       {label && <span className="text-[10px] text-amber-200/80 font-normal">({label})</span>}
     </span>
@@ -58,7 +59,7 @@ export function XPChip({ amount, label }: { amount: number; label?: string }) {
 export function CoinChip({ amount }: { amount: number }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-yellow-400/50 bg-gradient-to-r from-yellow-500/25 to-amber-600/25 px-2.5 py-0.5 text-xs font-extrabold text-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.25)] animate-in zoom-in-50 fade-in duration-300">
-      <span>🪙</span>
+      <GameIcon name="coin" />
       <span>+{amount}</span>
     </span>
   )

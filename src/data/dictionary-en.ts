@@ -439,7 +439,7 @@ export const DICTIONARY_EN: Record<string, string> = {
   'ทำภารกิจ Hofstede ครบ': 'Completed all Hofstede tasks',
   'เข้าร่วมต่อเนื่อง 3 คาบ': 'Attended 3 sessions in a row',
   'เข้าร่วมกิจกรรมจับคู่': 'Joined a pairing activity',
-  '🔒 ล็อคไว้อยู่': '🔒 Locked',
+  'ล็อคไว้อยู่': 'Locked',
   'ศูนย์รวมภารกิจสั่งงาน & ส่งงาน': 'Assignment & submission hub',
   'ภารกิจการเรียนทั้งหมด': 'All learning tasks',
   'ติดตามภารกิจการเรียน ส่งงานย่อย และตรวจสอบสถานะการส่งงาน':
@@ -501,8 +501,8 @@ export const DICTIONARY_EN: Record<string, string> = {
     'is 80%! To push your understanding to 100%, try these extra resources:',
   'วิดีโอสรุปแนะนำ (YouTube)': 'Recommended summary video (YouTube)',
   "YouTube 10 นาที: Hofstede's 6 Dimensions": "10-min YouTube: Hofstede's 6 Dimensions",
-  '▶️ เปิดดูบน YouTube': '▶️ Watch on YouTube',
-  '📖 อ่านสรุปย่อในศูนย์ทบทวน': '📖 Read the summary in the revision centre',
+  'เปิดดูบน YouTube': 'Watch on YouTube',
+  'อ่านสรุปย่อในศูนย์ทบทวน': 'Read the summary in the revision centre',
   'หนังสือ & E-Book แนะนำ': 'Recommended books & e-books',
   'หนังสืออ่านเสริม: Cultures and Organizations': 'Further reading: Cultures and Organizations',
   'Cultures and Organizations: Software of the Mind (บทที่ 2 หน้า 45-60)':
@@ -715,7 +715,6 @@ export const DICTIONARY_EN: Record<string, string> = {
   'สกัดวัตถุประสงค์และเนื้อหาประจำวิชาเรียบร้อยแล้ว':
     'Course objectives and content extracted',
   'คลิกเพื่อเปลี่ยนไฟล์ใหม่': 'Click to swap in a different file',
-  '🧪 ทดลองระบบด้วยไฟล์ตัวอย่าง:': '🧪 Try the system with a sample file:',
   'วิชา PIBM3301 (ธุรกิจข้ามชาติ)': 'PIBM3301 (International Business)',
   'วิชา MKT201 (การตลาดดิจิทัล)': 'MKT201 (Digital Marketing)',
   'สตูดิโอสร้างสื่อการสอน (AI Studio)': 'Teaching Material Studio (AI Studio)',
@@ -741,8 +740,6 @@ export const DICTIONARY_EN: Record<string, string> = {
   'สื่ออุปกรณ์:': 'Materials:',
   'ข้อควรระวังสำหรับเด็กต่างคณะ:': 'Watch-outs for students from other faculties:',
   'คำแนะนำการสอนคลาสเรียนข้ามคณะ': 'Tips for teaching a cross-faculty class',
-  '✨ สร้างสื่อการสอน': '✨ Generate teaching materials',
-  '⚡ ส่งเข้าคาบเรียนสด': '⚡ Send to the live class',
 
   /* ----------------------------------- studio: sections & faculties -- */
   'เศรษฐศาสตร์': 'Economics',
@@ -758,8 +755,8 @@ export const DICTIONARY_EN: Record<string, string> = {
   'คณะในคลาสเรียนนี้:': 'Faculties in this class:',
 
   /* ------------------------------------------ studio: generation flow -- */
-  '📂 วิชาการตลาดดิจิทัล • ลากไปวางได้เลย':
-    '📂 Digital Marketing course · Drag and drop',
+  'วิชาการตลาดดิจิทัล • ลากไปวางได้เลย':
+    'Digital Marketing course · Drag and drop',
 
   /* -------------------------------------------------- exams page only -- */
   'สร้างข้อสอบ AI (Exam Generator)': 'AI Exam Generator',
@@ -773,20 +770,19 @@ export const DICTIONARY_EN: Record<string, string> = {
   '✓ สร้างข้อสอบสำเร็จ': '✓ Questions generated',
   'สกัดได้ Pre-test 5 ข้อ + Post-test 5 ข้อ พร้อมวิเคราะห์จุดหลงผิดรายคณะ':
     '5 pre-test + 5 post-test questions with per-faculty misconception analysis',
-  '🚀 นำไปใช้ในคาบเรียนเลย': '🚀 Use in a live class now',
+  'นำไปใช้ในคาบเรียนเลย': 'Use in a live class now',
   'เปลี่ยนไฟล์ใหม่': 'Change file',
-  '📂 ไฟล์ข้อสอบโซ่อุปทาน • ลากไปวางได้เลย':
-    '📂 Supply chain exam file · Drag and drop',
+  'ไฟล์ข้อสอบโซ่อุปทาน • ลากไปวางได้เลย':
+    'Supply chain exam file · Drag and drop',
   'ข้อสอบชุดนี้ส่งตรงไปยังระบบ:': 'These questions are sent to the system:',
   'ข้อสอบที่สร้างจะแปลงเป็น Speed Quiz สำหรับท้าดวลสดในคลาส และคะแนนจะสรุปแยกตามคณะเข้าสู่แดชบอร์ดโดยอัตโนมัติ':
     'Generated questions become Speed Quizzes for live class battles, and scores are automatically broken down by faculty in the dashboard',
-  '📝 Pre-test (5 ข้อ)': '📝 Pre-test (5 questions)',
-  '🎯 Post-test (5 ข้อ)': '🎯 Post-test (5 questions)',
-  '💡 จุดหลงผิดรายคณะ': '💡 Per-faculty misconceptions',
+  'Pre-test (5 ข้อ)': 'Pre-test (5 questions)',
+  'Post-test (5 ข้อ)': 'Post-test (5 questions)',
+  'จุดหลงผิดรายคณะ': 'Per-faculty misconceptions',
   'ชุดข้อสอบ Pre-test (วัดก่อนเรียน)': 'Pre-test (before class)',
   'ชุดข้อสอบ Post-test (วัดหลังเรียน)': 'Post-test (after class)',
   '+ สร้างเพิ่ม': '+ Generate more',
-  '💡 จุดหลงผิด:': '💡 Misconception:',
   'การวิเคราะห์จุดหลงผิดที่ AI คาดการณ์ (Misconception Map)':
     'AI-predicted misconception analysis (Misconception Map)',
   'ช่วยอาจารย์เน้นย้ำเนื้อหาก่อนเริ่มทำกิจกรรม Active Learning':
@@ -989,7 +985,7 @@ export const DICTIONARY_EN: Record<string, string> = {
   กำหนดส่งการบ้าน: 'Homework due',
   ส่งภายใน: 'Due by',
   ไม่มีตารางสอนหรือการบ้านในวันนี้: 'No classes or homework on this day',
-  'ยินดีต้อนรับกลับครับ, อาจารย์! 👋': 'Welcome back, Professor! 👋',
+  'ยินดีต้อนรับกลับครับ, อาจารย์!': 'Welcome back, Professor!',
   '(รวมนักศึกษา': '(total',
   'คน จาก 3 กลุ่มเรียน)': 'students across 3 sections)',
   'ส่งออกรายงาน PDF เรียบร้อยแล้ว!': 'PDF report exported!',
@@ -1013,10 +1009,10 @@ export const DICTIONARY_EN: Record<string, string> = {
   งานที่ค้างส่ง: 'Overdue work',
   ขาดคะแนน: 'Points missing',
   ดำเนินการ: 'Action',
-  '🎉 นักศึกษาในกลุ่มนี้ส่งงานครบทุกคนแล้ว!': '🎉 Everyone in this group has submitted!',
+  'นักศึกษาในกลุ่มนี้ส่งงานครบทุกคนแล้ว!': 'Everyone in this group has submitted!',
   คะแนน: 'pts',
   '✓ เตือนแล้ว': '✓ Reminded',
-  '📲 สะกิดเตือน': '📲 Nudge',
+  สะกิดเตือน: 'Nudge',
   'ความเข้าใจรายสัปดาห์ (พัฒนาการย้อนหลัง 6 สัปดาห์ แยกทุกคณะ)': 'Weekly understanding (6-week trend by faculty)',
   'แสดงเปรียบเทียบพัฒนาการสัปดาห์ที่ 1 - 6 ของทั้ง 5 คณะวิชาอย่างชัดเจน':
     'Compares progress from Week 1 to Week 6 across all 5 faculties',
@@ -1129,7 +1125,7 @@ export const PATTERN_RULES: { re: RegExp; to: string }[] = [
   { re: /^ครั้ง$/, to: 'times' },
   { re: /^(\d+)\s*จุด$/, to: '$1 pts' },
   { re: /^(\d+)\s*นาที$/, to: '$1 min' },
-  { re: /^📄\s*ไฟล์ที่ใช้:$/, to: '📄 File in use:' },
+  { re: /^ไฟล์ที่ใช้:$/, to: 'File in use:' },
   { re: /^วิเคราะห์จากผลคะแนนของคุณ$/, to: 'Based on your scores' },
   { re: /^ปี$/, to: 'Year' },
   { re: /^เข้าแข่งในชื่อ (.+)$/, to: 'Playing as $1' },

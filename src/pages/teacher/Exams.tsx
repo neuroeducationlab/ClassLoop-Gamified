@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 const DIFFICULTY_META: Record<string, { label: string; chip: string }> = {
   easy: { label: 'ง่าย', chip: 'bg-pink-50 text-pink-600 border border-pink-200' },
@@ -260,7 +261,8 @@ export default function Exams() {
                     onClick={() => navigate('/teacher/live')}
                     className="rounded-2xl bg-pink-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-pink-700 transition-all cursor-pointer"
                   >
-                    🚀 นำไปใช้ในคาบเรียนเลย
+                    <GameIcon name="rocket" className="mr-1" />
+                    นำไปใช้ในคาบเรียนเลย
                   </button>
                   <button
                     type="button"
@@ -293,7 +295,7 @@ export default function Exams() {
                       Chapter5_SupplyChain.docx
                     </p>
                     <p className="text-xs font-bold text-grey-500 mt-0.5">
-                      📂 ไฟล์ข้อสอบโซ่อุปทาน • ลากไปวางได้เลย
+                      ไฟล์ข้อสอบโซ่อุปทาน • ลากไปวางได้เลย
                     </p>
                   </div>
                 </div>
@@ -330,7 +332,8 @@ export default function Exams() {
                     : 'text-grey-600 hover:text-ink hover:bg-grey-100'
                 )}
               >
-                <span>📝 Pre-test (5 ข้อ)</span>
+                <GameIcon name="notepad" />
+                <span>Pre-test (5 ข้อ)</span>
               </button>
               <button
                 type="button"
@@ -342,7 +345,8 @@ export default function Exams() {
                     : 'text-grey-600 hover:text-ink hover:bg-grey-100'
                 )}
               >
-                <span>🎯 Post-test (5 ข้อ)</span>
+                <GameIcon name="target" />
+                <span>Post-test (5 ข้อ)</span>
               </button>
               <button
                 type="button"
@@ -354,7 +358,8 @@ export default function Exams() {
                     : 'text-grey-600 hover:text-ink hover:bg-grey-100'
                 )}
               >
-                <span>💡 จุดหลงผิดรายคณะ</span>
+                <GameIcon name="idea" />
+                <span>จุดหลงผิดรายคณะ</span>
               </button>
             </div>
 
@@ -520,7 +525,9 @@ export default function Exams() {
                         </div>
 
                         <p className="text-xs text-grey-600 bg-canvas p-2.5 rounded-xl border border-grey-300/40 mt-1 font-medium">
-                          <span className="font-bold text-pink-600">💡 จุดหลงผิด:</span>{' '}
+                          <span className="font-bold text-pink-600">
+                          <GameIcon name="idea" /> จุดหลงผิด:
+                        </span>{' '}
                           {q.misconception}
                         </p>
                       </div>

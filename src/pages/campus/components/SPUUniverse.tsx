@@ -3,13 +3,14 @@ import { useFrame } from '@react-three/fiber'
 import { Stars } from '@react-three/drei'
 import { Vector3, type Group, type Mesh } from 'three'
 import { MRT_LINE, PLAZA_CENTER } from '@/data/buildings'
+import type { IconName } from '@/components/icons/GameIcon'
 
 export type TimeOfDay = 'morning' | 'midday' | 'evening' | 'night'
 
 export interface SkyPreset {
   id: TimeOfDay
   label: { th: string; en: string }
-  icon: string
+  icon: IconName
   skyGradient: [string, string, string] // top, mid, horizon
   fogColor: string
   fogNear: number
@@ -28,7 +29,7 @@ export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
   morning: {
     id: 'morning',
     label: { th: 'เช้า', en: 'Morning' },
-    icon: '🌅',
+    icon: 'sunrise',
     skyGradient: ['#1E40AF', '#60A5FA', '#FED7AA'],
     fogColor: '#FED7AA',
     fogNear: 75,
@@ -45,7 +46,7 @@ export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
   midday: {
     id: 'midday',
     label: { th: 'กลางวัน', en: 'Midday' },
-    icon: '☀️',
+    icon: 'sun',
     skyGradient: ['#1D4ED8', '#3B82F6', '#BAE6FD'],
     fogColor: '#BAE6FD',
     fogNear: 85,
@@ -62,7 +63,7 @@ export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
   evening: {
     id: 'evening',
     label: { th: 'เย็น', en: 'Sunset' },
-    icon: '🌇',
+    icon: 'sunset',
     skyGradient: ['#2A2858', '#99355D', '#F59E0B'],
     fogColor: '#E68A65',
     fogNear: 50,
@@ -79,7 +80,7 @@ export const SKY_PRESETS: Record<TimeOfDay, SkyPreset> = {
   night: {
     id: 'night',
     label: { th: 'ค่ำ/ดวงดาว', en: 'Night' },
-    icon: '🌌',
+    icon: 'night',
     skyGradient: ['#070A14', '#0F172A', '#1E1B4B'],
     fogColor: '#0F172A',
     fogNear: 45,

@@ -4,6 +4,8 @@ import { Billboard } from '@react-three/drei'
 import { CanvasTexture, SRGBColorSpace, type Group } from 'three'
 import Avatar3D from './Avatar3D'
 import type { AvatarAura, AvatarHat, AvatarOutfit } from '@/context/AppContext'
+import type { IconName } from '@/components/icons/GameIcon'
+import { drawGameIcon } from '@/components/icons/drawGameIcon'
 
 export interface CampusNPC {
   id: string
@@ -13,7 +15,7 @@ export interface CampusNPC {
   facultyEn: string
   title: string
   titleEn: string
-  questIcon: string
+  questIcon: IconName
   color: string
   hat: AvatarHat
   outfit: AvatarOutfit
@@ -27,6 +29,7 @@ export interface CampusNPC {
   options: {
     label: string
     labelEn: string
+    icon: IconName
     action: 'xp' | 'navigate_arena' | 'navigate_faculty' | 'navigate_dorm' | 'open_shop' | 'close'
     rewardXP?: number
     rewardCoins?: number
@@ -45,7 +48,7 @@ export const CAMPUS_NPCS: CampusNPC[] = [
     facultyEn: 'Digital Media',
     title: 'เซียนคำศัพท์ Arena',
     titleEn: 'Flashcard Arena Champion',
-    questIcon: '⚔️',
+    questIcon: 'swords',
     color: '#06B6D4',
     hat: 'dj_headset',
     outfit: 'hoodie',
@@ -60,8 +63,9 @@ export const CAMPUS_NPCS: CampusNPC[] = [
       'Cross-Cultural concepts are huge on this exam! If you master Hofstede’s dimensions, you can chain 3x streaks for massive XP in the Arena.',
     options: [
       {
-        label: '💡 ขอทวนคำศัพท์ด่วน 1 ข้อ (+20 XP)',
-        labelEn: '💡 Quick Flashcard Drill (+20 XP)',
+        label: 'ขอทวนคำศัพท์ด่วน 1 ข้อ (+20 XP)',
+        labelEn: 'Quick Flashcard Drill (+20 XP)',
+        icon: 'idea',
         action: 'xp',
         rewardXP: 20,
         rewardCoins: 10,
@@ -69,16 +73,18 @@ export const CAMPUS_NPCS: CampusNPC[] = [
         feedbackEn: 'Awesome! High-Context cultures emphasize indirect communication and deep relational bonds. +20 XP awarded!',
       },
       {
-        label: '🏟️ นำทางฉันไปที่ Arena',
-        labelEn: '🏟️ Guide me to the Arena',
+        label: 'นำทางฉันไปที่ Arena',
+        labelEn: 'Guide me to the Arena',
+        icon: 'swords',
         action: 'navigate_arena',
         targetBuildingId: 'arena',
         feedback: 'จัดไป! ประตู Arena เปิดแล้ว ไปลุยคว้าแชมป์ลีดเดอร์บอร์ดเลย!',
         feedbackEn: 'Let’s go! Arena doors are open. Climb the weekly leaderboard!',
       },
       {
-        label: '👋 ไว้เจอกันใหม่นะ',
-        labelEn: '👋 See you around',
+        label: 'ไว้เจอกันใหม่นะ',
+        labelEn: 'See you around',
+        icon: 'wave',
         action: 'close',
         feedback: 'สู้ ๆ นะ แล้วเจอกันที่ลีดเดอร์บอร์ด!',
         feedbackEn: 'Good luck! See you on the leaderboard!',
@@ -93,7 +99,7 @@ export const CAMPUS_NPCS: CampusNPC[] = [
     facultyEn: 'Computer Engineering',
     title: 'รุ่นพี่สโมสรนิสิต',
     titleEn: 'Senior Peer Mentor',
-    questIcon: '📜',
+    questIcon: 'scroll',
     color: '#8B5CF6',
     hat: 'cyber_cat',
     outfit: 'suit',
@@ -108,8 +114,9 @@ export const CAMPUS_NPCS: CampusNPC[] = [
       'Building 1 holds the Cyber Lecture Amphitheater. Make sure you watch the pre-class video and tackle the Pre-Test before class. You will stack coins for the Boutique!',
     options: [
       {
-        label: '📚 ขอรับเคล็ดลับการเรียนล่วงหน้า (+25 XP)',
-        labelEn: '📚 Claim Study Pro-Tips (+25 XP)',
+        label: 'ขอรับเคล็ดลับการเรียนล่วงหน้า (+25 XP)',
+        labelEn: 'Claim Study Pro-Tips (+25 XP)',
+        icon: 'books',
         action: 'xp',
         rewardXP: 25,
         rewardCoins: 15,
@@ -117,16 +124,18 @@ export const CAMPUS_NPCS: CampusNPC[] = [
         feedbackEn: 'Pro-tip: 3 minutes of daily pre-tests guarantees an A+ grade! Claimed +25 XP & +15 Coins!',
       },
       {
-        label: '🏛️ นำทางฉันเข้าสู่อาคาร 1 (Faculty Hall)',
-        labelEn: '🏛️ Guide me into Building 1',
+        label: 'นำทางฉันเข้าสู่อาคาร 1 (Faculty Hall)',
+        labelEn: 'Guide me into Building 1',
+        icon: 'landmark',
         action: 'navigate_faculty',
         targetBuildingId: 'faculty',
         feedback: 'เดินตามทางไฟนีออนตรงไปหน้าอาคาร 1 ได้เลย!',
         feedbackEn: 'Follow the neon path straight to Building 1!',
       },
       {
-        label: '👍 ขอบคุณมากครับพี่',
-        labelEn: '👍 Thanks mentor',
+        label: 'ขอบคุณมากครับพี่',
+        labelEn: 'Thanks mentor',
+        icon: 'like',
         action: 'close',
         feedback: 'ขอให้สนุกกับการเก็บเควสต์ในมอ!',
         feedbackEn: 'Have fun conquering quests on campus!',
@@ -141,7 +150,7 @@ export const CAMPUS_NPCS: CampusNPC[] = [
     facultyEn: 'Communication Arts',
     title: 'บรรณารักษ์ & ผู้พิทักษ์ศาลานิรนาม',
     titleEn: 'Library Mentor & Sanctuary Keeper',
-    questIcon: '🎭',
+    questIcon: 'mask',
     color: '#EC4899',
     hat: 'crown',
     outfit: 'hoodie',
@@ -156,8 +165,9 @@ export const CAMPUS_NPCS: CampusNPC[] = [
       'The Learning Library has weekly syllabus summaries and review notes before exams. And if you are ever stuck, you can submit anonymous inquiries to the Guild Master in Bldg 10!',
     options: [
       {
-        label: '✨ รับหน้ากากปริศนา & เคล็ดลับทบทวนบทเรียน (+20 XP)',
-        labelEn: '✨ Equip Mystery Persona & Study Tips (+20 XP)',
+        label: 'รับหน้ากากปริศนา & เคล็ดลับทบทวนบทเรียน (+20 XP)',
+        labelEn: 'Equip Mystery Persona & Study Tips (+20 XP)',
+        icon: 'sparkles',
         action: 'xp',
         rewardXP: 20,
         rewardCoins: 10,
@@ -165,8 +175,9 @@ export const CAMPUS_NPCS: CampusNPC[] = [
         feedbackEn: 'Mystery persona equipped! Drop your inquiry inside Building 10 for another +15 XP!',
       },
       {
-        label: '🚪 นำทางฉันไปที่ศาลานิรนาม (Heart Dorm)',
-        labelEn: '🚪 Guide me to Secret Sanctuary',
+        label: 'นำทางฉันไปที่ศาลานิรนาม (Heart Dorm)',
+        labelEn: 'Guide me to Secret Sanctuary',
+        icon: 'door',
         action: 'navigate_dorm',
         targetBuildingId: 'dorm',
         feedback: 'กำลังมุ่งหน้าสู่ศาลานิรนาม อาคาร 10!',
@@ -175,6 +186,7 @@ export const CAMPUS_NPCS: CampusNPC[] = [
       {
         label: 'ไว้แวะมาใหม่นะ',
         labelEn: 'I will check back soon',
+        icon: 'wave',
         action: 'close',
         feedback: 'ขอให้สนุกกับการอ่านหนังสือและทำภารกิจนะ!',
         feedbackEn: 'Have a wonderful study session and quest run!',
@@ -189,7 +201,7 @@ export const CAMPUS_NPCS: CampusNPC[] = [
     facultyEn: 'SPU Innovation Center',
     title: 'ไกด์นำทางดิจิทัล',
     titleEn: 'Campus Smart Concierge',
-    questIcon: '🤖',
+    questIcon: 'bot',
     color: '#E89BC4',
     hat: 'grad',
     outfit: 'default',
@@ -204,15 +216,17 @@ export const CAMPUS_NPCS: CampusNPC[] = [
       'You can freely roam SPU campus with WASD or mouse drag. Earn study coins across all buildings to customize your 3D outfit in the Boutique!',
     options: [
       {
-        label: '🛍️ เปิดร้านค้าแฟชั่น SPU Boutique ตอนนี้',
-        labelEn: '🛍️ Open SPU Boutique Shop',
+        label: 'เปิดร้านค้าแฟชั่น SPU Boutique ตอนนี้',
+        labelEn: 'Open SPU Boutique Shop',
+        icon: 'shop',
         action: 'open_shop',
         feedback: 'เปิดตู้เสื้อผ้าแฟชั่น SPU Boutique แล้ว!',
         feedbackEn: 'Opening SPU Boutique Fashion Shop!',
       },
       {
-        label: '🪙 รับโบนัสต้อนรับสู่แคมปัส (+30 Coins)',
-        labelEn: '🪙 Claim Welcome Coins (+30 Coins)',
+        label: 'รับโบนัสต้อนรับสู่แคมปัส (+30 Coins)',
+        labelEn: 'Claim Welcome Coins (+30 Coins)',
+        icon: 'coin',
         action: 'xp',
         rewardXP: 10,
         rewardCoins: 30,
@@ -222,6 +236,7 @@ export const CAMPUS_NPCS: CampusNPC[] = [
       {
         label: 'เข้าใจแล้ว ขอบคุณมาก',
         labelEn: 'Got it, thank you',
+        icon: 'wave',
         action: 'close',
         feedback: 'ขอให้สนุกกับการผจญภัยในแคมปัส SPU ครับ!',
         feedbackEn: 'Enjoy your adventure across SPU campus!',
@@ -321,8 +336,7 @@ function nametagTexture(npc: CampusNPC, lang: 'th' | 'en') {
   g.arc(256, 40, 32, 0, Math.PI * 2)
   g.fill()
   g.stroke()
-  g.font = '34px sans-serif'
-  g.fillText(npc.questIcon, 256, 42)
+  drawGameIcon(g, npc.questIcon, 256, 40, 34, '#FDE68A')
   // name pill
   const name = lang === 'th' ? npc.name : npc.nameEn
   const faculty = lang === 'th' ? npc.faculty : npc.facultyEn

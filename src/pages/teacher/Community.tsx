@@ -14,6 +14,8 @@ import {
 import { useApp } from '@/context/AppContext'
 import { initials } from '@/components/AutoTranslate'
 import { cn } from '@/lib/utils'
+import { GameIcon } from '@/components/icons/GameIcon'
+import type { Reactions } from '@/data/seed-data'
 
 export default function Community() {
   const { posts, students, addPost, addReply, lang } = useApp()
@@ -223,12 +225,12 @@ export default function Community() {
 
                 {/* Emoji Reactions Static Counts */}
                 <div className="flex items-center gap-3 pt-1 text-xs">
-                  {Object.entries(post.reactions).map(([emoji, count]) => (
+                  {(Object.entries(post.reactions) as [keyof Reactions, number][]).map(([emoji, count]) => (
                     <span
                       key={emoji}
                       className="flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-grey-600 border border-grey-300/40"
                     >
-                      <span>{emoji}</span>
+                      <GameIcon name={emoji} />
                       <span>{count}</span>
                     </span>
                   ))}

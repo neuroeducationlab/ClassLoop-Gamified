@@ -1,5 +1,6 @@
 import { Scroll, CheckCircle2, ArrowRight, Clock, X } from 'lucide-react'
 import { useApp, type Mission } from '@/context/AppContext'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 export default function MissionTrackerWidget({
   onSelectMission,
@@ -66,9 +67,10 @@ export default function MissionTrackerWidget({
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">
-                          {isExam ? '⚔️' : isQuiz ? '🎯' : mission.type === 'drill' ? '🧠' : '📝'}
-                        </span>
+                        <GameIcon
+                          name={isExam ? 'swords' : isQuiz ? 'target' : mission.type === 'drill' ? 'brain' : 'notepad'}
+                          className="text-sm text-pink-300"
+                        />
                         <h4 className="font-bold text-xs leading-tight text-white group-hover:text-pink-300 transition-colors">
                           {lang === 'en' && mission.titleEn ? mission.titleEn : mission.title}
                         </h4>
@@ -88,7 +90,7 @@ export default function MissionTrackerWidget({
                       </span>
                       <span className="flex items-center gap-0.5 text-yellow-300 font-extrabold text-[10px]">
                         <span>+{mission.coinReward}</span>
-                        <span className="text-[9px]">🪙</span>
+                        <GameIcon name="coin" className="text-[9px]" />
                       </span>
                       {mission.dueDate && (
                         <span className="flex items-center gap-0.5 text-white/50 text-[10px]">

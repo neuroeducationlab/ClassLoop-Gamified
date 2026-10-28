@@ -20,6 +20,7 @@ import {
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 import type { ExpectationSticky } from '@/data/seed-data'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 export default function Review() {
   const {
@@ -274,7 +275,10 @@ export default function Review() {
                 <Lock className="h-4 w-4" />
               </div>
               <span className="text-xs font-bold text-grey-600">3. Audio Book</span>
-              <span className="text-[9px] text-pink-600 font-bold mt-0.5">🔒 ล็อคไว้อยู่</span>
+              <span className="mt-0.5 flex items-center gap-0.5 text-[9px] font-bold text-pink-600">
+                      <GameIcon name="lock" />
+                      ล็อคไว้อยู่
+                    </span>
             </button>
           </div>
         </div>

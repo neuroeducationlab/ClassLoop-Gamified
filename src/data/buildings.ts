@@ -9,6 +9,8 @@
  * spacing is widened so labels and clicks never overlap on video.
  */
 
+import type { IconName } from '@/components/icons/GameIcon'
+
 export type BuildingId = 'entry' | 'faculty' | 'arena' | 'dorm' | 'data' | 'plan' | 'library' | 'union' | 'lounge'
 
 /** Low-poly silhouette used by the 3D campus — one per building so each reads at a glance. */
@@ -19,7 +21,7 @@ export type Building = {
   name: { th: string; en: string }
   /** One-line description shown on hover / in the door prompt. */
   description: { th: string; en: string }
-  emoji: string
+  icon: IconName
   /** Where it sits on the real SPU campus. */
   spuRef: string
   color: string
@@ -99,7 +101,7 @@ export const BUILDINGS: Building[] = [
       th: 'ประตูทางเข้าหลัก เชื่อมต่อจากสถานีรถไฟฟ้าสายสีเขียวสู่ลานกลางแคมปัส SPU',
       en: 'Main pedestrian entrance connecting MRT Sai Ma Exit 2 directly to the campus plaza.',
     },
-    emoji: '🚪',
+    icon: 'door',
     spuRef: 'MRT Exit 2',
     color: '#F25F5C',
     shape: 'gate',
@@ -114,7 +116,7 @@ export const BUILDINGS: Building[] = [
       th: 'อาคารเรียนหลักสำหรับบรรยาย วิดีโอก่อนเรียน ควิซ และแบบทดสอบเก็บคะแนน',
       en: 'Primary lecture building — pre-class videos, interactive quizzes, and graded assessments.',
     },
-    emoji: '🏫',
+    icon: 'school',
     spuRef: 'bldg 1/11',
     color: '#7C9BE8',
     shape: 'hall',
@@ -129,7 +131,7 @@ export const BUILDINGS: Building[] = [
       th: 'ลานประลองและกิจกรรมกลางแจ้ง แข่งขันตอบคำถาม ชิงอันดับลีดเดอร์บอร์ด',
       en: 'Open-air competition plaza — word games, team challenges, and a live class leaderboard.',
     },
-    emoji: '🏆',
+    icon: 'trophy',
     spuRef: 'lawn by the pond',
     color: '#E89BC4',
     shape: 'arena',
@@ -144,7 +146,7 @@ export const BUILDINGS: Building[] = [
       th: 'หอพักใจ ส่งความคิดเห็นและแชทกับอาจารย์แบบไม่เปิดเผยตัวตน สไตล์ RPG',
       en: 'Anonymous feedback channel — share thoughts with your instructor confidentially.',
     },
-    emoji: '💬',
+    icon: 'chat',
     spuRef: 'bldg 6',
     color: '#4FB0A5',
     shape: 'house',
@@ -159,7 +161,7 @@ export const BUILDINGS: Building[] = [
       th: 'ศูนย์วิเคราะห์ข้อมูลสถิติผู้เรียน วิเคราะห์ Gap ความรู้ และคลังข้อสอบสำหรับอาจารย์',
       en: 'Faculty-only analytics hub — student performance charts, gap analysis, and research data.',
     },
-    emoji: '📊',
+    icon: 'chart',
     spuRef: 'bldg 9',
     color: '#F2994A',
     shape: 'hub',
@@ -174,7 +176,7 @@ export const BUILDINGS: Building[] = [
       th: 'สตูดิโอออกแบบแผนการสอนด้วย AI สรุปกิจกรรมและสื่อการสอน 1-คลิก',
       en: 'AI-assisted curriculum design room — upload a syllabus and get instant activity suggestions.',
     },
-    emoji: '🗺️',
+    icon: 'map',
     spuRef: 'bldg 5',
     color: '#7C9BE8',
     shape: 'office',
@@ -189,7 +191,7 @@ export const BUILDINGS: Building[] = [
       th: 'ศูนย์ทบทวนบทเรียนและหลักสูตรรายวิชา ทบทวนก่อนสอบ ดูเป้าหมายแต่ละสัปดาห์',
       en: 'Review centre and course syllabus — revise before the test and see each week’s goals.',
     },
-    emoji: '📚',
+    icon: 'books',
     spuRef: 'library',
     color: '#5B8DEF',
     shape: 'library',
@@ -204,7 +206,7 @@ export const BUILDINGS: Building[] = [
       th: 'ชุมชนแลกเปลี่ยนเรียนรู้และโปรไฟล์ของคุณ ถาม-ตอบ แชร์โน้ต ดูความสำเร็จ',
       en: 'Community board and your profile — ask, share notes and see your achievements.',
     },
-    emoji: '🎪',
+    icon: 'tent',
     spuRef: 'student union',
     color: '#9B6BFF',
     shape: 'union',
@@ -219,7 +221,7 @@ export const BUILDINGS: Building[] = [
       th: 'เฉพาะอาจารย์ ศูนย์รวมเครื่องมือครู ออกแบบบทเรียน สถิติ ข้อสอบ สอนสด รายชื่อ และเสียงนักศึกษา',
       en: 'Staff only — every teaching tool in one room: lesson design, stats, exams, live class, roster and student voice.',
     },
-    emoji: '☕',
+    icon: 'coffee',
     spuRef: 'staff room',
     color: '#E0B04B',
     shape: 'lounge',

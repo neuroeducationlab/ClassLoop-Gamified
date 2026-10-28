@@ -15,6 +15,7 @@ import { useApp } from '@/context/AppContext'
 import Section from './Section'
 import AvatarShopModal from '../components/AvatarShopModal'
 import { playClickSound, playCoinSound } from '../soundEngine'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 /**
  * GateRoom: SPU Cybernetic Gate & Virtual Student Identity Hub
@@ -76,7 +77,7 @@ export default function GateRoom() {
               className="flex h-20 w-20 items-center justify-center rounded-2xl"
               style={{ backgroundColor: avatar?.color ?? '#E89BC4' }}
             >
-              🧑‍🎓
+              <GameIcon name="gradCap" />
             </span>
             <span className="absolute -bottom-2 -right-1 rounded-full border border-pink-400/50 bg-[#16182E] px-2 py-0.5 text-[10px] font-extrabold text-pink-300 shadow">
               Lv.{level}
@@ -122,7 +123,9 @@ export default function GateRoom() {
             </div>
             <div>
               <p className="text-[11px] text-white/60">{lang === 'th' ? 'เหรียญสะสม' : 'SPU Coins'}</p>
-              <p className="text-base font-extrabold text-amber-300">🪙 {studentCoins}</p>
+              <p className="flex items-center gap-1 text-base font-extrabold text-amber-300">
+                <GameIcon name="coin" /> {studentCoins}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">

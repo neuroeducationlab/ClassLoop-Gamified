@@ -732,7 +732,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isAnonymous,
       body: trimmed,
       kind: kind || 'คำถาม',
-      reactions: { '👍': 0, '🤔': 0, '❤️': 0, '💡': 0 },
+      reactions: { like: 0, think: 0, love: 0, idea: 0 },
       createdAt: 'เมื่อสักครู่',
       replies: [],
       ...(isAnonymous

@@ -48,6 +48,7 @@ import {
   isSoundMuted,
   toggleSoundMute,
 } from './soundEngine'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 const BUILDING_ICON: Record<string, LucideIcon> = {
   entry: DoorOpen,
@@ -326,7 +327,7 @@ export default function Campus3D() {
     (b: BuildingConfig, opts?: { silent?: boolean }) => {
       lastSpot = doorPoint(b)
       if (b.studentSees === null) {
-        setToast(`${b.emoji} ${b.name[lang]} — ${t.teachersOnly}`)
+        setToast(`${b.name[lang]} — ${t.teachersOnly}`)
         return
       }
       if (!opts?.silent) playPortalSound()
@@ -465,7 +466,7 @@ export default function Campus3D() {
         <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-black/55 px-4 py-3 text-white backdrop-blur-md border border-white/15 shadow-xl">
           {isTeacher ? (
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-600 text-white shadow-md text-lg shrink-0">
-              🎓
+              <GameIcon name="gradCap" />
             </div>
           ) : (
             <span className="h-9 w-9 rounded-full border-2 border-white shadow shrink-0" style={{ backgroundColor: me.color }} />
@@ -493,7 +494,7 @@ export default function Campus3D() {
             className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/55 transition-colors shadow cursor-pointer"
             title={`Time of Day: ${SKY_PRESETS[timeOfDay].label.en} (${SKY_PRESETS[timeOfDay].label.th})`}
           >
-            <span className="text-sm">{SKY_PRESETS[timeOfDay].icon}</span>
+            <GameIcon name={SKY_PRESETS[timeOfDay].icon} className="text-sm" />
             <span className="hidden sm:inline font-bold">{SKY_PRESETS[timeOfDay].label[lang]}</span>
           </button>
 
@@ -526,7 +527,7 @@ export default function Campus3D() {
                 aria-label={t.map2d}
                 className="flex items-center gap-1.5 rounded-xl bg-black/40 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md border border-white/10 hover:bg-black/50 transition-colors shadow"
               >
-                <span>🗺️</span>
+                <GameIcon name="map" />
                 <span className="hidden sm:inline">{t.map2d}</span>
               </Link>
               <Link
@@ -546,7 +547,7 @@ export default function Campus3D() {
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
                 title={`SPU Boutique · ${t.shop}`}
               >
-                <span className="text-sm">🪙</span>
+                <GameIcon name="coin" className="text-sm text-amber-300" />
                 <span>{studentCoins}</span>
                 <span className="hidden sm:inline font-semibold text-amber-200/90">{t.coins}</span>
               </button>
@@ -624,7 +625,7 @@ export default function Campus3D() {
         {/* Door prompt with authentic name & clear description */}
         {nearDoor && !isArriving && (
           <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-black/75 px-5 py-2.5 text-white backdrop-blur-md border border-white/20 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <span className="text-xl">{nearDoor.emoji}</span>
+            <GameIcon name={nearDoor.icon} className="text-xl" />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold">{nearDoor.name[lang]}</span>
               <span className="text-[11px] text-white/75 hidden sm:block max-w-sm">{nearDoor.description[lang]}</span>
@@ -644,7 +645,7 @@ export default function Campus3D() {
         {/* NPC prompt with avatar title & speech prompt */}
         {!nearDoor && nearNPC && !isArriving && (
           <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-amber-400/50 bg-black/85 px-5 py-2.5 text-white shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <span className="text-xl animate-bounce">{nearNPC.questIcon}</span>
+            <GameIcon name={nearNPC.questIcon} className="text-xl text-amber-300 animate-bounce" />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-black text-amber-300">
                 {lang === 'th' ? `พบ ${nearNPC.name}` : `Meet ${nearNPC.nameEn}`}
@@ -773,11 +774,11 @@ export default function Campus3D() {
           onClose={() => setActiveNPC(null)}
           onAddXP={(amt) => {
             addXP(amt)
-            setToast(lang === 'th' ? `✨ ได้รับ +${amt} XP!` : `✨ Earned +${amt} XP!`)
+            setToast(lang === 'th' ? `ได้รับ +${amt} XP!` : `Earned +${amt} XP!`)
           }}
           onAddCoins={(amt) => {
             addCoins(amt)
-            setToast(lang === 'th' ? `🪙 ได้รับ +${amt} SPU Coins!` : `🪙 Earned +${amt} Coins!`)
+            setToast(lang === 'th' ? `ได้รับ +${amt} SPU Coins!` : `Earned +${amt} Coins!`)
           }}
           onNavigateToBuilding={(id) => {
             const b = BUILDINGS.find((x) => x.id === id)
@@ -799,7 +800,7 @@ export default function Campus3D() {
           className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 text-white animate-in fade-in duration-500"
           style={{ backgroundColor: entering.color }}
         >
-          <span className="text-7xl animate-in zoom-in-50 duration-500">{entering.emoji}</span>
+          <GameIcon name={entering.icon} className="text-7xl animate-in zoom-in-50 duration-500" />
           <p className="text-2xl font-bold animate-in slide-in-from-bottom-4 duration-500">{entering.name[lang]}</p>
           <p className="text-sm text-white/85 max-w-sm text-center animate-in slide-in-from-bottom-4 duration-700 px-4">
             {entering.description[lang]}

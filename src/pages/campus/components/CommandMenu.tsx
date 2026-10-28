@@ -1,9 +1,10 @@
 import { useRef, type KeyboardEvent } from 'react'
 import { playDialogBlip, playPortalSound } from '../soundEngine'
+import { GameIcon, type IconName } from '@/components/icons/GameIcon'
 
 export type MenuItem = {
   id: string
-  icon: string
+  icon: IconName
   label: string
   /** What you do there, in plain words. */
   does: string
@@ -104,11 +105,11 @@ export default function CommandMenu({
 
               {/* Cursor indicator */}
               <span className={`w-3.5 shrink-0 text-xs font-black text-[#F2C879] transition-opacity mt-0.5 ${on ? 'opacity-100 translate-x-0.5' : 'opacity-0'}`}>
-                ▶
+                <GameIcon name="play" className="fill-current" />
               </span>
 
               {/* Icon */}
-              <span className="text-xl leading-none shrink-0 mt-0.5">{it.icon}</span>
+              <GameIcon name={it.icon} className="text-xl leading-none mt-0.5" />
 
               {/* Text content */}
               <div className="min-w-0 flex-1">

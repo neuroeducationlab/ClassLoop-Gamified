@@ -34,6 +34,7 @@ import {
   getStudentAssignments,
 } from '@/data/seed-data'
 import { cn } from '@/lib/utils'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 /* ------------------------------------------------------------- constants -- */
 
@@ -429,7 +430,8 @@ export default function Dashboard() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-ink tracking-tight flex items-center gap-2">
-            <span>ยินดีต้อนรับกลับครับ, อาจารย์! 👋</span>
+            <span>ยินดีต้อนรับกลับครับ, อาจารย์!</span>
+            <GameIcon name="wave" className="text-amber-500" />
           </h1>
           <p className="text-sm font-medium text-grey-600 mt-0.5">
             {course.code} · {course.name} (รวมนักศึกษา {students.length} คน จาก 3 กลุ่มเรียน)
@@ -609,7 +611,8 @@ export default function Dashboard() {
                     {missingStudents.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="py-8 text-center text-grey-500 font-bold">
-                          🎉 นักศึกษาในกลุ่มนี้ส่งงานครบทุกคนแล้ว!
+                          <GameIcon name="party" className="mr-1.5 text-pink-500" />
+                          นักศึกษาในกลุ่มนี้ส่งงานครบทุกคนแล้ว!
                         </td>
                       </tr>
                     ) : (
@@ -671,7 +674,14 @@ export default function Dashboard() {
                                     : 'bg-pink-600 text-white shadow-xs hover:bg-pink-700'
                                 )}
                               >
-                                {isReminded ? '✓ เตือนแล้ว' : '📲 สะกิดเตือน'}
+                                {isReminded ? (
+                                  '✓ เตือนแล้ว'
+                                ) : (
+                                  <>
+                                    <GameIcon name="phone" className="mr-1" />
+                                    สะกิดเตือน
+                                  </>
+                                )}
                               </button>
                             </td>
                           </tr>
@@ -807,7 +817,7 @@ export default function Dashboard() {
                       <span>ทำได้ดี: <strong className="text-ink">{item.strongTopic}</strong></span>
                     </div>
                     <div className="flex items-start gap-1.5 text-rose-600 font-bold">
-                      <span className="shrink-0">⚠️</span>
+                      <GameIcon name="alert" className="mt-0.5" />
                       <span>ควรพัฒนา: <strong className="text-ink">{item.improveTopic}</strong></span>
                     </div>
                   </div>

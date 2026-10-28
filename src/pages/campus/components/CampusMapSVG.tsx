@@ -11,6 +11,7 @@ import {
   type BuildingShape,
 } from '@/data/buildings'
 import { doorPoint } from '../geometry'
+import { GAME_ICONS } from '@/components/icons/GameIcon'
 
 /** Footprint (width, depth) of each shape on the top-down map, in world units. */
 const FOOTPRINT: Record<Exclude<BuildingShape, 'arena'>, [number, number]> = {
@@ -230,6 +231,7 @@ function MapBuildingItem({
 }) {
   const [x, z] = b.position
   const clickable = Boolean(onOpen)
+  const BuildingIcon = GAME_ICONS[b.icon]
 
   const body =
     b.shape === 'arena' ? (
@@ -257,9 +259,7 @@ function MapBuildingItem({
         <circle cx={x} cy={z} r={2.9} fill="none" stroke="#FFFFFF" strokeWidth={0.2} className="animate-pulse" />
       )}
       {body}
-      <text x={x} y={z + 0.35} fontSize={1.3} textAnchor="middle">
-        {b.emoji}
-      </text>
+      <BuildingIcon x={x - 0.65} y={z - 0.65} size={1.3} color="#FFFFFF" strokeWidth={2.5} aria-hidden />
       {showLabels && (
         <text
           x={x}

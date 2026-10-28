@@ -9,6 +9,7 @@ import { isLowPower } from './lowPower'
 import CommandMenu from './components/CommandMenu'
 import InteriorScene, { type LabelMap } from './interior/InteriorScene'
 import HoloPanel from './interior/HoloPanel'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 /**
  * Inside a campus building, at /campus/:buildingId: a 3D room in the building's
@@ -119,7 +120,7 @@ function Room({ building }: { building: Building }) {
                 hovered === s.id || focused === s.id ? 'scale-110 border-white/70 bg-white/25' : 'border-white/30 bg-black/45'
               }`}
             >
-              <span>{s.icon}</span>
+              <GameIcon name={s.icon} />
               {s.label[lang]}
             </button>
           </div>
@@ -147,9 +148,7 @@ function Room({ building }: { building: Building }) {
             </button>
           )}
           <div className="flex items-center gap-2.5 rounded-2xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur">
-            <span className="text-2xl" aria-hidden>
-              {building.emoji}
-            </span>
+            <GameIcon name={building.icon} className="text-2xl" />
             <div className="min-w-0">
               <h1 className="text-sm font-bold leading-tight sm:text-base">{building.name[lang]}</h1>
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65">SPU · {building.spuRef}</p>
@@ -166,8 +165,9 @@ function Room({ building }: { building: Building }) {
           >
             {muted ? <VolumeX className="h-4 w-4 text-rose-300" /> : <Volume2 className="h-4 w-4 text-emerald-300" />}
           </button>
-          <span className="rounded-full border border-white/25 bg-black/40 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
-            {role === 'teacher' ? (lang === 'th' ? '🧑‍🏫 โหมดอาจารย์' : '🧑‍🏫 Faculty Mode') : lang === 'th' ? '🧑‍🎓 โหมดนักศึกษา' : '🧑‍🎓 Student Mode'}
+          <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
+            <GameIcon name={role === 'teacher' ? 'teacher' : 'gradCap'} />
+            {role === 'teacher' ? (lang === 'th' ? 'โหมดอาจารย์' : 'Faculty Mode') : lang === 'th' ? 'โหมดนักศึกษา' : 'Student Mode'}
           </span>
         </div>
       </header>
@@ -195,11 +195,11 @@ function Locked({ staffOnly }: { staffOnly: boolean }) {
   const { role, lang, setRole } = useApp()
   const title = staffOnly
     ? lang === 'th'
-      ? '🔒 เฉพาะอาจารย์ · Staff only'
-      : '🔒 Staff only'
+      ? 'เฉพาะอาจารย์ · Staff only'
+      : 'Staff only'
     : lang === 'th'
-      ? '🔒 ห้องนี้สำหรับนักศึกษา'
-      : '🔒 A student space'
+      ? 'ห้องนี้สำหรับนักศึกษา'
+      : 'A student space'
   const body = staffOnly
     ? lang === 'th'
       ? 'ห้องนี้เป็นพื้นที่ทำงานของอาจารย์ นักศึกษามองเห็นได้แต่เข้าใช้ไม่ได้'
@@ -212,13 +212,17 @@ function Locked({ staffOnly }: { staffOnly: boolean }) {
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/40 bg-amber-500/20 text-amber-400">
         <Lock className="h-7 w-7" />
       </div>
-      <p className="text-lg font-extrabold">{title}</p>
+      <p className="flex items-center justify-center gap-2 text-lg font-extrabold">
+        <GameIcon name="lock" />
+        {title}
+      </p>
       <p className="text-sm text-white/75">{body}</p>
       <button
         onClick={() => setRole(role === 'student' ? 'teacher' : 'student')}
         className="mt-1 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-pink-500/30 transition-all hover:brightness-110"
       >
-        {lang === 'th' ? '⚡ สลับบทบาทเพื่อทดสอบ (Switch Demo Role)' : '⚡ Switch Role for Demo'}
+        <GameIcon name="zap" className="mr-1" />
+        {lang === 'th' ? 'สลับบทบาทเพื่อทดสอบ (Switch Demo Role)' : 'Switch Role for Demo'}
       </button>
     </div>
   )

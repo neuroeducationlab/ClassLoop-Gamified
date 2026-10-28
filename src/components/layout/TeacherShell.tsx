@@ -25,6 +25,7 @@ import DarkModeToggle from '@/components/layout/DarkModeToggle'
 import { BrandLockup } from '@/components/brand/BrandMark'
 import { useApp, type TranslationKey } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 type NavItem = { to: string; labelKey: TranslationKey; icon: typeof LayoutDashboard; end?: boolean }
 
@@ -197,7 +198,7 @@ export default function TeacherShell() {
               className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:brightness-110 transition-all"
               title="Return to 3D Campus"
             >
-              <span>🎮</span>
+              <GameIcon name="gamepad" />
               <span className="hidden sm:inline">3D Campus</span>
             </Link>
 

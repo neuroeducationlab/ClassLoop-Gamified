@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useApp, type AvatarHat, type AvatarOutfit, type AvatarAura } from '@/context/AppContext'
 import { playClickSound, playCoinSound, playLevelUpSound, playWrongSound } from '../soundEngine'
+import { GameIcon, type IconName } from '@/components/icons/GameIcon'
 
 interface ShopItem {
   id: string
@@ -10,7 +11,7 @@ interface ShopItem {
   category: 'hat' | 'outfit' | 'aura'
   itemKey: AvatarHat | AvatarOutfit | AvatarAura
   price: number
-  icon: string
+  icon: IconName
   description: string
   descriptionEn: string
   color: string
@@ -25,7 +26,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'hat',
     itemKey: 'grad',
     price: 0,
-    icon: '🎓',
+    icon: 'gradCap',
     description: 'หมวกบัณฑิตคลาสสิก มหาวิทยาลัยศรีปทุม',
     descriptionEn: 'Classic Sripatum University graduate mortarboard',
     color: '#2B2D55',
@@ -37,7 +38,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'hat',
     itemKey: 'cyber_cat',
     price: 80,
-    icon: '🐱',
+    icon: 'cat',
     description: 'หูแมวเรืองแสงนีออนสีชมพูสำหรับเกมเมอร์',
     descriptionEn: 'Glow-in-the-dark neon pink gaming cat ears',
     color: '#EC4899',
@@ -49,7 +50,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'hat',
     itemKey: 'dj_headset',
     price: 90,
-    icon: '🎧',
+    icon: 'headphones',
     description: 'หูฟังบลูทูธสตรีมเมอร์ พร้อมไฟสีฟ้า',
     descriptionEn: 'Streamer Bluetooth headset with cyan LED indicators',
     color: '#06B6D4',
@@ -61,7 +62,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'hat',
     itemKey: 'crown',
     price: 150,
-    icon: '👑',
+    icon: 'crown',
     description: 'มงกุฎทองคำประดับอัญมณีสำหรับผู้ทำคะแนนสูงสุด',
     descriptionEn: 'Royal jeweled gold crown for top leaderboard rankers',
     color: '#FBBF24',
@@ -73,7 +74,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'hat',
     itemKey: 'cap',
     price: 40,
-    icon: '🧢',
+    icon: 'cap',
     description: 'หมวกแก๊ปสไตล์เด็กสถาปัตย์สุดคูล',
     descriptionEn: 'Streetwear baseball cap favored by architecture designers',
     color: '#3B82F6',
@@ -85,7 +86,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'hat',
     itemKey: 'beanie',
     price: 50,
-    icon: '🧶',
+    icon: 'snowflake',
     description: 'หมวกไหมพรมสตรีทแฟชั่น',
     descriptionEn: 'Cozy knitted streetwear beanie for campus wanderers',
     color: '#10B981',
@@ -99,7 +100,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'outfit',
     itemKey: 'default',
     price: 0,
-    icon: '👕',
+    icon: 'shirt',
     description: 'ชุดนักศึกษาสีชมพูอันเป็นเอกลักษณ์ของ SPU',
     descriptionEn: 'Signature Sripatum University pink uniform',
     color: '#E89BC4',
@@ -111,7 +112,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'outfit',
     itemKey: 'hoodie',
     price: 70,
-    icon: '🧥',
+    icon: 'gamepad',
     description: 'เสื้อฮู้ดดี้ทีมนักกีฬาอีสปอร์ตมหาวิทยาลัย',
     descriptionEn: 'Official team hoodie for university esports athletes',
     color: '#3B82F6',
@@ -123,7 +124,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'outfit',
     itemKey: 'suit',
     price: 110,
-    icon: '👔',
+    icon: 'blazer',
     description: 'สูทผู้บริหารระดับสากลพร้อมเนกไทสีชมพู',
     descriptionEn: 'Tailored corporate blazer with SPU signature pink tie',
     color: '#1E2235',
@@ -135,7 +136,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'outfit',
     itemKey: 'labcoat',
     price: 120,
-    icon: '🥼',
+    icon: 'labCoat',
     description: 'ชุดกาวน์ห้องปฏิบัติการนวัตกรรมและ AI',
     descriptionEn: 'Innovation & AI lab coat for research projects',
     color: '#F8FAFC',
@@ -149,7 +150,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'aura',
     itemKey: 'none',
     price: 0,
-    icon: '✨',
+    icon: 'none',
     description: 'มุมมองเรียบง่าย สบายตา',
     descriptionEn: 'Clean, minimalist everyday campus presence',
     color: '#94A3B8',
@@ -161,7 +162,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'aura',
     itemKey: 'neon',
     price: 140,
-    icon: '💫',
+    icon: 'orbit',
     description: 'วงแหวนแสงคู่หมุนรอบเท้าสไตล์เกม Sci-Fi',
     descriptionEn: 'Twin orbiting luminescent rings around the avatar',
     color: '#38BDF8',
@@ -173,7 +174,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'aura',
     itemKey: 'gold',
     price: 130,
-    icon: '🌟',
+    icon: 'sparkle',
     description: 'ออร่าแสงสีทองเรืองรองเปล่งประกายรอบตัว',
     descriptionEn: 'Gleaming gold starlight emanating from the student',
     color: '#F59E0B',
@@ -185,7 +186,7 @@ const SHOP_ITEMS: ShopItem[] = [
     category: 'aura',
     itemKey: 'stars',
     price: 160,
-    icon: '⭐',
+    icon: 'star',
     description: 'ดาวหมุนลอยรอบตัวละครเหมือนเวทมนตร์',
     descriptionEn: 'Constellations orbiting the avatar like a magic spell',
     color: '#FDE047',
@@ -222,8 +223,8 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
       playLevelUpSound()
       setPurchaseMsg(
         lang === 'th'
-          ? `สวมใส่ ${item.name} เรียบร้อย! ✨`
-          : `Equipped ${item.name} successfully! ✨`
+          ? `สวมใส่ ${item.name} เรียบร้อย!`
+          : `Equipped ${item.name} successfully!`
       )
       setTimeout(() => setPurchaseMsg(null), 2500)
     } else {
@@ -234,8 +235,8 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
           equipStoreItem(item.category, item.itemKey)
           setPurchaseMsg(
             lang === 'th'
-              ? `ซื้อและสวมใส่ ${item.name} สำเร็จ! 🎉`
-              : `Purchased & equipped ${item.name}! 🎉`
+              ? `ซื้อและสวมใส่ ${item.name} สำเร็จ!`
+              : `Purchased & equipped ${item.name}!`
           )
           setTimeout(() => setPurchaseMsg(null), 2500)
         }
@@ -281,7 +282,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 text-white shadow-lg text-xl">
-              🛍️
+              <GameIcon name="shop" />
             </span>
             <div>
               <h3 className="text-base font-extrabold text-white">
@@ -297,7 +298,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
 
           {/* Coin Wallet Badge */}
           <div className="flex items-center gap-1.5 rounded-2xl bg-amber-500/20 border border-amber-400/40 px-3.5 py-1.5 text-amber-300 shadow-md">
-            <span className="text-base">🪙</span>
+            <GameIcon name="coin" className="text-base" />
             <span className="text-sm font-extrabold">{studentCoins}</span>
             <span className="text-[10px] text-amber-400/80">{lang === 'th' ? 'Coins' : 'Coins'}</span>
           </div>
@@ -321,7 +322,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'hat' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>{lang === 'th' ? '👑 หมวก & เครื่องประดับ' : '👑 Hats & Accessories'}</span>
+            <span className="inline-flex items-center gap-1">
+              <GameIcon name="crown" />
+              {lang === 'th' ? 'หมวก & เครื่องประดับ' : 'Hats & Accessories'}
+            </span>
           </button>
           <button
             onClick={() => {
@@ -332,7 +336,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'outfit' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>{lang === 'th' ? '👔 ชุดแฟชั่น' : '👔 Outfits'}</span>
+            <span className="inline-flex items-center gap-1">
+              <GameIcon name="blazer" />
+              {lang === 'th' ? 'ชุดแฟชั่น' : 'Outfits'}
+            </span>
           </button>
           <button
             onClick={() => {
@@ -343,7 +350,10 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
               activeTab === 'aura' ? 'bg-pink-600 text-white shadow' : 'text-white/60 hover:text-white'
             }`}
           >
-            <span>{lang === 'th' ? '✨ ออร่าเรืองแสง' : '✨ Glowing Auras'}</span>
+            <span className="inline-flex items-center gap-1">
+              <GameIcon name="sparkles" />
+              {lang === 'th' ? 'ออร่าเรืองแสง' : 'Glowing Auras'}
+            </span>
           </button>
         </div>
 
@@ -375,7 +385,7 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
                 <div>
                   {/* Icon & Color Dot */}
                   <div className="flex items-center justify-center h-12 w-12 mx-auto rounded-2xl bg-white/10 text-2xl shadow mb-2">
-                    {item.icon}
+                    <GameIcon name={item.icon} className="text-white" />
                   </div>
                   <h4 className="font-bold text-xs text-center text-white line-clamp-1">
                     {lang === 'en' && item.nameEn ? item.nameEn : item.name}
@@ -406,7 +416,9 @@ export default function AvatarShopModal({ onClose }: { onClose: () => void }) {
                       lang === 'th' ? 'สวมใส่' : 'Equip'
                     ) : (
                       <>
-                        <span>🪙 {item.price}</span>
+                        <span className="flex items-center gap-1">
+                          <GameIcon name="coin" /> {item.price}
+                        </span>
                         <span>{lang === 'th' ? 'ซื้อเลย' : 'Buy Now'}</span>
                       </>
                     )}

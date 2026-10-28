@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, X, RotateCcw, ArrowRight, Zap } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { playCorrectSound, playWrongSound } from '../soundEngine'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 interface DrillQuestion {
   id: number
@@ -155,7 +156,7 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
             {/* Header: name + progress, nothing else */}
             <div className="mb-4 flex items-center gap-3 pr-12">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-xl shadow-lg">
-                🧠
+                <GameIcon name="brain" />
               </span>
               <div className="min-w-0">
                 <h3 className="text-base font-extrabold">{th ? 'ลานฝึกสมอง' : 'Brain Gym'}</h3>
@@ -179,7 +180,7 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
 
             {/* The call to action, until an answer is picked */}
             {!answered && (
-              <p className="mb-2 text-sm font-semibold text-cyan-300">{th ? 'แตะคำตอบที่ถูก 👇' : 'Tap the right answer 👇'}</p>
+              <p className="mb-2 text-sm font-semibold text-cyan-300">{th ? 'แตะคำตอบที่ถูก' : 'Tap the right answer'}</p>
             )}
 
             <div className="mb-4 space-y-2">
@@ -239,7 +240,7 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
         ) : (
           <div className="py-2 text-center">
             <span className="mx-auto mb-3 flex h-16 w-16 animate-bounce items-center justify-center rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-4xl shadow-xl">
-              🏆
+              <GameIcon name="trophy" className="text-amber-900" />
             </span>
             <h3 className="text-xl font-black">
               {th ? `ถูก ${score} จาก ${DRILL_QUESTIONS.length} ข้อ` : `${score} of ${DRILL_QUESTIONS.length} correct`}
@@ -252,7 +253,7 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className="h-6 w-px bg-white/10" />
               <div className="flex items-center gap-1.5 text-sm font-extrabold text-yellow-300">
-                <span>🪙</span>
+                <GameIcon name="coin" />
                 <span>+{30 + score * 10}</span>
               </div>
             </div>
