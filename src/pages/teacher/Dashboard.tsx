@@ -4,6 +4,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -39,7 +40,6 @@ import { GameIcon } from '@/components/icons/GameIcon'
 /* ------------------------------------------------------------- constants -- */
 
 const INK = '#17161A'
-const GREY_200 = '#E3E3E6'
 
 const FACULTY_TH: Record<string, string> = {
   Accounting: 'การบัญชี',
@@ -382,23 +382,31 @@ export default function Dashboard() {
     const liveByFac = Object.fromEntries(facultyData.map((f) => [f.faculty, f.percent]))
     const topicByWeek = new Map(topics.map((t) => [t.week, TOPIC_SHORT[t.id] ?? t.title]))
     return [1, 2, 3, 4, 5, 6].map((week) => {
-      const row: Record<string, number | string> = { week, label: `ส.${week}` }
-      row.topic = topicByWeek.get(week) ?? `สัปดาห์ ${week}`
-      if (week === 2) {
-        if (hasData) {
-          row.class = liveAverage
-          for (const s of SERIES.slice(1)) row[s.key] = liveByFac[s.key] ?? 0
+      const rec = WEEKLY_SCORES.find((w) => w.week === week)
+      const row: Record<string, number | string> = {
+        week,
+        label: lang === 'th' ? `ส.${week}` : `W${week}`,
+        fullLabel: lang === 'th' ? `สัปดาห์ที่ ${week}` : `Week ${week}`,
+        topic: topicByWeek.get(week) ?? (rec ? TOPIC_SHORT[rec.topicId] : `สัปดาห์ ${week}`),
+      }
+      if (rec) {
+        row.class = rec.classPost
+        for (const s of SERIES.slice(1)) {
+          row[s.key] = rec.byFaculty[s.key] ?? 70
         }
-      } else {
-        const rec = WEEKLY_SCORES.find((w) => w.week === week)
-        if (rec) {
-          row.class = rec.classPost
-          for (const s of SERIES.slice(1)) row[s.key] = rec.byFaculty[s.key]
+      }
+      // If we have live responses and this is week 2, update with live data
+      if (week === 2 && hasData) {
+        row.class = liveAverage
+        for (const s of SERIES.slice(1)) {
+          if (liveByFac[s.key] !== undefined && liveByFac[s.key] > 0) {
+            row[s.key] = liveByFac[s.key]
+          }
         }
       }
       return row
     })
-  }, [facultyData, topics, hasData, liveAverage])
+  }, [facultyData, topics, hasData, liveAverage, lang])
 
   const studentAssignmentData = useMemo(() => {
     return secStudents.map((s) => {
@@ -597,14 +605,14 @@ export default function Dashboard() {
             {/* Scrollable Table */}
             <div className="overflow-hidden rounded-2xl border border-grey-300/60 bg-paper shadow-2xs">
               <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[580px]">
                   <thead className="bg-canvas border-b border-grey-300/40 text-grey-600 uppercase tracking-wider font-extrabold sticky top-0 z-10 shadow-2xs">
                     <tr>
-                      <th className="py-3 px-4">นักศึกษา</th>
-                      <th className="py-3 px-4">คณะ / Sec</th>
-                      <th className="py-3 px-4">งานที่ค้างส่ง</th>
-                      <th className="py-3 px-4">ขาดคะแนน</th>
-                      <th className="py-3 px-4 text-right">ดำเนินการ</th>
+                      <th className="py-2.5 px-3">นักศึกษา</th>
+                      <th className="py-2.5 px-3">คณะ / Sec</th>
+                      <th className="py-2.5 px-3">งานที่ค้างส่ง</th>
+                      <th className="py-2.5 px-3">ขาดคะแนน</th>
+                      <th className="py-2.5 px-3 text-right">ดำเนินการ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-grey-300/30 font-medium">
@@ -620,13 +628,13 @@ export default function Dashboard() {
                         const isReminded = remindedIds.has(s.id)
                         return (
                           <tr key={s.id} className="hover:bg-pink-50/20 transition-colors">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2.5">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 font-extrabold text-pink-700 text-xs shrink-0">
+                            <td className="py-2.5 px-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-pink-100 font-extrabold text-pink-700 text-[11px] shrink-0">
                                   {initials(s.nickname, lang)}
                                 </div>
-                                <div>
-                                  <p className="font-extrabold text-ink">
+                                <div className="min-w-0">
+                                  <p className="font-extrabold text-ink truncate text-xs">
                                     {s.name} <span className="text-pink-600">"{s.nickname}"</span>
                                   </p>
                                   <p className="text-[10px] text-grey-500 font-mono">ID: {s.id}</p>
@@ -634,23 +642,24 @@ export default function Dashboard() {
                               </div>
                             </td>
 
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-1 flex-wrap">
-                                <span className="rounded-md bg-pink-50 px-2 py-0.5 font-bold text-pink-600 border border-pink-200 text-[11px] whitespace-nowrap">
+                            <td className="py-2.5 px-3">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-ink text-[11px] leading-tight">
                                   {s.faculty}
                                 </span>
-                                <span className="rounded-md bg-purple-50 px-2 py-0.5 font-extrabold text-purple-700 border border-purple-200 text-[11px] whitespace-nowrap">
+                                <span className="inline-flex items-center w-fit rounded bg-purple-50 px-1.5 py-0.5 font-extrabold text-purple-700 border border-purple-200 text-[10px]">
                                   Sec {s.sec.replace('sec', '')}
                                 </span>
                               </div>
                             </td>
 
-                            <td className="py-3 px-4">
-                              <div className="flex flex-wrap gap-1">
+                            <td className="py-2.5 px-3">
+                              <div className="flex flex-col gap-1 max-w-[200px]">
                                 {hw.missingList.map((m) => (
                                   <span
                                     key={m.id}
-                                    className="rounded bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 border border-rose-200 whitespace-nowrap"
+                                    title={`${m.code}: ${m.title}`}
+                                    className="truncate rounded bg-rose-50 text-rose-800 text-[10.5px] font-bold px-2 py-0.5 border border-rose-200 block"
                                   >
                                     {m.code}: {m.title.split('(')[0].trim()}
                                   </span>
@@ -658,27 +667,27 @@ export default function Dashboard() {
                               </div>
                             </td>
 
-                            <td className="py-3 px-4 font-black text-rose-600 whitespace-nowrap">
-                              -{hw.missingPoints} คะแนน
+                            <td className="py-2.5 px-3 font-black text-rose-600 whitespace-nowrap text-xs">
+                              -{hw.missingPoints} {lang === 'th' ? 'คะแนน' : 'pts'}
                             </td>
 
-                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => remindOne(s.id, s.nickname)}
                                 disabled={isReminded}
                                 className={cn(
-                                  'rounded-xl px-3 py-1.5 text-xs font-extrabold transition-all cursor-pointer',
+                                  'inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap',
                                   isReminded
                                     ? 'bg-emerald-100 text-emerald-700 cursor-default'
-                                    : 'bg-pink-600 text-white shadow-xs hover:bg-pink-700'
+                                    : 'bg-pink-600 text-white shadow-xs hover:bg-pink-700 active:scale-95'
                                 )}
                               >
                                 {isReminded ? (
                                   '✓ เตือนแล้ว'
                                 ) : (
                                   <>
-                                    <GameIcon name="phone" className="mr-1" />
+                                    <GameIcon name="phone" className="mr-0.5 text-xs" />
                                     สะกิดเตือน
                                   </>
                                 )}
@@ -695,89 +704,186 @@ export default function Dashboard() {
           </div>
 
           {/* Full-Width Detailed Weekly Line Graph */}
-          <div className="rounded-3xl border border-grey-300/60 bg-paper p-6 shadow-sm space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-grey-300/40 pb-3">
-              <div>
-                <h3 className="text-lg font-extrabold text-ink flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-pink-600" />
-                  <span>ความเข้าใจรายสัปดาห์ (พัฒนาการย้อนหลัง 6 สัปดาห์ แยกทุกคณะ)</span>
-                </h3>
-                <p className="text-xs text-grey-600 font-medium mt-0.5">
-                  แสดงเปรียบเทียบพัฒนาการสัปดาห์ที่ 1 - 6 ของทั้ง 5 คณะวิชาอย่างชัดเจน
-                </p>
-              </div>
-              {/* Faculty Legend Toggles */}
-              <div className="flex flex-wrap gap-1.5">
-                {SERIES.map((s) => (
+          <div className="rounded-3xl border border-grey-300/60 bg-paper p-6 shadow-sm space-y-5">
+            <div className="space-y-3 border-b border-grey-300/40 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h3 className="text-lg font-extrabold text-ink flex items-center gap-2 tracking-tight">
+                    <Sparkles className="h-5 w-5 text-pink-600 shrink-0" />
+                    <span>ความเข้าใจรายสัปดาห์ (พัฒนาการย้อนหลัง 6 สัปดาห์ แยกทุกคณะ)</span>
+                  </h3>
+                  <p className="text-xs text-grey-600 font-medium mt-0.5">
+                    แสดงเปรียบเทียบพัฒนาการสัปดาห์ที่ 1 - 6 ของทั้ง 5 คณะวิชาอย่างชัดเจน
+                  </p>
+                </div>
+                {/* Fast select actions */}
+                <div className="flex items-center gap-2 shrink-0">
                   <button
-                    key={s.key}
                     type="button"
-                    onClick={() => setVisibleSeries((prev) => ({ ...prev, [s.key]: !prev[s.key] }))}
-                    className={cn(
-                      'rounded-full px-3 py-1 text-xs font-extrabold border cursor-pointer transition-all shadow-2xs',
-                      visibleSeries[s.key] ? 'bg-paper opacity-100 ring-1' : 'opacity-30 bg-canvas'
-                    )}
-                    style={{ color: s.color, borderColor: s.color }}
+                    onClick={() => {
+                      const allOn = Object.fromEntries(SERIES.map((s) => [s.key, true]))
+                      setVisibleSeries(allOn)
+                    }}
+                    className="text-[11px] font-bold text-pink-600 hover:underline cursor-pointer"
                   >
-                    {s.th}
+                    แสดงทั้งหมด
                   </button>
-                ))}
+                  <span className="text-grey-300">|</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const onlyClass = Object.fromEntries(SERIES.map((s) => [s.key, s.key === 'class']))
+                      setVisibleSeries(onlyClass)
+                    }}
+                    className="text-[11px] font-bold text-grey-500 hover:text-ink cursor-pointer"
+                  >
+                    เฉพาะทั้งชั้น
+                  </button>
+                </div>
+              </div>
+
+              {/* Faculty Legend Toggles Row */}
+              <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                <span className="text-[11px] font-bold text-grey-500 mr-1">
+                  เลือกแสดงคณะ:
+                </span>
+                {SERIES.map((s) => {
+                  const active = visibleSeries[s.key]
+                  return (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => setVisibleSeries((prev) => ({ ...prev, [s.key]: !prev[s.key] }))}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold border cursor-pointer transition-all shadow-2xs',
+                        active
+                          ? 'bg-paper opacity-100 ring-1 scale-102 font-black'
+                          : 'opacity-40 bg-canvas/80 text-grey-400 border-grey-300 hover:opacity-75'
+                      )}
+                      style={{
+                        color: active ? s.color : undefined,
+                        borderColor: active ? s.color : undefined,
+                      }}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: s.color }}
+                      />
+                      <span>{s.th}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
             {/* High-Resolution Full-Width Graph */}
-            <div className="h-80 w-full pt-2">
+            <div className="h-88 w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weeklyData} margin={{ top: 15, right: 25, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GREY_200} vertical={false} />
+                <LineChart data={weeklyData} margin={{ top: 20, right: 30, left: -10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                   <XAxis
                     dataKey="label"
-                    stroke="#666"
+                    stroke="#4B5563"
                     tickLine={false}
-                    tick={{ fontSize: 12, fontWeight: 800 }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tick={{ fontSize: 13, fontWeight: 800, fill: '#374151' }}
+                    dy={6}
                   />
                   <YAxis
-                    domain={[40, 100]}
-                    stroke="#666"
+                    domain={[50, 100]}
+                    ticks={[50, 60, 70, 80, 90, 100]}
+                    stroke="#4B5563"
                     tickLine={false}
-                    tick={{ fontSize: 11, fontWeight: 700 }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tick={{ fontSize: 11, fontWeight: 700, fill: '#6B7280' }}
+                    tickFormatter={(v) => `${v}%`}
                   />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null
-                      const d = payload[0].payload
+                      const d = payload[0]?.payload
+                      if (!d) return null
+                      const sorted = [...payload].sort((a, b) => Number(b.value || 0) - Number(a.value || 0))
                       return (
-                        <div className="rounded-2xl border border-grey-300/80 bg-paper p-3.5 shadow-xl text-xs space-y-2 font-bold">
-                          <p className="font-extrabold text-ink border-b border-grey-200 pb-1 flex items-center justify-between gap-4">
-                            <span>สัปดาห์ที่ {d.week}:</span>
-                            <span className="text-pink-600 font-extrabold">{d.topic}</span>
-                          </p>
-                          <div className="space-y-1">
-                            {payload.map((p) => (
-                              <div key={p.name} className="flex justify-between gap-6 text-[11px]">
-                                <span style={{ color: p.color }} className="font-extrabold">{p.name}:</span>
-                                <span className="font-black text-ink">{p.value}%</span>
-                              </div>
-                            ))}
+                        <div className="rounded-2xl border border-grey-300/80 bg-paper/95 backdrop-blur-md p-4 shadow-xl text-xs space-y-2.5 font-bold min-w-[220px]">
+                          <div className="border-b border-grey-200/80 pb-2">
+                            <span className="text-[10px] font-black uppercase text-pink-600 tracking-wider">
+                              {d.fullLabel}
+                            </span>
+                            <p className="font-extrabold text-ink text-sm">
+                              {d.topic}
+                            </p>
+                          </div>
+                          <div className="space-y-1.5">
+                            {sorted.map((p) => {
+                              const isClass = p.dataKey === 'class'
+                              return (
+                                <div
+                                  key={p.name}
+                                  className={cn(
+                                    'flex items-center justify-between gap-4 text-xs py-0.5 px-1.5 rounded-lg',
+                                    isClass ? 'bg-grey-100 font-black' : 'font-bold'
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: p.color }}
+                                    />
+                                    <span style={{ color: isClass ? '#111827' : p.color }}>
+                                      {p.name}
+                                    </span>
+                                  </div>
+                                  <span className="font-black text-ink font-mono text-[13px]">
+                                    {p.value}%
+                                  </span>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
                       )
                     }}
                   />
-                  {SERIES.map((s) =>
-                    visibleSeries[s.key] ? (
+                  <ReferenceLine
+                    y={80}
+                    stroke="#10B981"
+                    strokeDasharray="4 4"
+                    strokeWidth={1.5}
+                    label={{
+                      value: lang === 'th' ? '🎯 เป้าหมายความเข้าใจ (80%)' : '🎯 Target Goal (80%)',
+                      position: 'insideTopRight',
+                      fill: '#059669',
+                      fontSize: 11,
+                      fontWeight: 700,
+                    }}
+                  />
+                  {SERIES.map((s) => {
+                    if (!visibleSeries[s.key]) return null
+                    const isClass = s.key === 'class'
+                    return (
                       <Line
                         key={s.key}
                         name={s.th}
                         type="monotone"
                         dataKey={s.key}
                         stroke={s.color}
-                        strokeWidth={s.key === 'class' ? 4 : 3}
-                        dot={{ r: 4.5, strokeWidth: 2, fill: s.color }}
-                        activeDot={{ r: 7, strokeWidth: 0 }}
+                        strokeWidth={isClass ? 4 : 2.5}
+                        dot={{
+                          r: isClass ? 5 : 4,
+                          fill: '#FFFFFF',
+                          stroke: s.color,
+                          strokeWidth: isClass ? 3 : 2.5,
+                        }}
+                        activeDot={{
+                          r: isClass ? 7 : 6.5,
+                          fill: s.color,
+                          stroke: '#FFFFFF',
+                          strokeWidth: 2,
+                        }}
                       />
-                    ) : null
-                  )}
+                    )
+                  })}
                 </LineChart>
               </ResponsiveContainer>
             </div>
