@@ -168,6 +168,32 @@ export default function Login() {
     setError(null)
   }
 
+  // Auto-fill + auto-submit: when a role is selected, pre-fill the first
+  // demo account and submit after a brief delay so the audience can see
+  // the credentials flash before the 4DX dive kicks in.
+  const autoSubmitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (selectedRole === 'none' || loading || isDiving) return
+    const acc = DEMO_ACCOUNTS.find((a) => a.role === selectedRole)
+    if (!acc) return
+
+    setEmail(acc.email)
+    setPassword(acc.password)
+    setError(null)
+
+    autoSubmitTimer.current = setTimeout(() => {
+      const result = signIn(acc.email, acc.password)
+      if (!result.ok) return
+      setLoading(true)
+      targetDestination.current = '/campus'
+      setIsDiving(true)
+    }, 800)
+
+    return () => {
+      if (autoSubmitTimer.current) clearTimeout(autoSubmitTimer.current)
+    }
+  }, [selectedRole]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div
       className="relative min-h-screen w-full select-none overflow-hidden font-campus transition-all duration-1000"
