@@ -11,7 +11,12 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
 import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
-import { Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll, Volume2, VolumeX } from 'lucide-react'
+import {
+  Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll, Volume2, VolumeX,
+  DoorOpen, GraduationCap, Trophy, MessageCircleHeart, BarChart3, Wand2, BookOpen, Users, Coffee,
+  Lock,
+  type LucideIcon,
+} from 'lucide-react'
 import { useApp, type Avatar, type Mission } from '@/context/AppContext'
 import {
   BUILDINGS,
@@ -43,6 +48,18 @@ import {
   isSoundMuted,
   toggleSoundMute,
 } from './soundEngine'
+
+const BUILDING_ICON: Record<string, LucideIcon> = {
+  entry: DoorOpen,
+  faculty: GraduationCap,
+  arena: Trophy,
+  dorm: MessageCircleHeart,
+  data: BarChart3,
+  plan: Wand2,
+  library: BookOpen,
+  union: Users,
+  lounge: Coffee,
+}
 
 const WALK_SPEED = 5 // units / second
 /** Third-person camera offset above + behind the avatar. */
@@ -361,36 +378,50 @@ export default function Campus3D() {
         )}
       </Canvas>
 
-      {/* ── Building floating labels with authentic names & clear descriptions ── */}
+      {/* ── Building floating labels — compact pill by default, expand on hover/near ── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {BUILDINGS.map((b) => {
           const isHovered = hovered === b.id
           const isNear = nearDoor?.id === b.id
           const locked = b.studentSees === null
+          const expanded = isHovered || isNear
+          const Icon = BUILDING_ICON[b.id]
+          const isTeacherZone = !isTeacher && locked
           return (
             <div key={b.id} ref={labelRef(b.id)} className="absolute left-0 top-0" style={{ visibility: 'hidden' }}>
               <div
-                className="rounded-xl px-3 py-2 text-center text-xs text-white shadow-xl backdrop-blur-md transition-all duration-200 border border-white/25"
+                className={`rounded-xl text-center text-white shadow-xl backdrop-blur-md transition-all duration-200 border ${
+                  isTeacherZone
+                    ? 'border-white/10 px-2.5 py-1.5'
+                    : expanded
+                      ? 'border-white/30 px-3 py-2'
+                      : 'border-white/20 px-2.5 py-1.5'
+                }`}
                 style={{
-                  backgroundColor: b.color + 'E6',
-                  transform: isHovered || isNear ? 'scale(1.08) translateY(-4px)' : 'scale(1)',
-                  maxWidth: '220px',
+                  backgroundColor: isTeacherZone ? b.color + '80' : b.color + 'E6',
+                  transform: expanded ? 'scale(1.08) translateY(-4px)' : 'scale(1)',
+                  maxWidth: expanded ? '220px' : '180px',
+                  opacity: isTeacherZone ? 0.65 : 1,
                 }}
               >
                 <div className="flex items-center gap-1.5 justify-center">
-                  <span className="text-sm">{b.emoji}</span>
-                  <span className="font-bold tracking-tight text-white">{b.name[lang]}</span>
-                  {locked && <span className="text-[10px] opacity-75">🔒</span>}
+                  {Icon && <Icon size={isTeacherZone ? 12 : 14} strokeWidth={2.2} className="shrink-0" />}
+                  <span className={`font-bold tracking-tight ${isTeacherZone ? 'text-[11px] text-white/90' : 'text-xs text-white'}`}>
+                    {b.name[lang]}
+                  </span>
+                  {locked && <Lock size={10} className="opacity-60 shrink-0" />}
                 </div>
-                <p className="mt-1 text-[10px] font-normal leading-snug text-white/90 whitespace-normal text-center">
-                  {b.description[lang]}
-                </p>
-                {!locked && (isHovered || isNear) && (
+                {expanded && (
+                  <p className="mt-1 text-[10px] font-normal leading-snug text-white/90 whitespace-normal text-center">
+                    {b.description[lang]}
+                  </p>
+                )}
+                {expanded && !locked && (
                   <p className="mt-1 text-[10px] font-semibold text-white/95 border-t border-white/20 pt-1">
                     {t.clickToEnter}
                   </p>
                 )}
-                {locked && (isHovered || isNear) && (
+                {expanded && locked && (
                   <p className="mt-1 text-[10px] font-semibold text-white/80 border-t border-white/20 pt-1">
                     {t.facultyOnly}
                   </p>
