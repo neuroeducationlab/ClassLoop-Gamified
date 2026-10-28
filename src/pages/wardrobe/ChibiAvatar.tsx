@@ -64,8 +64,7 @@ export default function ChibiAvatar({
       <ellipse cx={134} cy={262} rx={14} ry={8} fill={shoes} {...S} />
 
       {outfit.front?.(c)}
-      {held.front?.(c)}
-      {/* hands on top of sleeves and held items */}
+      {/* hands sit on top of the sleeves */}
       <circle cx={G.handL[0] + 2} cy={G.handL[1] - 2} r={9.5} fill={look.skin} {...S} />
       <circle cx={G.handR[0] - 2} cy={G.handR[1] - 2} r={9.5} fill={look.skin} {...S} />
 
@@ -80,6 +79,9 @@ export default function ChibiAvatar({
       <path d="M114,142 Q120,147 126,142" fill="none" stroke={OUT} strokeWidth={2.6} strokeLinecap="round" />
 
       {hair.front?.(c)}
+      {/* Held item in front of hair and head: the character is proudly holding it up, not hiding
+          it behind long hair. Hat and aura (sparkles) still sit above. */}
+      {held.front?.(c)}
       {hat.front?.(c)}
       {aura.front?.(c)}
     </svg>
