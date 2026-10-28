@@ -14,12 +14,165 @@ import {
   X,
   Shuffle,
   MapPin,
+  Maximize2,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { type Student } from '@/data/seed-data'
 import { cn } from '@/lib/utils'
 import { initials } from '@/components/AutoTranslate'
 import { GameIcon } from '@/components/icons/GameIcon'
+
+// Authentic SPU Classroom numbers pool
+const SPU_ROOMS = [
+  '11-704',
+  '11-1002',
+  '11-801',
+  '11-1205',
+  '11-903',
+  '5-603',
+  '9-301',
+  '1-502',
+  '11-0402',
+]
+
+/**
+ * Realistic deterministic 25x25 SVG QR Code Generator with finder patterns,
+ * timing tracks, alignment module, and center SPU badge.
+ */
+function RealisticQRCode({
+  value,
+  size = 112,
+  className,
+}: {
+  value: string
+  size?: number
+  className?: string
+}) {
+  const matrix = useMemo(() => {
+    const N = 25
+    let hash = 0
+    for (let i = 0; i < value.length; i++) {
+      hash = (hash << 5) - hash + value.charCodeAt(i)
+      hash |= 0
+    }
+    const mat: boolean[][] = Array.from({ length: N }, () => Array(N).fill(false))
+    const reserved: boolean[][] = Array.from({ length: N }, () => Array(N).fill(false))
+
+    // Helper: 7x7 Finder Patterns + 1-module light border
+    const setFinder = (sr: number, sc: number) => {
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 7; c++) {
+          const row = sr + r
+          const col = sc + c
+          reserved[row][col] = true
+          const isBorder = r === 0 || r === 6 || c === 0 || c === 6
+          const isCore = r >= 2 && r <= 4 && c >= 2 && c <= 4
+          mat[row][col] = isBorder || isCore
+        }
+      }
+      for (let r = -1; r <= 7; r++) {
+        for (let c = -1; c <= 7; c++) {
+          const row = sr + r
+          const col = sc + c
+          if (row >= 0 && row < N && col >= 0 && col < N) {
+            reserved[row][col] = true
+            if (r === -1 || r === 7 || c === -1 || c === 7) {
+              mat[row][col] = false
+            }
+          }
+        }
+      }
+    }
+
+    setFinder(0, 0)
+    setFinder(0, N - 7)
+    setFinder(N - 7, 0)
+
+    // Alignment pattern at (18, 18)
+    const ar = 18,
+      ac = 18
+    for (let r = -2; r <= 2; r++) {
+      for (let c = -2; c <= 2; c++) {
+        reserved[ar + r][ac + c] = true
+        mat[ar + r][ac + c] = Math.max(Math.abs(r), Math.abs(c)) !== 1
+      }
+    }
+
+    // Timing strips
+    for (let i = 8; i < N - 8; i++) {
+      reserved[6][i] = true
+      mat[6][i] = i % 2 === 0
+      reserved[i][6] = true
+      mat[i][6] = i % 2 === 0
+    }
+
+    // Center logo cutout (5x5)
+    const mid = Math.floor(N / 2)
+    for (let r = mid - 2; r <= mid + 2; r++) {
+      for (let c = mid - 2; c <= mid + 2; c++) {
+        reserved[r][c] = true
+        mat[r][c] = false
+      }
+    }
+
+    // PRNG data fill based on seed hash
+    let prng = Math.abs(hash) || 987654321
+    const nextRand = () => {
+      prng = (prng * 1664525 + 1013904223) % 4294967296
+      return prng / 4294967296
+    }
+
+    for (let r = 0; r < N; r++) {
+      for (let c = 0; c < N; c++) {
+        if (!reserved[r][c]) {
+          const rand = nextRand()
+          mat[r][c] = rand > 0.47 !== ((r + c) % 3 === 0)
+        }
+      }
+    }
+
+    return mat
+  }, [value])
+
+  const cellSize = 100 / 25
+
+  return (
+    <div
+      style={{ width: size, height: size }}
+      className={cn(
+        'relative bg-white rounded-2xl p-1.5 shadow-sm border border-grey-200 select-none flex items-center justify-center overflow-hidden',
+        className,
+      )}
+    >
+      <svg viewBox="0 0 100 100" className="w-full h-full" shapeRendering="crispEdges">
+        <rect width="100" height="100" fill="#FFFFFF" />
+        {matrix.map((row, r) =>
+          row.map((cell, c) => {
+            if (!cell) return null
+            return (
+              <rect
+                key={`${r}-${c}`}
+                x={c * cellSize}
+                y={r * cellSize}
+                width={cellSize}
+                height={cellSize}
+                fill="#17161A"
+              />
+            )
+          }),
+        )}
+      </svg>
+      {/* Central Brand Badge with SPU pink accent */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="h-6 w-6 rounded-md bg-white shadow-sm border border-pink-200 flex items-center justify-center">
+          <span className="text-[8px] font-black tracking-tighter text-pink-600 font-campus">
+            SPU
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export type AttendanceStatus = 'present' | 'late' | 'absent' | 'leave'
 
@@ -72,7 +225,10 @@ export default function Attendance() {
   const [selectedSec, setSelectedSec] = useState<'all' | 'sec1' | 'sec2' | 'sec3'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | AttendanceStatus>('all')
   const [currentWeek, setCurrentWeek] = useState(5)
-  const [liveCode, setLiveCode] = useState('8429')
+  const [roomNumber, setRoomNumber] = useState('11-704')
+  const [liveCode, setLiveCode] = useState('9452')
+  const [isChangingCode, setIsChangingCode] = useState(false)
+  const [isProjectorOpen, setIsProjectorOpen] = useState(false)
   const [isLiveOpen, setIsLiveOpen] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
   const [randomModalOpen, setRandomModalOpen] = useState(false)
@@ -155,11 +311,30 @@ export default function Attendance() {
     }, 80)
   }
 
-  // Action: Generate new PIN code
+  // Action: Generate new Room number & PIN code
   const handleGenerateNewCode = () => {
-    const newCode = Math.floor(1000 + Math.random() * 9000).toString()
+    setIsChangingCode(true)
+    setTimeout(() => setIsChangingCode(false), 500)
+
+    // Pick a new room different from current
+    const availableRooms = SPU_ROOMS.filter((r) => r !== roomNumber)
+    const newRoom =
+      availableRooms[Math.floor(Math.random() * availableRooms.length)] || '11-1002'
+
+    // Pick a new 4-digit PIN different from current
+    let newCode = Math.floor(1000 + Math.random() * 9000).toString()
+    while (newCode === liveCode) {
+      newCode = Math.floor(1000 + Math.random() * 9000).toString()
+    }
+
+    setRoomNumber(newRoom)
     setLiveCode(newCode)
-    showToast(lang === 'th' ? `สร้างรหัส PIN ใหม่: ${newCode}` : `New PIN Code: ${newCode}`)
+
+    showToast(
+      lang === 'th'
+        ? `เปลี่ยนห้องและรหัสใหม่: ห้อง ${newRoom} | PIN: ${newCode}`
+        : `Generated New Room & PIN: Room ${newRoom} | PIN: ${newCode}`,
+    )
   }
 
   // Action: Export CSV
@@ -283,41 +458,24 @@ export default function Attendance() {
       <div className="rounded-3xl border border-pink-200/80 bg-gradient-to-br from-pink-500/10 via-paper to-sky-500/10 p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            {/* Live QR Code Box */}
-            <div className="relative flex flex-col items-center justify-center rounded-2xl bg-white p-3 shadow-md border border-grey-200 shrink-0">
-              <div className="h-28 w-28 rounded-lg bg-grey-900 p-2 flex items-center justify-center text-white relative overflow-hidden">
-                {/* Simulated QR Pattern */}
-                <div className="grid grid-cols-5 gap-1.5 w-full h-full p-1 opacity-90">
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-transparent" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-pink-400 rounded-xs animate-pulse" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-transparent" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-pink-400 rounded-xs" />
-                  <div className="bg-transparent" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-white rounded-xs" />
-                  <div className="bg-pink-400 rounded-xs animate-pulse" />
-                  <div className="bg-white rounded-xs" />
-                </div>
+            {/* Live QR Code Box with click-to-project & zoom hint */}
+            <div
+              onClick={() => setIsProjectorOpen(true)}
+              title={lang === 'th' ? 'คลิกเพื่อฉายจอใหญ่ (Projector Mode)' : 'Click to open Projector Mode'}
+              className="group relative flex flex-col items-center justify-center rounded-2xl bg-white p-2.5 shadow-md border border-pink-200/80 hover:border-pink-400 transition-all cursor-pointer hover:shadow-lg shrink-0"
+            >
+              <div className={cn('transition-all duration-300', isChangingCode && 'scale-95 opacity-70 rotate-3')}>
+                <RealisticQRCode value={`${roomNumber}-${liveCode}`} size={112} />
               </div>
-              <span className="mt-1 text-[10px] font-bold text-grey-500">
-                {lang === 'th' ? 'สแกนผ่าน SPU Life' : 'Scan via SPU App'}
-              </span>
+              <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-grey-500 group-hover:text-pink-600 transition-colors">
+                <Maximize2 className="h-3 w-3" />
+                <span>{lang === 'th' ? 'สแกนผ่าน SPU Life' : 'Scan via SPU App'}</span>
+              </div>
             </div>
 
             {/* Live Session Info */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold border',
@@ -334,27 +492,66 @@ export default function Attendance() {
                 </span>
               </div>
 
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-grey-500">
-                  {lang === 'th' ? 'รหัส PIN เช็คชื่อในห้องเรียน' : 'In-Class 4-Digit PIN'}
-                </span>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <div className="flex items-center gap-1.5 font-mono text-3xl font-extrabold tracking-widest text-pink-600 bg-pink-100/70 px-4 py-1.5 rounded-xl border border-pink-300/60 shadow-xs">
+              {/* Room & PIN Display Row */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Classroom / Room Number */}
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-grey-500 mb-0.5">
+                    {lang === 'th' ? 'เลขห้องเรียน (ROOM)' : 'CLASSROOM / ROOM'}
+                  </span>
+                  <div
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 font-mono text-xl font-extrabold text-indigo-700 shadow-xs transition-all duration-300',
+                      isChangingCode && 'scale-105 bg-indigo-100 text-indigo-800',
+                    )}
+                  >
+                    <span className="text-[11px] font-bold font-sans text-indigo-500 uppercase">
+                      {lang === 'th' ? 'ห้อง' : 'RM'}
+                    </span>
+                    <span>{roomNumber}</span>
+                  </div>
+                </div>
+
+                {/* 4-Digit PIN */}
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-grey-500 mb-0.5">
+                    {lang === 'th' ? 'รหัส PIN เข้าห้อง' : 'IN-CLASS 4-DIGIT PIN'}
+                  </span>
+                  <div
+                    className={cn(
+                      'flex items-center gap-1.5 font-mono text-2xl font-extrabold tracking-widest text-pink-600 bg-pink-100/80 px-3.5 py-1.5 rounded-xl border border-pink-300/80 shadow-xs transition-all duration-300',
+                      isChangingCode && 'scale-105 bg-pink-200 text-pink-700',
+                    )}
+                  >
                     {liveCode}
                   </div>
+                </div>
+
+                {/* Quick Refresh Button */}
+                <div className="self-end pb-0.5">
                   <button
                     onClick={handleGenerateNewCode}
-                    title={lang === 'th' ? 'สร้างรหัสใหม่' : 'Generate new code'}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-grey-300/60 bg-paper text-grey-600 hover:bg-grey-100 hover:text-pink-600 transition-colors shadow-xs cursor-pointer"
+                    title={lang === 'th' ? 'สุ่มเลขห้องและรหัส PIN ใหม่' : 'Generate new Room & PIN'}
+                    className={cn(
+                      'flex h-10 items-center gap-1.5 px-3 rounded-xl border border-grey-300/80 bg-white text-grey-700 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-300 transition-all shadow-xs cursor-pointer active:scale-95',
+                      isChangingCode && 'border-pink-500 text-pink-600 bg-pink-50',
+                    )}
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw className={cn('h-4 w-4', isChangingCode && 'animate-spin text-pink-600')} />
+                    <span className="text-xs font-bold hidden sm:inline">
+                      {lang === 'th' ? 'เปลี่ยนห้อง/รหัส' : 'Change'}
+                    </span>
                   </button>
                 </div>
               </div>
 
-              <p className="text-xs text-grey-600 flex items-center gap-1.5">
+              <p className="text-xs text-grey-600 flex items-center gap-1.5 pt-0.5">
                 <MapPin className="h-3.5 w-3.5 text-pink-500 shrink-0" />
-                <span>{lang === 'th' ? 'จำกัดพิกัด: เฉพาะอาคาร 1/11 (SPU Main Campus)' : 'Geofence: Building 11 SPU Campus'}</span>
+                <span>
+                  {lang === 'th'
+                    ? `จำกัดพิกัด: อาคาร ${roomNumber.split('-')[0] || '11'} (ห้อง ${roomNumber}) ม.ศรีปทุม`
+                    : `Geofence: Building ${roomNumber.split('-')[0] || '11'} (Room ${roomNumber}), SPU Main Campus`}
+                </span>
               </p>
             </div>
           </div>
@@ -883,6 +1080,87 @@ export default function Attendance() {
                 className="rounded-xl bg-grey-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-black cursor-pointer"
               >
                 {lang === 'th' ? 'ปิด' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Big Screen Projector Mode Modal */}
+      {isProjectorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-xl rounded-3xl border border-pink-300/50 bg-white p-8 text-center shadow-2xl">
+            {/* Close button */}
+            <button
+              onClick={() => setIsProjectorOpen(false)}
+              className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-grey-100 text-grey-600 hover:bg-grey-200 transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header info */}
+            <div className="space-y-1 mb-6">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold border border-pink-300 bg-pink-50 text-pink-600">
+                <Radio className="h-3.5 w-3.5 text-pink-500 animate-pulse" />
+                <span>{lang === 'th' ? 'ฉายจอเช็คชื่อสดในห้องเรียน' : 'Live In-Class Projector Mode'}</span>
+              </span>
+              <h2 className="text-2xl font-black text-ink">
+                {course.code} · {course.name}
+              </h2>
+              <p className="text-xs text-grey-600">
+                {lang === 'th'
+                  ? 'เปิดแอป SPU Life สแกน QR Code หรือกรอก PIN เพื่อเช็คชื่อเข้าเรียน'
+                  : 'Open SPU Life app to scan QR Code or enter 4-digit PIN'}
+              </p>
+            </div>
+
+            {/* Large QR Code */}
+            <div className="flex justify-center my-6">
+              <div className="p-4 rounded-3xl bg-pink-50/60 border-2 border-pink-200 shadow-inner">
+                <RealisticQRCode
+                  value={`${roomNumber}-${liveCode}`}
+                  size={240}
+                  className="shadow-lg border-2 border-grey-300/80"
+                />
+              </div>
+            </div>
+
+            {/* Large Room & PIN Display */}
+            <div className="flex items-center justify-center gap-4 my-4 flex-wrap">
+              <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 px-5 py-3 text-center">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-indigo-500">
+                  {lang === 'th' ? 'ห้องเรียน (Room)' : 'Classroom'}
+                </span>
+                <span className="font-mono text-3xl font-black text-indigo-700">
+                  {roomNumber}
+                </span>
+              </div>
+
+              <div className="rounded-2xl border-2 border-pink-300 bg-pink-50 px-6 py-3 text-center">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-pink-500">
+                  {lang === 'th' ? 'รหัส PIN เช็คชื่อ' : '4-Digit PIN'}
+                </span>
+                <span className="font-mono text-4xl font-black tracking-widest text-pink-600">
+                  {liveCode}
+                </span>
+              </div>
+            </div>
+
+            {/* Action buttons inside modal */}
+            <div className="mt-6 flex items-center justify-center gap-3 pt-4 border-t border-grey-200">
+              <button
+                onClick={handleGenerateNewCode}
+                className="flex items-center gap-2 rounded-2xl bg-pink-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-pink-700 active:scale-95 transition-all cursor-pointer"
+              >
+                <RefreshCw className={cn('h-4 w-4', isChangingCode && 'animate-spin')} />
+                <span>{lang === 'th' ? 'สุ่มเลขห้องและรหัสใหม่' : 'Generate New Room & PIN'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsProjectorOpen(false)}
+                className="rounded-2xl border border-grey-300 bg-white px-5 py-2.5 text-xs font-bold text-grey-700 hover:bg-grey-100 transition-all cursor-pointer"
+              >
+                {lang === 'th' ? 'ปิดหน้าต่าง' : 'Close'}
               </button>
             </div>
           </div>
