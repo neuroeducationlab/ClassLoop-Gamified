@@ -516,7 +516,7 @@ export default function InteriorScene({
       )}
 
       <RoomShell config={config} color={building.color} />
-      <RoomDressing dressing={config.dressing} config={config} color={building.color} />
+      <RoomDressing dressing={config.dressing} config={config} color={building.color} lang={lang} />
       {stations.map((s) => (
         <StationProp
           key={s.id}

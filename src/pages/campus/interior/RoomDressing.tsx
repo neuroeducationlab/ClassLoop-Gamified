@@ -47,8 +47,24 @@ function signTexture(text: string, color: string) {
   return t
 }
 
-function Sign({ text, color, p, w = 4, r = 0 }: { text: string; color: string; p: V3; w?: number; r?: number }) {
-  const map = useMemo(() => signTexture(text, color), [text, color])
+function Sign({
+  text,
+  color,
+  p,
+  w = 4,
+  r = 0,
+  lang,
+}: {
+  text: string
+  color: string
+  p: V3
+  w?: number
+  r?: number
+  lang: 'th' | 'en'
+}) {
+  // signs are bilingual "English · ไทย"; EN mode keeps only the English half
+  const shown = lang === 'en' ? text.split(' · ').filter((s) => !/[฀-๿]/.test(s)).join(' · ') : text
+  const map = useMemo(() => signTexture(shown, color), [shown, color])
   return (
     <mesh position={p} rotation={[0, r, 0]}>
       <planeGeometry args={[w, w * 0.156]} />
@@ -129,7 +145,17 @@ function ServerRack({ p, r = 0, color }: { p: V3; r?: number; color: string }) {
   )
 }
 
-export default function RoomDressing({ dressing, config, color }: { dressing: Dressing; config: InteriorConfig; color: string }) {
+export default function RoomDressing({
+  dressing,
+  config,
+  color,
+  lang,
+}: {
+  dressing: Dressing
+  config: InteriorConfig
+  color: string
+  lang: 'th' | 'en'
+}) {
   const [w, d] = config.size
   const right = w / 2 - 0.6
   const left = -w / 2 + 0.6
@@ -154,7 +180,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
               </mesh>
             )),
           )}
-          <Sign text="MRT EXIT 2 · ClassLoop Campus" color={color} p={[0, config.height - 1, 3.4]} w={5.5} r={Math.PI} />
+          <Sign lang={lang} text="MRT EXIT 2 · ClassLoop Campus" color={color} p={[0, config.height - 1, 3.4]} w={5.5} r={Math.PI} />
           <Bench p={[right - 0.2, 0, 0.5]} w={2.4} r={-Math.PI / 2} />
         </group>
       )
@@ -174,7 +200,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
             ))
           })}
           <Box p={[2.2, 0.55, -4.4]} s={[0.7, 1.1, 0.5]} c="#C9A97E" />
-          <Sign text="Rangsit-Nives Academic Hall" color={color} p={[0, config.height - 0.7, -d / 2 + 0.03]} w={6} />
+          <Sign lang={lang} text="Rangsit-Nives Academic Hall" color={color} p={[0, config.height - 0.7, -d / 2 + 0.03]} w={6} />
           <Plant p={[right - 0.3, 0, front - 0.5]} />
         </group>
       )
@@ -206,7 +232,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
               <Box p={[0.6, 1.2, 0]} s={[0.3, 0.1, 0.3]} c="#FFE3A8" e={1.2} />
             </group>
           ))}
-          <Sign text="Learning Library · หอสมุด" color={color} p={[0, config.height - 0.7, -d / 2 + 0.03]} w={5} />
+          <Sign lang={lang} text="Learning Library · หอสมุด" color={color} p={[0, config.height - 0.7, -d / 2 + 0.03]} w={5} />
         </group>
       )
 
@@ -229,7 +255,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
             <meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={0.4} />
           </mesh>
           <Box p={[0, 0.016, 0]} s={[0.1, 0.01, d - 4]} c="#FFFFFF" />
-          <Sign text="ARENA · LEADERBOARD LIVE" color={color} p={[0, config.height - 0.9, -d / 2 + 0.03]} w={6} />
+          <Sign lang={lang} text="ARENA · LEADERBOARD LIVE" color={color} p={[0, config.height - 0.9, -d / 2 + 0.03]} w={6} />
         </group>
       )
 
@@ -255,7 +281,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
               <meshStandardMaterial color="#FFE3A8" emissive="#FFE3A8" emissiveIntensity={2} toneMapped={false} />
             </mesh>
           ))}
-          <Sign text="STUDENT UNION · สโมสรนักศึกษา" color={color} p={[0, config.height - 0.7, -d / 2 + 0.03]} w={5.5} />
+          <Sign lang={lang} text="STUDENT UNION · สโมสรนักศึกษา" color={color} p={[0, config.height - 0.7, -d / 2 + 0.03]} w={5.5} />
           <Plant p={[left + 0.4, 0, front - 0.6]} />
         </group>
       )
@@ -276,7 +302,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
             <Box p={[0, 0.8, 0]} s={[0.06, 1.6, 0.06]} c="#2B2E38" />
             <Box p={[0, 1.65, 0]} s={[0.45, 0.3, 0.45]} c="#FFE3A8" e={1.5} />
           </group>
-          <Sign text="Wellness Lounge · พื้นที่ปลอดภัย" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5} />
+          <Sign lang={lang} text="Wellness Lounge · พื้นที่ปลอดภัย" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5} />
         </group>
       )
 
@@ -295,7 +321,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
               <Box key={i} p={[-1.5 + (i % 6) * 0.6, 1.5 + Math.floor(i / 6) * 0.55, 0]} s={[0.42, 0.42, 0.02]} c={['#FFF2A8', '#FFD1E0', '#C8F0FF', '#D6F5C9'][i % 4]} />
             ))}
           </group>
-          <Sign text="Lesson Planning Studio" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5} />
+          <Sign lang={lang} text="Lesson Planning Studio" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5} />
         </group>
       )
 
@@ -306,7 +332,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
           {[-3.4, -2.3, -1.2, 1.2, 2.3].map((z) => (
             <ServerRack key={z} p={[right - 0.2, 0, z + 1.5]} r={-Math.PI / 2} color={color} />
           ))}
-          <Sign text="Academic Data & Research Center" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5.5} />
+          <Sign lang={lang} text="Academic Data & Research Center" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5.5} />
         </group>
       )
 
@@ -327,7 +353,7 @@ export default function RoomDressing({ dressing, config, color }: { dressing: Dr
             <Box p={[0.6, 1.2, 0]} s={[0.2, 0.18, 0.2]} c="#F4EFE6" />
           </group>
           <Sofa p={[left + 1.0, 0, 2.2]} r={Math.PI / 2} c="#4C5A78" />
-          <Sign text="STAFF ONLY · ห้องพักครู" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5} />
+          <Sign lang={lang} text="STAFF ONLY · ห้องพักครู" color={color} p={[0, config.height - 0.6, -d / 2 + 0.03]} w={5} />
           <Plant p={[right - 0.3, 0, -1.5]} />
         </group>
       )
