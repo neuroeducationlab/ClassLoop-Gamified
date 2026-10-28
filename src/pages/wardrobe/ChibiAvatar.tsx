@@ -76,10 +76,8 @@ export default function ChibiAvatar({
       <ellipse cx={156} cy={138} rx={10} ry={6} fill="#FF9E9E" opacity={0.55} />
       {!eyes.replacesEyes && DEFAULT_EYES(c)}
       {eyes.front?.(c)}
-      {/* a hint of a nose + a confident smile (not a baby curve): a small open mouth with pink lip */}
-      <circle cx={120} cy={138} r={1.6} fill={OUT} opacity={0.55} />
-      <path d="M110,148 Q120,158 130,148" fill="#5B3A2E" stroke={OUT} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M112,149 Q120,156 128,149 L128,151 Q120,153 112,151 Z" fill="#FFB1C7" />
+      {/* A plain smile curve, in the same brown as the brows: friendly and simple. */}
+      <path d="M114,148 Q120,154 126,148" fill="none" stroke={OUT} strokeWidth={2.6} strokeLinecap="round" />
 
       {hair.front?.(c)}
       {/* Held item in front of hair and head: the character is proudly holding it up, not hiding

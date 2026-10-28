@@ -47,7 +47,7 @@ const GATE_ANGLE = Math.atan2(GATE.position[0] - PLAZA_CENTER[0], GATE.position[
 const noop = () => {}
 
 /** orbit → (Start) approach half-way → choose a role → dive into the campus. */
-type Phase = 'orbit' | 'approach' | 'choose' | 'dive'
+type Phase = 'orbit' | 'approach' | 'choose' | 'signin' | 'dive'
 
 
 /** easeOutBack: overshoots a little, so towers "land" with a bounce. */
@@ -161,7 +161,8 @@ function CameraRig({
   const c = useMemo<Cyl>(() => ({ a: 0, r: 0, y: 0 }), [])
 
   useFrame((state, dt) => {
-    const kind = phase === 'choose' ? 'approach' : phase
+    // the signin card hovers above the role cards: the camera stays at the cloud tops
+    const kind = phase === 'choose' || phase === 'signin' ? 'approach' : phase
     if (move.current?.phase !== kind) {
       // a new phase glides on from wherever the camera is now (the very first orbit starts in place)
       const from = move.current ? cylOf(camera.position) : { a: orbitAngle.current, r: ORBIT_RADIUS, y: ORBIT_HEIGHT }
@@ -260,16 +261,22 @@ export default function Landing() {
   const diving = phase === 'dive'
 
   const start = () => {
-    // fetch the campus while the camera glides, so the hand-off after the dive is instant
+    // Enter Campus → everyone must sign in first, so go to the Login page
+    // (the Landing's own role/signin phases below are kept only as a fallback and are no longer reachable)
     void import('@/pages/campus/Campus3D')
-    setPhase('approach')
+    navigate('/login')
   }
 
-  /** Sign in with the chosen role's demo account, then dive straight into the campus. */
+  /** Role picked: show the demo credentials card. The actual sign-in happens on Sign in. */
+  const [picked, setPicked] = useState<Role | null>(null)
   const chooseRole = (role: Role) => {
-    const account = DEMO_ACCOUNTS.find((a) => a.role === role)
+    setPicked(role)
+    setPhase('signin')
+  }
+  const signInAndDive = () => {
+    if (!picked) return
+    const account = DEMO_ACCOUNTS.find((a) => a.role === picked)
     if (!account || !signIn(account.email, account.password).ok) return
-    // both roles land on the campus (teachers get their quick-access panel there)
     setPhase('dive')
   }
 
@@ -438,6 +445,62 @@ export default function Landing() {
           <span className="rounded-full bg-[#16182E]/45 px-4 py-1.5 text-sm text-white backdrop-blur">Descending to BTS SPU Station Exit 2…</span>
         </p>
       )}
+
+      {/* Demo sign-in card: the viewer sees who they'd log in as, confirms, then the dive starts */}
+      {phase === 'signin' && picked && <SignInCard role={picked} onConfirm={signInAndDive} onBack={() => { setPicked(null); setPhase('choose') }} />}
+    </div>
+  )
+}
+
+function SignInCard({ role, onConfirm, onBack }: { role: Role; onConfirm: () => void; onBack: () => void }) {
+  const account = DEMO_ACCOUNTS.find((a) => a.role === role)!
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onBack()
+      if (e.key === 'Enter') onConfirm()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onBack, onConfirm])
+  return (
+    <div className="absolute inset-0 isolate flex items-center justify-center px-5 text-white animate-in fade-in duration-300">
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[520px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.7),transparent_70%)]" />
+      <div className="w-full max-w-md rounded-3xl border border-white/25 bg-[#16182E]/85 p-6 shadow-2xl backdrop-blur-md animate-in zoom-in-95 duration-300">
+        <p className="text-[11px] font-bold tracking-[0.3em] text-[#7FE3FF]">DEMO SIGN-IN</p>
+        <h3 className="mt-1 text-2xl font-bold">
+          Sign in as <span className="text-[#F2C879]">{role === 'student' ? 'Student' : 'Faculty'}</span>
+        </h3>
+        <p className="mt-1 text-sm text-white/70">{account.name} · credentials are shown so the audience can log in themselves at any time.</p>
+
+        <div className="mt-4 space-y-2">
+          <div className="rounded-xl border border-white/15 bg-white/5 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Email</p>
+            <p className="font-mono text-sm">{account.email}</p>
+          </div>
+          <div className="flex items-stretch gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2">
+            <div className="flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Password</p>
+              <p className="font-mono text-sm tracking-widest">{show ? account.password : '•'.repeat(account.password.length)}</p>
+            </div>
+            <button onClick={() => setShow((v) => !v)} className="rounded-lg bg-white/10 px-2 text-[11px] font-semibold text-white/70 hover:bg-white/20">
+              {show ? 'Hide' : 'Show'}
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={onConfirm}
+          autoFocus
+          className="group mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-6 py-3 text-base font-bold text-[#2B2D55] shadow-[0_0_30px_rgba(242,200,121,0.55)] transition-transform hover:scale-[1.02] active:scale-95"
+        >
+          Sign in · ลงชื่อเข้าใช้
+          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </button>
+        <button onClick={onBack} className="mt-3 flex w-full items-center justify-center gap-1.5 text-xs text-white/70 hover:text-white">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back · เลือกบทบาทใหม่
+        </button>
+      </div>
     </div>
   )
 }

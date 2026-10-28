@@ -110,7 +110,9 @@ export default function Login() {
   const [isDiving, setIsDiving] = useState(false)
   const [lowPower] = useState(isLowPower)
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning')
-  const [viewMode, setViewMode] = useState<'3d' | 'cinematic'>('3d')
+  // 3D-only now that the HD-art toggle button is gone; `viewMode` kept so the
+  // cinematic branch below still typechecks and can be re-enabled later.
+  const [viewMode] = useState<'3d' | 'cinematic'>('3d')
   const targetDestination = useRef<string>('/campus')
 
   const cycleTimeOfDay = () => {
@@ -295,17 +297,6 @@ export default function Login() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setViewMode((m) => (m === 'cinematic' ? '3d' : 'cinematic'))}
-                className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 backdrop-blur hover:bg-white/20 transition-colors shadow-xs cursor-pointer"
-                title="Switch between Cinematic Artwork and 3D Real-time"
-              >
-                <span className="flex items-center gap-1 text-[11px] font-bold">
-                  <GameIcon name={viewMode === 'cinematic' ? 'image' : 'gamepad'} />
-                  {viewMode === 'cinematic' ? 'HD Art' : '3D'}
-                </span>
-              </button>
               <button
                 type="button"
                 onClick={cycleTimeOfDay}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Ban, Check, ChevronLeft, ChevronRight, Lock, Pencil, RefreshCw, Sparkles, Star } from 'lucide-react'
+import { ArrowLeft, Ban, Check, ChevronLeft, ChevronRight, Lock, Pencil, RefreshCw, Sparkles, Star, X } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { playClickSound, playWrongSound } from '@/pages/campus/soundEngine'
 import ChibiAvatar, { ItemThumb, type Look } from './ChibiAvatar'
@@ -33,9 +33,14 @@ const WOOD = {
   hatch: 'repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0 2px, transparent 2px 7px)',
 }
 
-/** Change Outfit: a cozy dress-up closet. Try anything on; buy with coins; legendaries come from special quests. */
-export default function Wardrobe() {
+/**
+ * Change Outfit: a cozy dress-up closet. Try anything on; buy with coins; legendaries come
+ * from special quests. Shown either as a full page at `/create` (no `onClose`), or as a
+ * popup from the campus HUD (an `onClose` callback dismisses it instead of navigating).
+ */
+export default function Wardrobe({ onClose }: { onClose?: () => void } = {}) {
   const navigate = useNavigate()
+  const asModal = Boolean(onClose)
   const { lang, studentCoins, addCoins, avatar, setAvatar, currentStudent, studentXP } = useApp()
   const w = useWardrobe()
   const th = lang === 'th'
@@ -106,7 +111,14 @@ export default function Wardrobe() {
 
   const done = () => {
     setTrying({})
-    navigate('/campus')
+    if (onClose) onClose()
+    else navigate('/campus')
+  }
+
+  /** Special-quest buttons: in modal mode, just close so the campus beneath can handle it. */
+  const openOnCampus = (where: string) => {
+    if (onClose) onClose()
+    navigate('/campus', { state: { open: where } })
   }
 
   useEffect(() => {
@@ -116,13 +128,27 @@ export default function Wardrobe() {
   })
 
   return (
-    <div className="min-h-screen bg-[#FFF3E8] font-campus text-[#5B3A2E]">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-4 p-3 sm:p-5 lg:flex-row">
+    <div
+      className={asModal
+        ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 font-campus text-[#5B3A2E] backdrop-blur-sm animate-in fade-in duration-200'
+        : 'min-h-screen bg-[#FFF3E8] font-campus text-[#5B3A2E]'}
+      onMouseDown={asModal ? (e) => e.target === e.currentTarget && done() : undefined}
+    >
+      <div
+        className={asModal
+          ? 'flex max-h-[94vh] w-full max-w-5xl flex-col gap-3 overflow-y-auto rounded-[2rem] border-[4px] border-[#5B3A2E] bg-[#FFF3E8] p-3 shadow-[0_8px_0_#5B3A2E] animate-in zoom-in-95 duration-300 sm:p-4 lg:flex-row'
+          : 'mx-auto flex min-h-screen max-w-6xl flex-col gap-4 p-3 sm:p-5 lg:flex-row'}
+      >
         {/* ───────────── stage ───────────── */}
         <section className="relative flex flex-col lg:sticky lg:top-5 lg:h-[calc(100vh-2.5rem)] lg:w-[44%]">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <button onClick={done} className="flex items-center gap-1.5 rounded-2xl border-[3px] border-[#5B3A2E] bg-white px-3 py-1.5 text-sm font-bold shadow-[0_3px_0_#5B3A2E] transition active:translate-y-0.5 active:shadow-none">
-              <ArrowLeft className="h-4 w-4" /> {th ? 'แคมปัส' : 'Campus'}
+            <button
+              onClick={done}
+              aria-label={asModal ? (th ? 'ปิด' : 'Close') : (th ? 'กลับแคมปัส' : 'Back to campus')}
+              className="flex items-center gap-1.5 rounded-2xl border-[3px] border-[#5B3A2E] bg-white px-3 py-1.5 text-sm font-bold shadow-[0_3px_0_#5B3A2E] transition active:translate-y-0.5 active:shadow-none"
+            >
+              {asModal ? <X className="h-4 w-4" strokeWidth={3} /> : <ArrowLeft className="h-4 w-4" />}
+              {asModal ? (th ? 'ปิด' : 'Close') : (th ? 'แคมปัส' : 'Campus')}
             </button>
             <h1 className="text-xl font-bold sm:text-2xl">{th ? 'ตู้เสื้อผ้า' : 'Wardrobe'}</h1>
             <span className="flex items-center gap-1.5 rounded-2xl border-[3px] border-[#5B3A2E] bg-[#FFE7A8] px-3 py-1.5 text-sm font-bold shadow-[0_3px_0_#5B3A2E]" title={th ? 'เหรียญ' : 'Coins'}>
@@ -180,7 +206,7 @@ export default function Wardrobe() {
                 lang={lang}
                 onBuy={() => purchase(tried)}
                 onUndo={() => setTrying(({ [slot]: _, ...rest }) => rest)}
-                onGo={(where) => navigate('/campus', { state: { open: where } })}
+                onGo={(where) => openOnCampus(where)}
               />
             )}
           </div>

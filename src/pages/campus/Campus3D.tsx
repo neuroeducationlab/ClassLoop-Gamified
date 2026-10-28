@@ -41,6 +41,7 @@ import FlashcardSprint from '@/pages/wardrobe/FlashcardSprint'
 import SpecialQuests, { type SpecialGo } from '@/pages/wardrobe/SpecialQuests'
 import ProfileModal, { BadgeRow, ProfilePic } from '@/pages/wardrobe/ProfileCard'
 import RewardCelebration from '@/pages/wardrobe/RewardCelebration'
+import Wardrobe from '@/pages/wardrobe/Wardrobe'
 import { BLOCK_QUESTS, recordTalk, wardrobeState } from '@/pages/wardrobe/store'
 import { BLOCK_SPOTS } from '@/pages/wardrobe/quests'
 import type { QuestId } from '@/pages/wardrobe/catalog'
@@ -96,6 +97,9 @@ let introPlayed = true
 type LabelMap = Map<string, HTMLDivElement>
 
 const TEACHER_BUILDING_IDS = new Set<BuildingId>(['faculty', 'data', 'plan', 'dorm', 'lounge'])
+/** Buildings a student can enter; the rest are hidden from the student view entirely. */
+const STUDENT_BUILDING_IDS = new Set<BuildingId>(BUILDINGS.filter((b) => b.studentSees !== null).map((b) => b.id))
+const inRole = (b: BuildingConfig, isTeacher: boolean) => (isTeacher ? TEACHER_BUILDING_IDS : STUDENT_BUILDING_IDS).has(b.id)
 
 const GAME_FEATURE_SNIPPETS: Record<BuildingId, { th: string; en: string }> = {
   faculty: {
@@ -229,6 +233,7 @@ export default function Campus3D() {
   // ── Student Gamification Modals & Widgets State ───────────────────────────
   const [showBrainGym, setShowBrainGym] = useState<boolean>(false)
   // the coin shop is the wardrobe now (/create); these are its campus-side modals
+  const [showWardrobe, setShowWardrobe] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showFlashcards, setShowFlashcards] = useState(false)
   const [blockQuest, setBlockQuest] = useState<QuestId | null>(null)
@@ -333,11 +338,7 @@ export default function Campus3D() {
     nickname: currentStudent.nickname,
   }
 
-  const visibleBuildings = useMemo(() => {
-    return isTeacher
-      ? BUILDINGS.filter((b) => TEACHER_BUILDING_IDS.has(b.id))
-      : BUILDINGS
-  }, [isTeacher])
+  const visibleBuildings = useMemo(() => BUILDINGS.filter((b) => inRole(b, isTeacher)), [isTeacher])
 
   // Warp: the scene jumps under a flash of light (see warpTo in CampusScene)
   const warpRef = useRef<(target: [number, number], building: BuildingConfig | null, face?: [number, number]) => boolean>(() => false)
@@ -511,7 +512,8 @@ export default function Campus3D() {
         {visibleBuildings.map((b) => {
           const isHovered = hovered === b.id
           const isNear = nearDoor?.id === b.id
-          const showLock = !isTeacher && b.studentSees === null
+          // all buildings in `visibleBuildings` are accessible to the current role, so no lock is drawn
+          const showLock = false
           const snippet = GAME_FEATURE_SNIPPETS[b.id]?.[lang]
 
           return (
@@ -748,7 +750,7 @@ export default function Campus3D() {
             <>
               {/* SPU Boutique Shop with Student Coins */}
               <button
-                onClick={() => navigate('/create')}
+                onClick={() => setShowWardrobe(true)}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
                 title={`SPU Boutique · ${t.shop}`}
               >
@@ -908,7 +910,7 @@ export default function Campus3D() {
             walkGroundRef.current(dp[0], dp[1], b)
           }}
           lang={lang}
-          activeFilter={isTeacher ? (b) => TEACHER_BUILDING_IDS.has(b.id) : undefined}
+          activeFilter={(b) => inRole(b, isTeacher)}
         />
       )}
 
@@ -960,7 +962,8 @@ export default function Campus3D() {
       {/* ── Wardrobe special quests, profile, and the reward fanfare ── */}
       {showFlashcards && <FlashcardSprint onClose={() => setShowFlashcards(false)} />}
       {blockQuest && <BlockQuestion quest={blockQuest} onClose={() => setBlockQuest(null)} />}
-      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} onOpenWardrobe={() => setShowWardrobe(true)} />}
+      {showWardrobe && <Wardrobe onClose={() => setShowWardrobe(false)} />}
       <RewardCelebration />
 
       {/* ── Brain Gym Pre-Learning Arena Modal ── */}
@@ -988,7 +991,7 @@ export default function Campus3D() {
               setToast(lang === 'th' ? `กำลังนำทางไปที่ ${b.name.th}` : `Guiding to ${b.name.en}`)
             }
           }}
-          onOpenShop={() => navigate('/create')}
+          onOpenShop={() => setShowWardrobe(true)}
         />
       )}
 
@@ -1067,11 +1070,7 @@ function CampusScene({
   const intro = useRef(introPlayed ? 1 : 0)
   const nearNPCRef = useRef<CampusNPC | null>(null)
 
-  const visibleBuildings = useMemo(() => {
-    return isTeacher
-      ? BUILDINGS.filter((b) => TEACHER_BUILDING_IDS.has(b.id))
-      : BUILDINGS
-  }, [isTeacher])
+  const visibleBuildings = useMemo(() => BUILDINGS.filter((b) => inRole(b, isTeacher)), [isTeacher])
 
   // Arrival animation
   const arrivalT = useRef(0)

@@ -33,7 +33,7 @@ export function BadgeRow({ max = 4, size = 18 }: { max?: number; size?: number }
 }
 
 /** Show-off card: the full character in its scene, level, best items and the badge wall. */
-export default function ProfileModal({ onClose }: { onClose: () => void }) {
+export default function ProfileModal({ onClose, onOpenWardrobe }: { onClose: () => void; onOpenWardrobe?: () => void }) {
   const navigate = useNavigate()
   const { lang, studentXP, studentCoins, avatar, setAvatar, currentStudent } = useApp()
   const w = useWardrobe()
@@ -143,11 +143,12 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           <button
             onClick={() => {
               onClose()
-              navigate('/create')
+              if (onOpenWardrobe) onOpenWardrobe()
+              else navigate('/create')
             }}
             className="mt-4 flex items-center justify-center gap-2 rounded-2xl border-[3px] border-[#5B3A2E] bg-gradient-to-b from-[#FFB0A6] to-[#F27D74] py-3 text-base font-bold text-white shadow-[0_4px_0_#B85B52] active:translate-y-1 active:shadow-none cursor-pointer"
           >
-            <Shirt className="h-5 w-5" /> {th ? 'ห้องแต่งตัวตัวละคร 3D' : '3D Avatar Customizer'}
+            <Shirt className="h-5 w-5" /> {th ? 'แต่งตัว' : 'Change outfit'}
           </button>
           <p className="mt-2 text-center text-[11px] font-semibold opacity-60">{owned.length}/{ITEMS.length} {th ? 'ไอเท็มในตู้' : 'items in your closet'}</p>
         </div>
