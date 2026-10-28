@@ -133,6 +133,14 @@ tool as RPG text boxes; hovering one projects a live preview of the real page an
 5. **Emoji Deduplication**:
    - Removed redundant/duplicate emojis across toasts, badges, dialog rewards, Brain Gym explanation, and battle tabs.
 
+6. **Course Switcher & Dynamic Content Packs**:
+   - Sidebar course switcher in TeacherShell wired to `COURSE_PACKS` (`IBM3301`, `MGT2201`, `MGT4401`).
+   - Dynamic 6-week syllabus, active lesson topic, activities, flashcards, pretest pool, and mixed class tips per course pack.
+   - Studio/Exams edit flows automatically scoped to active course pack without breaking callers.
+7. **Attendance Console Bilingual & Emoji Sweep**:
+   - Status filters, table headers, initials helper (`initials(nickname, lang)`), action buttons, and random roll-call modal fully bilingual in Thai and English.
+   - Clean, professional design with 0 emoji clutter and 0 untranslated text in English mode.
+
 ## Wardrobe, special quests and profile (28 Oct, user-approved)
 
 `/create` is now the **Change Outfit** wardrobe (`src/pages/wardrobe/`), styled after cozy dress-up games: the
