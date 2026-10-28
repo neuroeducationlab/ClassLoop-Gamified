@@ -233,23 +233,6 @@ function CameraRig({
   return null
 }
 
-const ROLE_CARDS: { role: Role; icon: typeof GraduationCap; title: string; blurb: string; accent: string }[] = [
-  {
-    role: 'student',
-    icon: GraduationCap,
-    title: 'Student',
-    blurb: 'Explore the 3D campus, complete learning missions, earn XP, and climb the leaderboard.',
-    accent: 'from-[#7C9BE8] to-[#4FB0A5]',
-  },
-  {
-    role: 'teacher',
-    icon: BookOpen,
-    title: 'Faculty / Professor',
-    blurb: 'View live class analytics, student engagement metrics, and design AI-powered lessons.',
-    accent: 'from-[#E89BC4] to-[#F2994A]',
-  },
-]
-
 /** Grand opening page at `/`: the campus builds itself at golden hour, then Start dives into Exit 2 → login. */
 export default function Landing() {
   const navigate = useNavigate()
@@ -266,14 +249,9 @@ export default function Landing() {
     setPhase('approach')
   }
 
-  /** Role picked: show the demo credentials card. The actual sign-in happens on Sign in. */
-  const [picked, setPicked] = useState<Role | null>(null)
-  const chooseRole = (role: Role) => {
-    setPicked(role)
-    setPhase('signin')
-  }
+  /** The role picked in the sign-in card. Student by default; a toggle in the form switches it. */
+  const [picked, setPicked] = useState<Role>('student')
   const signInAndDive = () => {
-    if (!picked) return
     const account = DEMO_ACCOUNTS.find((a) => a.role === picked)
     if (!account || !signIn(account.email, account.password).ok) return
     setPhase('dive')
@@ -338,7 +316,7 @@ export default function Landing() {
         <CameraRig
           phase={phase}
           veil={veil}
-          onApproached={() => setPhase('choose')}
+          onApproached={() => setPhase('signin')}
           // the dive already ends on Campus3D's first-person pose: no arrival sequence there
           onDived={() => navigate('/campus', { state: { fromLanding: true } })}
         />
@@ -395,49 +373,6 @@ export default function Landing() {
         ClassLoop Campus · SPU Edition — The Winner from LearnHackathon
       </p>
 
-      {/* role cards: always mounted, faded with a transition (a keyframe animation can stall on a busy GPU) */}
-      {(
-        <div
-          inert={phase !== 'choose'}
-          className={`absolute inset-0 isolate flex flex-col items-center justify-center gap-6 px-5 text-white transition-all duration-700 ${
-            phase === 'choose' ? 'scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
-          }`}
-        >
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.6),transparent_70%)]" />
-          <div className="text-center">
-            <p className="text-[11px] font-semibold tracking-[0.25em] text-[#7FE3FF]">CLASSLOOP CAMPUS</p>
-            <h2 className="mt-1 text-3xl font-bold drop-shadow sm:text-4xl">Select Your Role</h2>
-          </div>
-          <div className="grid w-full max-w-2xl gap-4 sm:grid-cols-2">
-            {ROLE_CARDS.map(({ role, icon: Icon, title, blurb, accent }) => (
-              <button
-                key={role}
-                onClick={() => chooseRole(role)}
-                className="group flex items-center gap-4 rounded-3xl border border-white/25 bg-[#16182E]/70 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:-translate-y-1 hover:border-white/50 hover:bg-[#16182E]/80 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#F2C879]/70 sm:flex-col sm:items-start sm:p-6"
-              >
-                <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} shadow-lg transition-transform group-hover:scale-110`}>
-                  <Icon className="h-7 w-7" />
-                </span>
-                <span>
-                  <span className="block text-xl font-bold text-white">
-                    {title}
-                  </span>
-                  <span className="mt-1 block text-sm text-white/75">{blurb}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-5 text-sm">
-            <button onClick={() => setPhase('orbit')} className="flex items-center gap-1.5 text-white/80 hover:text-white">
-              <ArrowLeft className="h-4 w-4" /> Back
-            </button>
-            <button onClick={() => navigate('/login')} className="text-white/80 underline-offset-4 hover:text-white hover:underline">
-              Sign in with email
-            </button>
-          </div>
-        </div>
-      )}
-
       {diving && (
         <p className="pointer-events-none absolute inset-x-0 bottom-10 flex justify-center animate-in fade-in duration-500">
           <span className="rounded-full bg-[#16182E]/45 px-4 py-1.5 text-sm text-white backdrop-blur">Descending to BTS SPU Station Exit 2…</span>
@@ -445,41 +380,68 @@ export default function Landing() {
       )}
 
       {/* Demo sign-in card: the viewer sees who they'd log in as, confirms, then the dive starts */}
-      {phase === 'signin' && picked && <SignInCard role={picked} onConfirm={signInAndDive} onBack={() => { setPicked(null); setPhase('choose') }} />}
+      {phase === 'signin' && <SignInCard role={picked} setRole={setPicked} onConfirm={signInAndDive} onBack={() => setPhase('orbit')} />}
     </div>
   )
 }
 
-function SignInCard({ role, onConfirm, onBack }: { role: Role; onConfirm: () => void; onBack: () => void }) {
+function SignInCard({
+  role,
+  setRole,
+  onConfirm,
+  onBack,
+}: {
+  role: Role
+  setRole: (r: Role) => void
+  onConfirm: () => void
+  onBack: () => void
+}) {
   const account = DEMO_ACCOUNTS.find((a) => a.role === role)!
   const [show, setShow] = useState(false)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onBack()
-      if (e.key === 'Enter') onConfirm()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onBack, onConfirm])
+  }, [onBack])
   return (
     <div
-      className="absolute inset-0 isolate flex items-center justify-center px-5 text-white animate-in fade-in duration-300"
-      // click outside the card goes back to role picking
+      className="absolute inset-0 isolate flex items-center justify-center px-5 text-white animate-in fade-in duration-500"
+      // click outside the card goes back to the title
       onMouseDown={(e) => e.target === e.currentTarget && onBack()}
     >
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.75),transparent_70%)]" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[600px] w-[min(900px,130vw)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(16,18,40,0.75),transparent_70%)]" />
       <form
         onSubmit={(e) => { e.preventDefault(); onConfirm() }}
-        className="w-full max-w-md rounded-3xl border border-white/25 bg-[#16182E]/90 p-6 shadow-2xl backdrop-blur-md animate-in zoom-in-95 duration-300"
+        className="w-full max-w-md rounded-3xl border border-white/25 bg-[#16182E]/90 p-6 shadow-2xl backdrop-blur-md animate-in zoom-in-95 duration-500"
       >
         <div className="flex items-center justify-between">
           <p className="text-[11px] font-bold tracking-[0.3em] text-[#7FE3FF]">SIGN IN · เข้าสู่ระบบ</p>
           <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[10px] font-semibold text-white/70">DEMO</span>
         </div>
-        <h3 className="mt-1 text-2xl font-bold">
-          {role === 'student' ? 'Student' : 'Faculty'} <span className="text-white/40 text-base font-medium">· {account.name}</span>
-        </h3>
-        <p className="mt-1 text-[11px] text-white/55">Credentials are pre-filled so anyone can sign in. Click Sign in when ready.</p>
+        <h3 className="mt-1 text-2xl font-bold">ClassLoop <span className="text-[#F2C879]">Campus</span></h3>
+        <p className="mt-0.5 text-[11px] text-white/55">Sign in to continue · credentials are pre-filled, pick your role below.</p>
+
+        {/* Role tabs: a one-tap toggle that swaps the pre-filled credentials */}
+        <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl border border-white/15 bg-white/[0.04] p-1">
+          {(['student', 'teacher'] as Role[]).map((r) => {
+            const active = role === r
+            return (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-bold transition ${
+                  active ? 'bg-gradient-to-br from-[#F7E3B4] to-[#F2C879] text-[#2B2D55] shadow' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                {r === 'student' ? <GraduationCap className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}
+                {r === 'student' ? 'Student' : 'Faculty'}
+              </button>
+            )
+          })}
+        </div>
 
         <label className="mt-4 block">
           <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-white/50">Email</span>
@@ -511,11 +473,11 @@ function SignInCard({ role, onConfirm, onBack }: { role: Role; onConfirm: () => 
           autoFocus
           className="group mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#F7E3B4] to-[#F2C879] px-6 py-3 text-base font-bold text-[#2B2D55] shadow-[0_0_30px_rgba(242,200,121,0.55)] transition-transform hover:scale-[1.02] active:scale-95"
         >
-          Sign in · ลงชื่อเข้าใช้
+          Sign in as {role === 'student' ? 'Student' : 'Faculty'} · ลงชื่อเข้าใช้
           <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </button>
         <button type="button" onClick={onBack} className="mt-3 flex w-full items-center justify-center gap-1.5 text-xs text-white/70 hover:text-white">
-          <ArrowLeft className="h-3.5 w-3.5" /> Back · เลือกบทบาทใหม่
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
       </form>
     </div>
