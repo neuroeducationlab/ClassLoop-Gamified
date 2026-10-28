@@ -41,12 +41,6 @@ const NAV: NavItem[] = [
   { to: '/teacher/community', labelKey: 'community', icon: MessagesSquare },
 ]
 
-const TEACHER_COURSES = [
-  { code: 'IBC101', name: 'International Business Communication' },
-  { code: 'MGT201', name: 'Organisational Behaviour' },
-  { code: 'STR401', name: 'Strategic Management' },
-]
-
 const NOTIFICATIONS = [
   'นักศึกษา 3 คนยังไม่ส่ง Pre-test สัปดาห์ที่ 5',
   'มีคำถามใหม่ 5 ข้อในคอมมูนิตี้',
@@ -61,7 +55,7 @@ function Brand() {
 }
 
 export default function TeacherShell() {
-  const { teacherName, resetDemo, setRole, signOut, t } = useApp()
+  const { teacherName, resetDemo, setRole, signOut, t, activeCourseId, setActiveCourseId, coursePacks } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -70,7 +64,6 @@ export default function TeacherShell() {
 
   const [openMenu, setOpenMenu] = useState<'bell' | 'account' | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [selectedCourseCode, setSelectedCourseCode] = useState('IBC101')
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [soundMuted, setSoundMuted] = useState(isSoundMuted())
@@ -108,13 +101,16 @@ export default function TeacherShell() {
             {t('courses')}
           </p>
           <div className="mt-2 flex flex-col gap-1.5">
-            {TEACHER_COURSES.map((c) => {
-              const isSelected = c.code === selectedCourseCode
+            {coursePacks.map((pack) => {
+              const isSelected = pack.course.id === activeCourseId
               return (
                 <button
-                  key={c.code}
+                  key={pack.course.id}
                   type="button"
-                  onClick={() => setSelectedCourseCode(c.code)}
+                  onClick={() => {
+                    playCoinSound()
+                    setActiveCourseId(pack.course.id)
+                  }}
                   className={cn(
                     'w-full text-left rounded-xl px-3 py-2 transition-all cursor-pointer border',
                     isSelected
@@ -122,10 +118,21 @@ export default function TeacherShell() {
                       : 'border-grey-200/50 hover:bg-grey-100/70 text-grey-600',
                   )}
                 >
-                  <p className={cn('truncate text-sm font-semibold', isSelected ? 'text-pink-600' : 'text-ink')}>
-                    {c.name}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: pack.accent }}
+                      />
+                      <span className="font-mono text-xs font-bold text-ink">{pack.course.code}</span>
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-pink-600" />
+                    )}
+                  </div>
+                  <p className={cn('mt-0.5 truncate text-[11px] font-medium pl-4', isSelected ? 'text-pink-700 font-semibold' : 'text-grey-500')}>
+                    {pack.course.name}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-grey-500 font-mono">{c.code}</p>
                 </button>
               )
             })}
@@ -331,17 +338,18 @@ export default function TeacherShell() {
             {/* courses */}
             <div className="px-1 pt-4">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-grey-600">
-                รายวิชา
+                {t('courses')}
               </p>
               <div className="mt-2 flex flex-col gap-1.5">
-                {TEACHER_COURSES.map((c) => {
-                  const isSelected = c.code === selectedCourseCode
+                {coursePacks.map((pack) => {
+                  const isSelected = pack.course.id === activeCourseId
                   return (
                     <button
-                      key={c.code}
+                      key={pack.course.id}
                       type="button"
                       onClick={() => {
-                        setSelectedCourseCode(c.code)
+                        playCoinSound()
+                        setActiveCourseId(pack.course.id)
                         setSidebarOpen(false)
                       }}
                       className={cn(
@@ -351,10 +359,21 @@ export default function TeacherShell() {
                           : 'border-grey-200/50 hover:bg-grey-100/70 text-grey-600',
                       )}
                     >
-                      <p className={cn('truncate text-sm font-semibold', isSelected ? 'text-pink-600' : 'text-ink')}>
-                        {c.name}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: pack.accent }}
+                          />
+                          <span className="font-mono text-xs font-bold text-ink">{pack.course.code}</span>
+                        </div>
+                        {isSelected && (
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-pink-600" />
+                        )}
+                      </div>
+                      <p className={cn('mt-0.5 truncate text-[11px] font-medium pl-4', isSelected ? 'text-pink-700 font-semibold' : 'text-grey-500')}>
+                        {pack.course.name}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-grey-500 font-mono">{c.code}</p>
                     </button>
                   )
                 })}

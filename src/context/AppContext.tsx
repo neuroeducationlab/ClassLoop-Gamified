@@ -3,14 +3,15 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { COURSE_PACKS, coursePack, type CoursePack } from '@/data/courses'
 import {
   COMMUNITY_POSTS,
-  COURSE,
   GAP_ANALYSIS,
   GENERATED_CONTENT,
   INITIAL_ASSIGNMENTS,
@@ -18,7 +19,6 @@ import {
   PRETEST_RESPONSES,
   REMEDIATION,
   STUDENTS,
-  TOPICS,
   type Activity,
   type Assignment,
   type CommunityPost,
@@ -301,6 +301,13 @@ type AppState = {
   teacherName: string
   currentStudent: Student
 
+  // course switcher & content packs
+  activeCourseId: string
+  setActiveCourseId: (id: string) => void
+  activeCoursePack: CoursePack
+  coursePacks: CoursePack[]
+  currentWeek: number
+
   // demo narrative — mutable so the teacher can edit AI-generated content
   course: Course
   topics: Topic[]
@@ -437,10 +444,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS)
   const [expectations, setExpectations] = useState<ExpectationSticky[]>(INITIAL_EXPECTATIONS)
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent>(
-    () => structuredClone(GENERATED_CONTENT),
-  )
-  const [activeActivity, setActiveActivity] = useState<Activity | null>(GENERATED_CONTENT.activities[0])
+  const [activeCourseId, setActiveCourseId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('classloop_active_course') || COURSE_PACKS[0].course.id
+    } catch {
+      return COURSE_PACKS[0].course.id
+    }
+  })
+
+  const [contentPacks, setContentPacks] = useState<Record<string, GeneratedContent>>(() => {
+    const initial: Record<string, GeneratedContent> = {}
+    for (const p of COURSE_PACKS) {
+      initial[p.course.id] = structuredClone(p.generatedContent)
+    }
+    return initial
+  })
+
+  const changeActiveCourse = useCallback((id: string) => {
+    setActiveCourseId(id)
+    try {
+      localStorage.setItem('classloop_active_course', id)
+    } catch {}
+  }, [])
+
+  const activeCoursePack = useMemo(() => coursePack(activeCourseId), [activeCourseId])
+  const course = activeCoursePack.course
+  const topics = activeCoursePack.topics
+  const currentWeek = activeCoursePack.currentWeek
+  const generatedContent = contentPacks[activeCourseId] ?? activeCoursePack.generatedContent
+
+  const [activeActivity, setActiveActivity] = useState<Activity | null>(() => {
+    const pack = coursePack(COURSE_PACKS[0].course.id)
+    return pack.generatedContent.activities[0] ?? null
+  })
+
+  useEffect(() => {
+    const pack = coursePack(activeCourseId)
+    const content = contentPacks[activeCourseId] ?? pack.generatedContent
+    setActiveActivity(content.activities[0] ?? null)
+  }, [activeCourseId, contentPacks])
   const [studentXP, setStudentXP] = useState(120)
   const [studentCoins, setStudentCoins] = useState(180)
   const [missions, setMissions] = useState<Mission[]>([
@@ -607,6 +649,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsGenerating(false)
     setIsSimulating(false)
     setRemediationSent(false)
+    const resetPacks: Record<string, GeneratedContent> = {}
+    for (const p of COURSE_PACKS) {
+      resetPacks[p.course.id] = structuredClone(p.generatedContent)
+    }
+    setContentPacks(resetPacks)
     // role is intentionally untouched: it is who is viewing, not demo data
   }, [clearGenTimer, clearSimTimers])
 
@@ -836,50 +883,89 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* ----------------------------------------- generated-content editing -- */
 
   const updateActivity = useCallback((index: number, partial: Partial<Activity>) => {
-    setGeneratedContent((prev) => ({
-      ...prev,
-      activities: prev.activities.map((a, i) => (i === index ? { ...a, ...partial } : a)),
-    }))
-  }, [])
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          activities: cur.activities.map((a, i) => (i === index ? { ...a, ...partial } : a)),
+        },
+      }
+    })
+  }, [activeCourseId])
 
   const deleteActivity = useCallback((index: number) => {
-    setGeneratedContent((prev) => ({
-      ...prev,
-      activities: prev.activities.filter((_, i) => i !== index),
-    }))
-  }, [])
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          activities: cur.activities.filter((_, i) => i !== index),
+        },
+      }
+    })
+  }, [activeCourseId])
 
   const updateFlashcard = useCallback((index: number, partial: Partial<Flashcard>) => {
-    setGeneratedContent((prev) => ({
-      ...prev,
-      flashcards: prev.flashcards.map((f, i) => (i === index ? { ...f, ...partial } : f)),
-    }))
-  }, [])
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          flashcards: cur.flashcards.map((f, i) => (i === index ? { ...f, ...partial } : f)),
+        },
+      }
+    })
+  }, [activeCourseId])
 
   const deleteFlashcard = useCallback((index: number) => {
-    setGeneratedContent((prev) => ({
-      ...prev,
-      flashcards: prev.flashcards.filter((_, i) => i !== index),
-    }))
-  }, [])
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          flashcards: cur.flashcards.filter((_, i) => i !== index),
+        },
+      }
+    })
+  }, [activeCourseId])
 
   const updatePretestQuestion = useCallback((id: string, partial: Partial<PretestQuestion>) => {
-    setGeneratedContent((prev) => ({
-      ...prev,
-      pretest: prev.pretest.map((q) => (q.id === id ? { ...q, ...partial } : q)),
-    }))
-  }, [])
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          pretest: cur.pretest.map((q) => (q.id === id ? { ...q, ...partial } : q)),
+        },
+      }
+    })
+  }, [activeCourseId])
 
   const deletePretestQuestion = useCallback((id: string) => {
-    setGeneratedContent((prev) => ({
-      ...prev,
-      pretest: prev.pretest.filter((q) => q.id !== id),
-    }))
-  }, [])
+    setContentPacks((prev) => {
+      const cur = prev[activeCourseId] ?? coursePack(activeCourseId).generatedContent
+      return {
+        ...prev,
+        [activeCourseId]: {
+          ...cur,
+          pretest: cur.pretest.filter((q) => q.id !== id),
+        },
+      }
+    })
+  }, [activeCourseId])
 
   const resetGeneratedContent = useCallback(() => {
-    setGeneratedContent(structuredClone(GENERATED_CONTENT))
-  }, [])
+    setContentPacks((prev) => ({
+      ...prev,
+      [activeCourseId]: structuredClone(coursePack(activeCourseId).generatedContent),
+    }))
+  }, [activeCourseId])
 
   /* -------------------------------------------------------------- value -- */
 
@@ -890,8 +976,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     teacherName: TEACHER_NAME,
     currentStudent: demoStudent,
 
-    course: COURSE,
-    topics: TOPICS,
+    activeCourseId,
+    setActiveCourseId: changeActiveCourse,
+    activeCoursePack,
+    coursePacks: COURSE_PACKS,
+    currentWeek,
+
+    course,
+    topics,
     generatedContent,
     updateActivity,
     deleteActivity,

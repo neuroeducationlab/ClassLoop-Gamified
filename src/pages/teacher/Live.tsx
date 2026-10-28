@@ -35,6 +35,7 @@ export default function Live() {
   const {
     course,
     topics,
+    currentWeek,
     generatedContent,
     students,
     responses,
@@ -51,13 +52,20 @@ export default function Live() {
     lang,
   } = useApp()
 
+  const liveTopic = topics[currentWeek - 1] || topics[0]
+
   // View Mode: 'plan' (ตารางการเรียน & เตรียมสื่อ) or 'live' (สอนเรียลไทม์)
   const [viewMode, setViewMode] = useState<'live' | 'plan'>('plan')
 
   // Realtime start popup: which topic, pre or post
   const [startModal, setStartModal] = useState(false)
-  const [startTopicId, setStartTopicId] = useState('t2')
+  const [startTopicId, setStartTopicId] = useState<string>(() => topics[currentWeek - 1]?.id || topics[0]?.id || 't2')
   const [testPhase, setTestPhase] = useState<'pre' | 'post'>('pre')
+
+  useEffect(() => {
+    const cur = topics[currentWeek - 1] || topics[0]
+    if (cur) setStartTopicId(cur.id)
+  }, [topics, currentWeek])
 
   // Modal State for Picked Speaker
   const [pickedSpeaker, setPickedSpeaker] = useState<Student | null>(null)
@@ -209,10 +217,12 @@ export default function Live() {
             <div className="flex items-center justify-between border-b border-grey-300/40 pb-3">
               <h2 className="text-base font-bold text-ink flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-pink-600" />
-                <span>ตารางแผนการสอน 6 สัปดาห์ (Course Plan Schedule)</span>
+                <span>{lang === 'th' ? 'ตารางแผนการสอน 6 สัปดาห์ (Course Plan Schedule)' : '6-Week Course Plan Schedule'}</span>
               </h2>
               <span className="text-xs font-semibold text-pink-600 bg-pink-50 px-3 py-1 rounded-full border border-pink-200">
-                สัปดาห์ปัจจุบัน: W2 (Hofstede)
+                {lang === 'th'
+                  ? `สัปดาห์ปัจจุบัน: W${currentWeek} (${liveTopic?.title ?? ''})`
+                  : `Current Week: W${currentWeek} (${liveTopic?.title ?? ''})`}
               </span>
             </div>
 
@@ -220,11 +230,11 @@ export default function Live() {
               <table className="w-full text-left text-xs text-ink">
                 <thead className="bg-canvas text-grey-600 uppercase font-semibold border-b border-grey-300/40">
                   <tr>
-                    <th className="py-3 px-4">สัปดาห์</th>
-                    <th className="py-3 px-4">หัวข้อบทเรียน</th>
-                    <th className="py-3 px-4">วัตถุประสงค์การเรียนรู้</th>
-                    <th className="py-3 px-4">กิจกรรมที่เลือก</th>
-                    <th className="py-3 px-4">สถานะ</th>
+                    <th className="py-3 px-4">{lang === 'th' ? 'สัปดาห์' : 'Week'}</th>
+                    <th className="py-3 px-4">{lang === 'th' ? 'หัวข้อบทเรียน' : 'Topic'}</th>
+                    <th className="py-3 px-4">{lang === 'th' ? 'วัตถุประสงค์การเรียนรู้' : 'Learning Objective'}</th>
+                    <th className="py-3 px-4">{lang === 'th' ? 'กิจกรรมที่เลือก' : 'Selected Activity'}</th>
+                    <th className="py-3 px-4">{lang === 'th' ? 'สถานะ' : 'Status'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-grey-300/30">
@@ -233,35 +243,35 @@ export default function Live() {
                       key={t.id}
                       className={cn(
                         'hover:bg-pink-50/40 transition-colors',
-                        t.week === 2 && 'bg-pink-50/70 font-semibold'
+                        t.week === currentWeek && 'bg-pink-50/70 font-semibold'
                       )}
                     >
                       <td className="py-3.5 px-4 font-bold text-pink-600">
-                        สัปดาห์ที่ {t.week}
+                        {lang === 'th' ? `สัปดาห์ที่ ${t.week}` : `Week ${t.week}`}
                       </td>
                       <td className="py-3.5 px-4 font-bold">{t.title}</td>
                       <td className="py-3.5 px-4 text-grey-600 max-w-xs leading-relaxed">
                         {t.learningObjective}
                       </td>
                       <td className="py-3.5 px-4">
-                        {t.week === 2 ? (
+                        {t.week === currentWeek ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-pink-100 px-2.5 py-1 text-[11px] font-bold text-pink-700 border border-pink-300">
                             <Sparkles className="h-3 w-3 text-pink-600" />
-                            <span>{activeActivity?.name || 'Cultural Clash Debate'}</span>
+                            <span>{activeActivity?.name || generatedContent.activities[0]?.name || (lang === 'th' ? 'กิจกรรมคลาส' : 'Class Activity')}</span>
                           </span>
                         ) : (
-                          <span className="text-grey-600">เตรียมไว้จาก Studio</span>
+                          <span className="text-grey-600">{lang === 'th' ? 'เตรียมไว้จาก Studio' : 'Planned in Studio'}</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        {t.week === 2 ? (
+                        {t.week === currentWeek ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
                             <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                            <span>พร้อมสอน</span>
+                            <span>{lang === 'th' ? 'พร้อมสอน' : 'Ready'}</span>
                           </span>
                         ) : (
                           <span className="rounded-full bg-canvas px-2.5 py-0.5 text-[10px] text-grey-600 border border-grey-300">
-                            วางแผนแล้ว
+                            {lang === 'th' ? 'วางแผนแล้ว' : 'Planned'}
                           </span>
                         )}
                       </td>
@@ -278,23 +288,29 @@ export default function Live() {
             <div className="rounded-2xl border border-grey-300/60 bg-paper p-6 shadow-xs space-y-4">
               <h2 className="text-base font-extrabold text-ink flex items-center gap-2">
                 <Brain className="h-5 w-5 text-pink-600" />
-                <span>การเตรียมเนื้อหาการสอน</span>
+                <span>{lang === 'th' ? 'การเตรียมเนื้อหาการสอน' : 'Lesson Content Preparation'}</span>
               </h2>
 
               <div className="space-y-3 text-xs">
                 <div className="rounded-xl bg-canvas p-3.5 border border-grey-300/40 space-y-1">
-                  <p className="font-bold text-ink">มิติวัฒนธรรม 6 ด้านของ Hofstede:</p>
+                  <p className="font-bold text-ink">
+                    {lang === 'th' ? `หัวข้อหลักสัปดาห์ที่ ${currentWeek}:` : `Week ${currentWeek} Live Lesson Focus:`}
+                  </p>
                   <p className="text-grey-600 leading-relaxed font-medium">
-                    1. Power Distance Index (PDI) • 2. Individualism (IDV) • 3. Masculinity (MAS) • 4. Uncertainty Avoidance (UAI) • 5. Long Term Orientation (LTO) • 6. Indulgence (IND)
+                    {liveTopic ? `${liveTopic.title} — ${liveTopic.learningObjective}` : ''}
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-pink-50 p-3.5 border border-pink-200 space-y-1">
-                  <p className="font-bold text-pink-600">จุดเด่นที่เน้นในคลาสข้ามคณะ:</p>
-                  <p className="text-ink leading-relaxed font-medium">
-                    เน้นเปรียบเทียบระหว่าง คณะบริหารฯ (ชอบความตรงไปตรงมา) vs คณะดิจิทัลมีเดียฯ (เน้นความคิดสร้างสรรค์แบบเปิด) เพื่อสร้างบรรยากาศแลกเปลี่ยนจริง
-                  </p>
-                </div>
+                {generatedContent.mixedClassTip && (
+                  <div className="rounded-xl bg-pink-50 p-3.5 border border-pink-200 space-y-1">
+                    <p className="font-bold text-pink-600">
+                      {lang === 'th' ? 'จุดเด่นที่เน้นในคลาสข้ามคณะ:' : 'Mixed-Class Teaching Strategy:'}
+                    </p>
+                    <p className="text-ink leading-relaxed font-medium">
+                      {generatedContent.mixedClassTip}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -303,31 +319,40 @@ export default function Live() {
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-extrabold text-ink flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-pink-600" />
-                  <span>กิจกรรมการเรียนรู้ที่เลือก</span>
+                  <span>{lang === 'th' ? 'กิจกรรมการเรียนรู้ที่เลือก' : 'Selected Learning Activity'}</span>
                 </h2>
                 <span className="rounded-full bg-pink-600 px-3 py-1 text-xs font-extrabold text-white shadow-2xs">
-                  {activeActivity?.durationMin || 25} นาที
+                  {activeActivity?.durationMin || generatedContent.activities[0]?.durationMin || 25} {lang === 'th' ? 'นาที' : 'min'}
                 </span>
               </div>
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <h3 className="text-lg font-bold text-ink">{activeActivity?.name || 'Cultural Clash Debate'}</h3>
-                  <p className="text-grey-600 mt-1 leading-relaxed font-medium">{activeActivity?.whyItWorks}</p>
+                  <h3 className="text-lg font-bold text-ink">
+                    {activeActivity?.name || generatedContent.activities[0]?.name || (lang === 'th' ? 'กิจกรรมบทเรียน' : 'Lesson Activity')}
+                  </h3>
+                  <p className="text-grey-600 mt-1 leading-relaxed font-medium">
+                    {activeActivity?.whyItWorks || generatedContent.activities[0]?.whyItWorks}
+                  </p>
                 </div>
 
                 <div className="rounded-xl bg-canvas p-3 border border-grey-300/40 space-y-1">
                   <p className="font-bold text-ink flex items-center gap-1.5">
                     <Lightbulb className="h-4 w-4 text-pink-600" />
-                    <span>ทำไมกิจกรรมนี้ถึงเวิร์ก:</span>
+                    <span>{lang === 'th' ? 'ทำไมกิจกรรมนี้ถึงเวิร์ก:' : 'Why this activity works:'}</span>
                   </p>
-                  <p className="text-grey-600 leading-relaxed font-medium">{activeActivity?.whyItWorks}</p>
+                  <p className="text-grey-600 leading-relaxed font-medium">
+                    {activeActivity?.whyItWorks || generatedContent.activities[0]?.whyItWorks}
+                  </p>
                 </div>
 
-                {activeActivity?.materialsNeeded && (
+                {(activeActivity?.materialsNeeded || generatedContent.activities[0]?.materialsNeeded) && (
                   <p className="text-grey-600 font-semibold pt-1 flex items-center gap-1.5">
                     <Package className="h-3.5 w-3.5 text-pink-600 shrink-0" />
-                    <span>สื่อที่ต้องใช้: {activeActivity.materialsNeeded}</span>
+                    <span>
+                      {lang === 'th' ? 'สื่อที่ต้องใช้: ' : 'Materials: '}
+                      {activeActivity?.materialsNeeded || generatedContent.activities[0]?.materialsNeeded}
+                    </span>
                   </p>
                 )}
               </div>
@@ -338,7 +363,7 @@ export default function Live() {
           <div className="rounded-2xl border border-grey-300/60 bg-paper p-6 shadow-xs space-y-4">
             <h2 className="text-base font-extrabold text-ink flex items-center gap-2">
               <Layers className="h-5 w-5 text-pink-600" />
-              <span>สื่อการสอนและเครื่องมือ</span>
+              <span>{lang === 'th' ? 'สื่อการสอนและเครื่องมือ' : 'Teaching Media & Resources'}</span>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -347,12 +372,20 @@ export default function Live() {
                 <div className="flex items-center justify-between text-xs font-bold text-pink-600">
                   <span className="flex items-center gap-1.5 font-extrabold">
                     <Layers className="h-4 w-4 text-pink-600" />
-                    <span>สรุป Flashcards 8 ใบ</span>
+                    <span>
+                      {lang === 'th'
+                        ? `สรุป Flashcards ${generatedContent.flashcards.length} ใบ`
+                        : `${generatedContent.flashcards.length} Summary Flashcards`}
+                    </span>
                   </span>
-                  <span className="text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-md font-bold">8 การ์ด</span>
+                  <span className="text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-md font-bold">
+                    {generatedContent.flashcards.length} {lang === 'th' ? 'การ์ด' : 'cards'}
+                  </span>
                 </div>
                 <p className="text-xs text-grey-600 leading-relaxed font-medium">
-                  การ์ด 3D พลิกอ่านสรุปมิติวัฒนธรรม พร้อมคำใบ้และตัวอย่างจริง
+                  {lang === 'th'
+                    ? 'การ์ด 3D พลิกอ่านสรุปเนื้อหาสำคัญ พร้อมคำใบ้และตัวอย่างจริง'
+                    : 'Interactive 3D summary cards with real-world cases and prompts'}
                 </p>
               </div>
 
@@ -361,12 +394,20 @@ export default function Live() {
                 <div className="flex items-center justify-between text-xs font-bold text-pink-600">
                   <span className="flex items-center gap-1.5 font-extrabold">
                     <FileText className="h-4 w-4 text-pink-600" />
-                    <span>แบบทดสอบ Pre-test</span>
+                    <span>
+                      {lang === 'th'
+                        ? `แบบทดสอบ Pre-test ${generatedContent.pretest.length} ข้อ`
+                        : `${generatedContent.pretest.length}-Question Pre-test Pool`}
+                    </span>
                   </span>
-                  <span className="text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-md font-bold">5 ข้อ</span>
+                  <span className="text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-md font-bold">
+                    {generatedContent.pretest.length} {lang === 'th' ? 'ข้อ' : 'items'}
+                  </span>
                 </div>
                 <p className="text-xs text-grey-600 leading-relaxed font-medium">
-                  โจทย์ทดสอบความเข้าใจ พร้อมข้อสังเกตและแนวคิดการวิเคราะห์
+                  {lang === 'th'
+                    ? 'โจทย์ทดสอบความเข้าใจ พร้อมข้อสังเกตและแนวคิดการวิเคราะห์'
+                    : 'Concept-checking test pool with misconceptions and reasoning analysis'}
                 </p>
               </div>
 
@@ -375,12 +416,16 @@ export default function Live() {
                 <div className="flex items-center justify-between text-xs font-bold text-pink-600">
                   <span className="flex items-center gap-1.5 font-extrabold">
                     <BarChart className="h-4 w-4 text-pink-600" />
-                    <span>กราฟคำตอบเรียลไทม์</span>
+                    <span>{lang === 'th' ? 'กราฟคำตอบเรียลไทม์' : 'Real-time Response Analytics'}</span>
                   </span>
-                  <span className="text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-md font-bold">กราฟสด</span>
+                  <span className="text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-md font-bold">
+                    {lang === 'th' ? 'กราฟสด' : 'Live Graph'}
+                  </span>
                 </div>
                 <p className="text-xs text-grey-600 leading-relaxed font-medium">
-                  กราฟแท่งสีชมพูแสดงสัดส่วนการตอบของนักศึกษาแบบเรียลไทม์
+                  {lang === 'th'
+                    ? 'กราฟแท่งสีชมพูแสดงสัดส่วนการตอบของนักศึกษาแบบเรียลไทม์'
+                    : 'Real-time response breakdown by faculty as students answer questions'}
                 </p>
               </div>
             </div>

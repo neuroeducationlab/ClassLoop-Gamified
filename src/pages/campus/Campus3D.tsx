@@ -334,7 +334,7 @@ export default function Campus3D() {
         if (b) {
           const dp = doorPoint(b)
           walkGroundRef.current(dp[0], dp[1])
-          setToast(lang === 'th' ? `🧭 กำลังนำทางไปเควสต์ที่ ${b.name.th}` : `🧭 Guiding to quest at ${b.name.en}`)
+          setToast(lang === 'th' ? `กำลังนำทางไปเควสต์ที่ ${b.name.th}` : `Guiding to quest at ${b.name.en}`)
         }
       }
     },
@@ -372,8 +372,8 @@ export default function Campus3D() {
         walkGroundRef.current(dp[0], dp[1], b)
         setToast(
           lang === 'th'
-            ? `🚶 กำลังเดินไปที่ ${b.name.th}…`
-            : `🚶 Walking to ${b.name.en}…`,
+            ? `กำลังเดินไปที่ ${b.name.th}…`
+            : `Walking to ${b.name.en}…`,
         )
       }
     },
@@ -898,7 +898,7 @@ export default function Campus3D() {
             if (b) {
               const dp = doorPoint(b)
               walkGroundRef.current(dp[0], dp[1])
-              setToast(lang === 'th' ? `🧭 กำลังนำทางไปที่ ${b.name.th}` : `🧭 Guiding to ${b.name.en}`)
+              setToast(lang === 'th' ? `กำลังนำทางไปที่ ${b.name.th}` : `Guiding to ${b.name.en}`)
             }
           }}
           onOpenShop={() => setShowAvatarShop(true)}

@@ -13,10 +13,13 @@ import {
   Radio,
   X,
   Shuffle,
+  MapPin,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { type Student } from '@/data/seed-data'
 import { cn } from '@/lib/utils'
+import { initials } from '@/components/AutoTranslate'
+import { GameIcon } from '@/components/icons/GameIcon'
 
 export type AttendanceStatus = 'present' | 'late' | 'absent' | 'leave'
 
@@ -106,7 +109,7 @@ export default function Attendance() {
     const s = students.find((x) => x.id === id)
     showToast(
       lang === 'th'
-        ? `บันทึกสถานะ: ${s?.name || ''} ➔ ${
+        ? `บันทึกสถานะ: ${s?.name || ''} → ${
             newStatus === 'present'
               ? 'มาเรียน'
               : newStatus === 'late'
@@ -115,7 +118,7 @@ export default function Attendance() {
               ? 'ขาดเรียน'
               : 'ลา'
           }`
-        : `Updated: ${s?.name || ''} ➔ ${newStatus}`,
+        : `Updated: ${s?.name || ''} → ${newStatus}`,
     )
   }
 
@@ -133,7 +136,7 @@ export default function Attendance() {
       })
       return next
     })
-    showToast(lang === 'th' ? '✅ เช็คชื่อทุกคนในรายการว่า "มาเรียน" เรียบร้อย' : 'Marked all filtered as Present')
+    showToast(lang === 'th' ? 'เช็คชื่อทุกคนในรายการว่า "มาเรียน" เรียบร้อย' : 'Marked all filtered as Present')
   }
 
   // Action: Random Student Roll Call
@@ -156,12 +159,15 @@ export default function Attendance() {
   const handleGenerateNewCode = () => {
     const newCode = Math.floor(1000 + Math.random() * 9000).toString()
     setLiveCode(newCode)
-    showToast(lang === 'th' ? `🔑 สร้างรหัส PIN ใหม่: ${newCode}` : `New PIN Code: ${newCode}`)
+    showToast(lang === 'th' ? `สร้างรหัส PIN ใหม่: ${newCode}` : `New PIN Code: ${newCode}`)
   }
 
   // Action: Export CSV
   const handleExportCSV = () => {
-    const headers = 'รหัสนักศึกษา,ชื่อ-นามสกุล,ชื่อเล่น,คณะ,Section,สัปดาห์ที่ 5,เวลาเช็คชื่อ,วิธี,หมายเหตุ\n'
+    const headers =
+      lang === 'th'
+        ? 'รหัสนักศึกษา,ชื่อ-นามสกุล,ชื่อเล่น,คณะ,Section,สัปดาห์ที่ 5,เวลาเช็คชื่อ,วิธี,หมายเหตุ\n'
+        : 'StudentID,FullName,Nickname,Faculty,Section,Week 5,CheckInTime,Method,Notes\n'
     const rows = students
       .map((s) => {
         const att = attendance[s.id]
@@ -176,7 +182,7 @@ export default function Attendance() {
     link.download = `Attendance_${course.code}_Week${currentWeek}.csv`
     link.click()
     URL.revokeObjectURL(url)
-    showToast(lang === 'th' ? '📥 ส่งออกรายงานการเข้าเรียนเรียบร้อย' : 'Attendance report exported')
+    showToast(lang === 'th' ? 'ส่งออกรายงานการเข้าเรียนเรียบร้อย' : 'Attendance report exported')
   }
 
   // Filtered list
@@ -239,7 +245,7 @@ export default function Attendance() {
                 {lang === 'th' ? 'ระบบเช็คชื่อ & สถิติการเข้าเรียน' : 'Attendance & Live Roll Call'}
               </h1>
               <p className="text-xs text-grey-600">
-                {course.code} {course.name} · สัปดาห์ที่ {currentWeek}
+                {course.code} · {course.name} · {lang === 'th' ? `สัปดาห์ที่ ${currentWeek}` : `Week ${currentWeek}`}
               </p>
             </div>
           </div>
@@ -321,7 +327,7 @@ export default function Attendance() {
                   )}
                 >
                   <Radio className={cn('h-3 w-3', isLiveOpen ? 'text-emerald-500 animate-pulse' : 'text-grey-400')} />
-                  <span>{isLiveOpen ? (lang === 'th' ? 'กำลังเปิดรับเช็คชื่อสด' : 'Live Check-in Open') : 'ปิดรับชั่วคราว'}</span>
+                  <span>{isLiveOpen ? (lang === 'th' ? 'กำลังเปิดรับเช็คชื่อสด' : 'Live Check-in Open') : (lang === 'th' ? 'ปิดรับชั่วคราว' : 'Session Paused')}</span>
                 </span>
                 <span className="text-xs text-grey-500 font-medium">
                   {lang === 'th' ? 'หมดเวลาใน 09:12 นาที' : 'Session expires in 09:12'}
@@ -338,7 +344,7 @@ export default function Attendance() {
                   </div>
                   <button
                     onClick={handleGenerateNewCode}
-                    title="สร้างรหัสใหม่"
+                    title={lang === 'th' ? 'สร้างรหัสใหม่' : 'Generate new code'}
                     className="flex h-9 w-9 items-center justify-center rounded-xl border border-grey-300/60 bg-paper text-grey-600 hover:bg-grey-100 hover:text-pink-600 transition-colors shadow-xs cursor-pointer"
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -346,8 +352,8 @@ export default function Attendance() {
                 </div>
               </div>
 
-              <p className="text-xs text-grey-600 flex items-center gap-1">
-                <span>📍</span>
+              <p className="text-xs text-grey-600 flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-pink-500 shrink-0" />
                 <span>{lang === 'th' ? 'จำกัดพิกัด: เฉพาะอาคาร 1/11 (SPU Main Campus)' : 'Geofence: Building 11 SPU Campus'}</span>
               </p>
             </div>
@@ -358,7 +364,11 @@ export default function Attendance() {
             <button
               onClick={() => {
                 setIsLiveOpen(!isLiveOpen)
-                showToast(isLiveOpen ? '🔒 ปิดรับการเช็คชื่อสดแล้ว' : '🟢 เปิดรับการเช็คชื่อสดแล้ว')
+                showToast(
+                  isLiveOpen
+                    ? (lang === 'th' ? 'ปิดรับการเช็คชื่อสดแล้ว' : 'Live check-in closed')
+                    : (lang === 'th' ? 'เปิดรับการเช็คชื่อสดแล้ว' : 'Live check-in opened')
+                )
               }}
               className={cn(
                 'rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-2 border',
@@ -444,7 +454,7 @@ export default function Attendance() {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-extrabold text-purple-700">{stats.atRiskCount}</span>
-            <span className="text-xs text-purple-600 font-semibold">คน</span>
+            <span className="text-xs text-purple-600 font-semibold">{lang === 'th' ? 'คน' : 'students'}</span>
           </div>
           <p className="mt-1 text-[11px] text-purple-700 font-medium">
             {lang === 'th' ? 'ขาดเกิน 2 ครั้ง (จาก 5 ครั้ง)' : 'Missed > 2 sessions'}
@@ -455,22 +465,28 @@ export default function Attendance() {
       {/* Week Selector Tabs */}
       <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-grey-500 mr-1">สัปดาห์:</span>
+          <span className="text-xs font-bold text-grey-500 mr-1">{lang === 'th' ? 'สัปดาห์:' : 'Week:'}</span>
           {[1, 2, 3, 4, 5].map((w) => (
             <button
               key={w}
               onClick={() => {
                 setCurrentWeek(w)
-                showToast(`สลับดูสถิติสัปดาห์ที่ ${w}`)
+                showToast(lang === 'th' ? `สลับดูสถิติสัปดาห์ที่ ${w}` : `Switched to Week ${w}`)
               }}
               className={cn(
-                'rounded-xl px-3 py-1.5 text-xs font-bold transition-all border cursor-pointer',
+                'rounded-xl px-3 py-1.5 text-xs font-bold transition-all border cursor-pointer inline-flex items-center gap-1',
                 currentWeek === w
                   ? 'border-pink-500 bg-pink-600 text-white shadow-xs'
                   : 'border-grey-300/60 bg-paper text-grey-600 hover:border-grey-300',
               )}
             >
-              Week {w} {w === 5 && '🔥 (ปัจจุบัน)'}
+              <span>Week {w}</span>
+              {w === 5 && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold opacity-95">
+                  <GameIcon name="flame" className="h-3 w-3 text-amber-300" />
+                  <span>({lang === 'th' ? 'ปัจจุบัน' : 'current'})</span>
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -482,10 +498,12 @@ export default function Attendance() {
             onChange={(e) => setSelectedSec(e.target.value as any)}
             className="rounded-xl border border-grey-300/80 bg-paper px-3 py-1.5 text-xs font-bold text-ink outline-none"
           >
-            <option value="all">ทุก Section (74 คน)</option>
-            <option value="sec1">Sec 1 (24 คน)</option>
-            <option value="sec2">Sec 2 (25 คน)</option>
-            <option value="sec3">Sec 3 (25 คน)</option>
+            <option value="all">
+              {lang === 'th' ? `ทุก Section (${students.length} คน)` : `All Sections (${students.length} students)`}
+            </option>
+            <option value="sec1">Sec 1 (24 {lang === 'th' ? 'คน' : 'students'})</option>
+            <option value="sec2">Sec 2 (25 {lang === 'th' ? 'คน' : 'students'})</option>
+            <option value="sec3">Sec 3 (25 {lang === 'th' ? 'คน' : 'students'})</option>
           </select>
         </div>
       </div>
@@ -514,7 +532,7 @@ export default function Attendance() {
                 : 'border-grey-300/60 bg-canvas text-grey-600 hover:border-grey-300',
             )}
           >
-            ทั้งหมด ({students.length})
+            {lang === 'th' ? 'ทั้งหมด' : 'All'} ({students.length})
           </button>
           <button
             onClick={() => setStatusFilter('present')}
@@ -525,7 +543,7 @@ export default function Attendance() {
                 : 'border-grey-300/60 bg-canvas text-emerald-700 hover:border-emerald-300',
             )}
           >
-            มาเรียน ({stats.present})
+            {lang === 'th' ? 'มาเรียน' : 'Present'} ({stats.present})
           </button>
           <button
             onClick={() => setStatusFilter('late')}
@@ -536,7 +554,7 @@ export default function Attendance() {
                 : 'border-grey-300/60 bg-canvas text-amber-700 hover:border-amber-300',
             )}
           >
-            มาสาย ({stats.late})
+            {lang === 'th' ? 'มาสาย' : 'Late'} ({stats.late})
           </button>
           <button
             onClick={() => setStatusFilter('absent')}
@@ -547,7 +565,7 @@ export default function Attendance() {
                 : 'border-grey-300/60 bg-canvas text-rose-700 hover:border-rose-300',
             )}
           >
-            ขาดเรียน ({stats.absent})
+            {lang === 'th' ? 'ขาดเรียน' : 'Absent'} ({stats.absent})
           </button>
           <button
             onClick={() => setStatusFilter('leave')}
@@ -558,7 +576,7 @@ export default function Attendance() {
                 : 'border-grey-300/60 bg-canvas text-blue-700 hover:border-blue-300',
             )}
           >
-            ลา ({stats.leave})
+            {lang === 'th' ? 'ลา' : 'Leave'} ({stats.leave})
           </button>
         </div>
       </div>
@@ -569,19 +587,19 @@ export default function Attendance() {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-grey-300/60 bg-grey-50/70 text-[11px] font-bold uppercase tracking-wider text-grey-500">
-                <th className="py-3 px-4">นักศึกษา</th>
-                <th className="py-3 px-4">คณะ</th>
-                <th className="py-3 px-4">เวลา & ช่องทาง</th>
-                <th className="py-3 px-4 text-center">บันทึกสถานะการเข้าเรียน</th>
-                <th className="py-3 px-4 text-center">สถิติสะสม (5 สัปดาห์)</th>
-                <th className="py-3 px-4">หมายเหตุ</th>
+                <th className="py-3 px-4">{lang === 'th' ? 'นักศึกษา' : 'Student'}</th>
+                <th className="py-3 px-4">{lang === 'th' ? 'คณะ' : 'Faculty'}</th>
+                <th className="py-3 px-4">{lang === 'th' ? 'เวลา & ช่องทาง' : 'Time & Method'}</th>
+                <th className="py-3 px-4 text-center">{lang === 'th' ? 'บันทึกสถานะการเข้าเรียน' : 'Attendance Status'}</th>
+                <th className="py-3 px-4 text-center">{lang === 'th' ? 'สถิติสะสม (5 สัปดาห์)' : 'Rate (5 Weeks)'}</th>
+                <th className="py-3 px-4">{lang === 'th' ? 'หมายเหตุ' : 'Notes'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-grey-300/40">
               {filteredStudents.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-grey-500">
-                    ไม่พบข้อมูลนักศึกษาที่ตรงกับเงื่อนไขการค้นหา
+                    {lang === 'th' ? 'ไม่พบข้อมูลนักศึกษาที่ตรงกับเงื่อนไขการค้นหา' : 'No students found matching search criteria'}
                   </td>
                 </tr>
               ) : (
@@ -618,7 +636,7 @@ export default function Attendance() {
                                   : '#10B981',
                             }}
                           >
-                            {s.nickname[0]}
+                            {initials(s.nickname, lang)}
                           </span>
                           <div>
                             <p className="font-bold text-ink flex items-center gap-1.5">
@@ -649,7 +667,11 @@ export default function Attendance() {
                           ) : (
                             <Check className="h-3.5 w-3.5 text-emerald-600" />
                           )}
-                          <span className="font-mono text-xs">{att.time}</span>
+                          <span className="font-mono text-xs">
+                            {att.time === 'ส่งใบลา'
+                              ? (lang === 'th' ? 'ส่งใบลา' : 'Leave slip')
+                              : (lang === 'th' ? att.time : att.time.replace(' น.', ' AM'))}
+                          </span>
                         </div>
                       </td>
 
@@ -667,7 +689,7 @@ export default function Attendance() {
                                 : 'border-grey-300/60 bg-paper text-grey-600 hover:border-emerald-400 hover:text-emerald-700',
                             )}
                           >
-                            มา
+                            {lang === 'th' ? 'มา' : 'Present'}
                           </button>
 
                           {/* Late */}
@@ -681,7 +703,7 @@ export default function Attendance() {
                                 : 'border-grey-300/60 bg-paper text-grey-600 hover:border-amber-400 hover:text-amber-700',
                             )}
                           >
-                            สาย
+                            {lang === 'th' ? 'สาย' : 'Late'}
                           </button>
 
                           {/* Absent */}
@@ -695,7 +717,7 @@ export default function Attendance() {
                                 : 'border-grey-300/60 bg-paper text-grey-600 hover:border-rose-400 hover:text-rose-700',
                             )}
                           >
-                            ขาด
+                            {lang === 'th' ? 'ขาด' : 'Absent'}
                           </button>
 
                           {/* Leave */}
@@ -709,7 +731,7 @@ export default function Attendance() {
                                 : 'border-grey-300/60 bg-paper text-grey-600 hover:border-blue-400 hover:text-blue-700',
                             )}
                           >
-                            ลา
+                            {lang === 'th' ? 'ลา' : 'Leave'}
                           </button>
                         </div>
                       </td>
@@ -723,12 +745,12 @@ export default function Attendance() {
                               isAtRisk ? 'text-rose-600' : 'text-emerald-700',
                             )}
                           >
-                            {Math.round((att.totalPresent / 5) * 100)}% ({att.totalPresent}/5 ครั้ง)
+                            {Math.round((att.totalPresent / 5) * 100)}% ({att.totalPresent}/5 {lang === 'th' ? 'ครั้ง' : 'sessions'})
                           </span>
                           {isAtRisk && (
                             <span className="inline-flex items-center gap-1 rounded bg-rose-100 px-1.5 py-0.2 text-[9px] font-bold text-rose-700 mt-0.5">
                               <AlertCircle className="h-2.5 w-2.5" />
-                              เสี่ยงหมดสิทธิ์สอบ
+                              {lang === 'th' ? 'เสี่ยงหมดสิทธิ์สอบ' : 'Attendance Warning'}
                             </span>
                           )}
                         </div>
@@ -738,8 +760,16 @@ export default function Attendance() {
                       <td className="py-3 px-4">
                         <input
                           type="text"
-                          defaultValue={att.note || ''}
-                          placeholder="พิมพ์บันทึก..."
+                          defaultValue={
+                            att.note
+                              ? lang === 'th'
+                                ? att.note
+                                : att.note === 'ลากิจร่วมงานสโมสรนักศึกษา'
+                                ? 'Student council duty'
+                                : att.note
+                              : ''
+                          }
+                          placeholder={lang === 'th' ? 'พิมพ์บันทึก...' : 'Add notes...'}
                           onBlur={(e) => {
                             setAttendance((prev) => ({
                               ...prev,
@@ -748,7 +778,9 @@ export default function Attendance() {
                                 note: e.target.value,
                               },
                             }))
-                            if (e.target.value) showToast(`บันทึกหมายเหตุ: ${s.nickname}`)
+                            if (e.target.value) {
+                              showToast(lang === 'th' ? `บันทึกหมายเหตุ: ${s.nickname}` : `Note saved for ${s.nickname}`)
+                            }
                           }}
                           className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-[11px] text-grey-600 hover:border-grey-300 focus:border-pink-500 focus:bg-canvas outline-none transition-all"
                         />
@@ -787,7 +819,7 @@ export default function Attendance() {
               <div className="flex flex-col items-center justify-center py-4 text-center space-y-3">
                 <div className="relative">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 text-3xl font-extrabold text-white shadow-xl ring-4 ring-purple-100">
-                    {pickedStudent.nickname[0]}
+                    {initials(pickedStudent.nickname, lang)}
                   </div>
                   {isRolling && (
                     <span className="absolute inset-0 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
@@ -812,7 +844,7 @@ export default function Attendance() {
                     }}
                     className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 cursor-pointer"
                   >
-                    มาตรงเวลา (Present)
+                    {lang === 'th' ? 'มาตรงเวลา (Present)' : 'Present'}
                   </button>
                   <button
                     onClick={() => {
@@ -821,7 +853,7 @@ export default function Attendance() {
                     }}
                     className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-amber-700 cursor-pointer"
                   >
-                    มาสาย (Late)
+                    {lang === 'th' ? 'มาสาย (Late)' : 'Late'}
                   </button>
                   <button
                     onClick={() => {
@@ -830,7 +862,7 @@ export default function Attendance() {
                     }}
                     className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 cursor-pointer"
                   >
-                    ไม่ขานชื่อ (Absent)
+                    {lang === 'th' ? 'ไม่ขานชื่อ (Absent)' : 'Absent'}
                   </button>
                 </div>
               </div>
@@ -850,7 +882,7 @@ export default function Attendance() {
                 onClick={() => setRandomModalOpen(false)}
                 className="rounded-xl bg-grey-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-black cursor-pointer"
               >
-                ปิด
+                {lang === 'th' ? 'ปิด' : 'Close'}
               </button>
             </div>
           </div>
