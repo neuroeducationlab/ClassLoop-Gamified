@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   FileText,
   LayoutDashboard,
-  Lock,
   LogOut,
   Menu,
   MessagesSquare,
@@ -18,10 +17,13 @@ import {
   Users,
   Wand2,
   X,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 import RoleSwitcher from '@/components/layout/RoleSwitcher'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
 import DarkModeToggle from '@/components/layout/DarkModeToggle'
+import { isSoundMuted, toggleSoundMute, playCoinSound } from '@/pages/campus/soundEngine'
 import { useApp, type TranslationKey } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 
@@ -33,10 +35,15 @@ const NAV: NavItem[] = [
   { to: '/teacher/exams', labelKey: 'exams', icon: FileText },
   { to: '/teacher/live', labelKey: 'liveSession', icon: Radio },
   { to: '/teacher/class', labelKey: 'roster', icon: Users },
+  { to: '/teacher/attendance', labelKey: 'attendance', icon: ClipboardCheck },
   { to: '/teacher/community', labelKey: 'community', icon: MessagesSquare },
 ]
 
-const LOCKED_COURSES = ['Organisational Behaviour', 'Strategic Management']
+const TEACHER_COURSES = [
+  { code: 'IBC101', name: 'International Business Communication' },
+  { code: 'MGT201', name: 'Organisational Behaviour' },
+  { code: 'STR401', name: 'Strategic Management' },
+]
 
 const NOTIFICATIONS = [
   'นักศึกษา 3 คนยังไม่ส่ง Pre-test สัปดาห์ที่ 5',
@@ -46,15 +53,6 @@ const NOTIFICATIONS = [
 
 /** Avatar initial for the demo teacher (อ.ดร.ธนพร). */
 const TEACHER_INITIAL = 'ธ'
-
-function ComingSoonBadge() {
-  const { t } = useApp()
-  return (
-    <span className="shrink-0 rounded-full bg-grey-300/25 px-1.5 py-0.5 text-[10px] font-medium text-grey-600">
-      {t('comingSoon')}
-    </span>
-  )
-}
 
 function Brand() {
   return (
@@ -66,7 +64,7 @@ function Brand() {
 }
 
 export default function TeacherShell() {
-  const { course, teacherName, resetDemo, setRole, signOut, t } = useApp()
+  const { teacherName, resetDemo, setRole, signOut, t } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -75,6 +73,10 @@ export default function TeacherShell() {
 
   const [openMenu, setOpenMenu] = useState<'bell' | 'account' | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectedCourseCode, setSelectedCourseCode] = useState('IBC101')
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+  const [soundMuted, setSoundMuted] = useState(isSoundMuted())
   const bellRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
 
@@ -108,27 +110,28 @@ export default function TeacherShell() {
           <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-grey-600">
             {t('courses')}
           </p>
-          <div className="mt-2 flex flex-col gap-1">
-            <Link
-              to="/teacher"
-              className="rounded-lg bg-pink-50 px-3 py-2 ring-1 ring-pink-300/50 transition-colors hover:bg-pink-50/70"
-            >
-              <p className="truncate text-sm font-medium text-pink-600">{course.name}</p>
-              <p className="mt-0.5 text-[11px] text-grey-600">{course.code}</p>
-            </Link>
-            {LOCKED_COURSES.map((name) => (
-              <div
-                key={name}
-                aria-disabled="true"
-                className="cursor-not-allowed select-none rounded-lg px-3 py-2"
-              >
-                <div className="flex items-center gap-2">
-                  <p className="min-w-0 flex-1 truncate text-sm text-grey-300">{name}</p>
-                  <ComingSoonBadge />
-                  <Lock className="h-3.5 w-3.5 shrink-0 text-grey-300" />
-                </div>
-              </div>
-            ))}
+          <div className="mt-2 flex flex-col gap-1.5">
+            {TEACHER_COURSES.map((c) => {
+              const isSelected = c.code === selectedCourseCode
+              return (
+                <button
+                  key={c.code}
+                  type="button"
+                  onClick={() => setSelectedCourseCode(c.code)}
+                  className={cn(
+                    'w-full text-left rounded-xl px-3 py-2 transition-all cursor-pointer border',
+                    isSelected
+                      ? 'bg-pink-50 border-pink-300 ring-1 ring-pink-300/40 shadow-xs'
+                      : 'border-grey-200/50 hover:bg-grey-100/70 text-grey-600',
+                  )}
+                >
+                  <p className={cn('truncate text-sm font-semibold', isSelected ? 'text-pink-600' : 'text-ink')}>
+                    {c.name}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-grey-500 font-mono">{c.code}</p>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -143,7 +146,7 @@ export default function TeacherShell() {
                 cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-pink-50 text-pink-600'
+                    ? 'bg-pink-50 text-pink-600 font-semibold'
                     : 'text-grey-600 hover:bg-pink-50/60 hover:text-pink-600',
                 )
               }
@@ -152,15 +155,6 @@ export default function TeacherShell() {
               {t(labelKey)}
             </NavLink>
           ))}
-          <div
-            aria-disabled="true"
-            className="flex cursor-not-allowed select-none items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-grey-300"
-          >
-            <ClipboardCheck className="h-4 w-4" />
-            <span className="min-w-0 flex-1">{t('attendance')}</span>
-            <ComingSoonBadge />
-            <Lock className="h-3.5 w-3.5 shrink-0" />
-          </div>
         </nav>
 
         {/* e-learning card */}
@@ -209,6 +203,21 @@ export default function TeacherShell() {
             <RoleSwitcher />
             <LanguageSwitcher />
 
+            {/* sound toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = toggleSoundMute()
+                setSoundMuted(next)
+                if (!next) playCoinSound()
+              }}
+              title={soundMuted ? 'Unmute Sound / เปิดเสียง' : 'Mute Sound / ปิดเสียง'}
+              aria-label={soundMuted ? 'Unmute Sound' : 'Mute Sound'}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-grey-300/60 bg-paper text-grey-600 transition-colors hover:bg-pink-50 hover:text-pink-600 cursor-pointer shadow-xs"
+            >
+              {soundMuted ? <VolumeX className="h-4 w-4 text-rose-500" /> : <Volume2 className="h-4 w-4 text-emerald-600" />}
+            </button>
+
             {/* notifications */}
             <div className="relative" ref={bellRef}>
               <button
@@ -255,24 +264,28 @@ export default function TeacherShell() {
               </button>
               {openMenu === 'account' && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-grey-300/60 bg-paper p-2 shadow-lg">
-                  <div
-                    aria-disabled="true"
-                    className="flex cursor-not-allowed select-none items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-grey-300"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenMenu(null)
+                      setProfileModalOpen(true)
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-pink-50/60 cursor-pointer"
                   >
-                    <User className="h-4 w-4" />
+                    <User className="h-4 w-4 text-pink-600" />
                     <span className="min-w-0 flex-1">{t('myProfile')}</span>
-                    <ComingSoonBadge />
-                    <Lock className="h-3.5 w-3.5 shrink-0" />
-                  </div>
-                  <div
-                    aria-disabled="true"
-                    className="flex cursor-not-allowed select-none items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-grey-300"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenMenu(null)
+                      setSettingsModalOpen(true)
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-pink-50/60 cursor-pointer"
                   >
-                    <Settings className="h-4 w-4" />
+                    <Settings className="h-4 w-4 text-pink-600" />
                     <span className="min-w-0 flex-1">{t('settings')}</span>
-                    <ComingSoonBadge />
-                    <Lock className="h-3.5 w-3.5 shrink-0" />
-                  </div>
+                  </button>
                   <div className="my-1.5 border-t border-grey-300/40" />
                   <button
                     type="button"
@@ -323,28 +336,31 @@ export default function TeacherShell() {
               <p className="text-[11px] font-semibold uppercase tracking-wider text-grey-600">
                 รายวิชา
               </p>
-              <div className="mt-2 flex flex-col gap-1">
-                <Link
-                  to="/teacher"
-                  onClick={() => setSidebarOpen(false)}
-                  className="rounded-lg bg-pink-50 px-3 py-2 ring-1 ring-pink-300/50 transition-colors hover:bg-pink-50/70"
-                >
-                  <p className="truncate text-sm font-medium text-pink-600">{course.name}</p>
-                  <p className="mt-0.5 text-[11px] text-grey-600">{course.code}</p>
-                </Link>
-                {LOCKED_COURSES.map((name) => (
-                  <div
-                    key={name}
-                    aria-disabled="true"
-                    className="cursor-not-allowed select-none rounded-lg px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <p className="min-w-0 flex-1 truncate text-sm text-grey-300">{name}</p>
-                      <ComingSoonBadge />
-                      <Lock className="h-3.5 w-3.5 shrink-0 text-grey-300" />
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-2 flex flex-col gap-1.5">
+                {TEACHER_COURSES.map((c) => {
+                  const isSelected = c.code === selectedCourseCode
+                  return (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCourseCode(c.code)
+                        setSidebarOpen(false)
+                      }}
+                      className={cn(
+                        'w-full text-left rounded-xl px-3 py-2 transition-all cursor-pointer border',
+                        isSelected
+                          ? 'bg-pink-50 border-pink-300 ring-1 ring-pink-300/40 shadow-xs'
+                          : 'border-grey-200/50 hover:bg-grey-100/70 text-grey-600',
+                      )}
+                    >
+                      <p className={cn('truncate text-sm font-semibold', isSelected ? 'text-pink-600' : 'text-ink')}>
+                        {c.name}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-grey-500 font-mono">{c.code}</p>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -360,7 +376,7 @@ export default function TeacherShell() {
                     cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       isActive
-                        ? 'bg-pink-50 text-pink-600'
+                        ? 'bg-pink-50 text-pink-600 font-semibold'
                         : 'text-grey-600 hover:bg-pink-50/60 hover:text-pink-600',
                     )
                   }
@@ -369,15 +385,6 @@ export default function TeacherShell() {
                   {t(labelKey)}
                 </NavLink>
               ))}
-              <div
-                aria-disabled="true"
-                className="flex cursor-not-allowed select-none items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-grey-300"
-              >
-                <ClipboardCheck className="h-4 w-4" />
-                <span className="min-w-0 flex-1">เช็คชื่อ</span>
-                <ComingSoonBadge />
-                <Lock className="h-3.5 w-3.5 shrink-0" />
-              </div>
             </nav>
 
             {/* SPU E-learning info */}
@@ -390,6 +397,119 @@ export default function TeacherShell() {
               </div>
             </div>
           </aside>
+        </div>
+      )}
+
+      {/* Teacher Profile Modal */}
+      {profileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-3xl border border-pink-200/60 bg-paper p-6 shadow-2xl space-y-4 animate-slide-up">
+            <div className="flex items-center justify-between border-b border-grey-300/40 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-pink-100 text-pink-600">
+                  <User className="h-4 w-4" />
+                </span>
+                <h3 className="text-base font-extrabold text-ink">โปรไฟล์อาจารย์ผู้สอน</h3>
+              </div>
+              <button
+                onClick={() => setProfileModalOpen(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-grey-100 text-grey-500 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center py-2 space-y-2 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-pink-600 text-2xl font-black text-white shadow-md ring-4 ring-pink-100">
+                {TEACHER_INITIAL}
+              </div>
+              <div>
+                <h4 className="text-base font-extrabold text-ink">{teacherName}</h4>
+                <p className="text-xs text-pink-600 font-semibold">อาจารย์ประจำหลักสูตรบริหารธุรกิจบัณฑิต</p>
+                <p className="text-[11px] text-grey-500 font-mono mt-0.5">รหัสอาจารย์: SPU-FAC-8891</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-2xl bg-canvas p-3 text-xs border border-grey-200">
+              <div className="flex items-center justify-between text-grey-600">
+                <span>อีเมล</span>
+                <span className="font-mono font-medium text-ink">teacher@spu.ac.th</span>
+              </div>
+              <div className="flex items-center justify-between text-grey-600">
+                <span>คณะ</span>
+                <span className="font-medium text-ink">บริหารธุรกิจ (SPU)</span>
+              </div>
+              <div className="flex items-center justify-between text-grey-600">
+                <span>สถานะระบบ</span>
+                <span className="inline-flex items-center gap-1 font-bold text-emerald-600">
+                  <CheckCircle2 className="h-3 w-3" />
+                  e-Learning Verified
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setProfileModalOpen(false)}
+              className="w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold text-white hover:bg-pink-700 transition-colors shadow-sm cursor-pointer"
+            >
+              ปิดหน้าต่าง
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Teacher Settings Modal */}
+      {settingsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-3xl border border-grey-300/60 bg-paper p-6 shadow-2xl space-y-4 animate-slide-up">
+            <div className="flex items-center justify-between border-b border-grey-300/40 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-grey-100 text-grey-700">
+                  <Settings className="h-4 w-4" />
+                </span>
+                <h3 className="text-base font-extrabold text-ink">ตั้งค่าระบบผู้สอน</h3>
+              </div>
+              <button
+                onClick={() => setSettingsModalOpen(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-grey-100 text-grey-500 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 py-1 text-xs">
+              <div className="flex items-center justify-between rounded-xl bg-canvas p-3 border border-grey-200">
+                <div>
+                  <p className="font-bold text-ink">ภาษาของระบบ (Language)</p>
+                  <p className="text-[11px] text-grey-500">สลับระหว่างภาษาไทยและภาษาอังกฤษ</p>
+                </div>
+                <LanguageSwitcher />
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-canvas p-3 border border-grey-200">
+                <div>
+                  <p className="font-bold text-ink">ธีมแสดงผล (Dark / Light)</p>
+                  <p className="text-[11px] text-grey-500">โหมดมืดหรือสว่างสำหรับสอนหน้าห้อง</p>
+                </div>
+                <DarkModeToggle />
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-canvas p-3 border border-grey-200">
+                <div>
+                  <p className="font-bold text-ink">สลับบทบาท (Role Switcher)</p>
+                  <p className="text-[11px] text-grey-500">ทดสอบมุมมองในฐานะนักศึกษา</p>
+                </div>
+                <RoleSwitcher />
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSettingsModalOpen(false)}
+              className="w-full rounded-xl bg-grey-900 py-2.5 text-xs font-bold text-white hover:bg-black transition-colors shadow-sm cursor-pointer"
+            >
+              บันทึกการตั้งค่า
+            </button>
+          </div>
         </div>
       )}
     </div>

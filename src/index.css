@@ -251,3 +251,154 @@
 .dark .bg-white            { background-color: hsl(255 6% 18%) !important; }
 .dark .shadow-sm           { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4) !important; }
 .dark .shadow-md           { box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.5) !important; }
+
+/* =====================================================================
+   SCI-FI HOLOGRAM & PORTAL WARP ANIMATIONS
+   ===================================================================== */
+@keyframes holoUnfold {
+  0% {
+    transform: scaleX(0.08) scaleY(0.02);
+    opacity: 0;
+    filter: brightness(3.5) blur(6px);
+  }
+  35% {
+    transform: scaleX(1) scaleY(0.06);
+    opacity: 0.85;
+    filter: brightness(2) blur(3px);
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+    filter: brightness(1) blur(0);
+  }
+}
+
+@keyframes portalWarpIn {
+  0% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1) blur(0);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(0.92) rotate(-2deg);
+    filter: brightness(2.2) contrast(1.4);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.2) rotate(6deg);
+    filter: brightness(4) blur(14px);
+    opacity: 0;
+  }
+}
+
+.animate-holo-unfold {
+  animation: holoUnfold 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: center center;
+}
+
+.animate-portal-warp {
+  animation: portalWarpIn 0.38s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  pointer-events: none;
+}
+
+/* =====================================================================
+   SOFT CLOUD COVER & REVEAL TRANSITION (เมฆบังแล้วเปิดออกแบบซอฟและสมูท)
+   ===================================================================== */
+@keyframes cloudCoverLeft {
+  0% {
+    transform: translate3d(-100%, 0, 0) scale(0.92);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(0%, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cloudCoverRight {
+  0% {
+    transform: translate3d(100%, 0, 0) scale(0.92);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(0%, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cloudPartLeft {
+  0% {
+    transform: translate3d(0%, 0, 0) scale(1);
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(-115%, 0, 0) scale(1.08);
+    opacity: 0;
+  }
+}
+
+@keyframes cloudPartRight {
+  0% {
+    transform: translate3d(0%, 0, 0) scale(1);
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(115%, 0, 0) scale(1.08);
+    opacity: 0;
+  }
+}
+
+@keyframes cloudMistIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes cloudMistOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-cloud-cover-left {
+  animation: cloudCoverLeft 0.44s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-cloud-cover-right {
+  animation: cloudCoverRight 0.44s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-cloud-part-left {
+  animation: cloudPartLeft 0.52s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-cloud-part-right {
+  animation: cloudPartRight 0.52s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-cloud-mist-in {
+  animation: cloudMistIn 0.38s ease-out forwards;
+}
+
+.animate-cloud-mist-out {
+  animation: cloudMistOut 0.48s ease-in-out forwards;
+}
+

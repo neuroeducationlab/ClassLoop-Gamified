@@ -11,6 +11,7 @@ import Studio from '@/pages/teacher/Studio'
 import Exams from '@/pages/teacher/Exams'
 import Live from '@/pages/teacher/Live'
 import ClassRoster from '@/pages/teacher/ClassRoster'
+import Attendance from '@/pages/teacher/Attendance'
 import Community from '@/pages/teacher/Community'
 import Home from '@/pages/student/Home'
 import Join from '@/pages/student/Join'
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="exams" element={<Exams />} />
               <Route path="live" element={<Live />} />
               <Route path="class" element={<ClassRoster />} />
+              <Route path="attendance" element={<Attendance />} />
               <Route path="community" element={<Community />} />
             </Route>
 

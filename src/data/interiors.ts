@@ -27,6 +27,7 @@ export type ContentKey =
   | 'teacher-exams'
   | 'teacher-live'
   | 'teacher-roster'
+  | 'teacher-attendance'
   | 'teacher-community'
 
 export type StationKind = 'screen' | 'kiosk' | 'desk' | 'board' | 'shelf'

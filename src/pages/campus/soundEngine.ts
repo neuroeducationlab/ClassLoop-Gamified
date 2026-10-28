@@ -186,6 +186,69 @@ export function playPortalSound() {
   osc.stop(now + 0.45)
 }
 
+/** Soft, serene cloud breeze and gentle harmonious chime */
+export function playCloudWhooshSound() {
+  if (muted) return
+  const ctx = getAudioContext()
+  if (!ctx) return
+
+  const now = ctx.currentTime
+
+  // Soft filtered noise breeze
+  const bufferSize = Math.floor(ctx.sampleRate * 0.7)
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+  const output = buffer.getChannelData(0)
+  let lastOut = 0.0
+  for (let i = 0; i < bufferSize; i++) {
+    const white = Math.random() * 2 - 1
+    output[i] = (lastOut + 0.02 * white) / 1.02
+    lastOut = output[i]
+    output[i] *= 3.5
+  }
+
+  const noise = ctx.createBufferSource()
+  noise.buffer = buffer
+
+  const filter = ctx.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.setValueAtTime(320, now)
+  filter.frequency.exponentialRampToValueAtTime(1200, now + 0.3)
+  filter.frequency.exponentialRampToValueAtTime(280, now + 0.7)
+
+  const noiseGain = ctx.createGain()
+  noiseGain.gain.setValueAtTime(0.001, now)
+  noiseGain.gain.linearRampToValueAtTime(0.08, now + 0.2)
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7)
+
+  noise.connect(filter)
+  filter.connect(noiseGain)
+  noiseGain.connect(ctx.destination)
+
+  noise.start(now)
+  noise.stop(now + 0.7)
+
+  // Gentle pentatonic morning bells (E5, G#5, B5)
+  const freqs = [659.25, 830.61, 987.77]
+  freqs.forEach((freq, idx) => {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    const start = now + 0.06 + idx * 0.07
+
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(freq, start)
+
+    gain.gain.setValueAtTime(0.001, start)
+    gain.gain.linearRampToValueAtTime(0.04, start + 0.04)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.45)
+
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+
+    osc.start(start)
+    osc.stop(start + 0.5)
+  })
+}
+
 /** Answer correct chime */
 export function playCorrectSound() {
   if (muted) return
