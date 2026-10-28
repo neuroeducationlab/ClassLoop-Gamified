@@ -543,8 +543,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dueDateEn: '14 days left',
     },
   ])
-  const [ownedStoreItems, setOwnedStoreItems] = useState<string[]>(['hat-grad', 'outfit-default'])
-  const [avatar, setAvatar] = useState<Avatar | null>(null)
+  const [avatar, setAvatarState] = useState<Avatar | null>(() => {
+    try {
+      const saved = localStorage.getItem('classloop_avatar_3d')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      color: '#E89BC4',
+      hat: 'grad',
+      outfit: 'default',
+      aura: 'none',
+      nickname: 'ชานนท์',
+    }
+  })
+
+  const setAvatar = useCallback((newAvatar: Avatar) => {
+    setAvatarState(newAvatar)
+    try {
+      localStorage.setItem('classloop_avatar_3d', JSON.stringify(newAvatar))
+    } catch {}
+  }, [])
+
+  const [ownedStoreItems, setOwnedStoreItems] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('classloop_owned_store_items')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return ['grad', 'default']
+  })
   const [lang, setLangState] = useState<Language>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search)
@@ -598,20 +624,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return curr
     })
     if (success) {
-      setOwnedStoreItems((prev) => (prev.includes(itemId) ? prev : [...prev, itemId]))
+      setOwnedStoreItems((prev) => {
+        const next = prev.includes(itemId) ? prev : [...prev, itemId]
+        try {
+          localStorage.setItem('classloop_owned_store_items', JSON.stringify(next))
+        } catch {}
+        return next
+      })
     }
     return success
   }, [])
 
   const equipStoreItem = useCallback((category: 'hat' | 'outfit' | 'aura', itemId: string) => {
-    setAvatar((prev) => {
-      const base = prev ?? { color: '#E89BC4', hat: 'grad', nickname: demoStudent.nickname }
-      if (category === 'hat') return { ...base, hat: itemId as AvatarHat }
-      if (category === 'outfit') return { ...base, outfit: itemId as AvatarOutfit }
-      if (category === 'aura') return { ...base, aura: itemId as AvatarAura }
-      return base
+    setAvatarState((prev) => {
+      const base = prev ?? { color: '#E89BC4', hat: 'grad', outfit: 'default', aura: 'none', nickname: demoStudent.nickname }
+      let next = base
+      if (category === 'hat') next = { ...base, hat: itemId as AvatarHat }
+      else if (category === 'outfit') next = { ...base, outfit: itemId as AvatarOutfit }
+      else if (category === 'aura') next = { ...base, aura: itemId as AvatarAura }
+      try {
+        localStorage.setItem('classloop_avatar_3d', JSON.stringify(next))
+      } catch {}
+      return next
     })
-  }, [])
+  }, [demoStudent.nickname])
 
   const t = useCallback(
     (key: keyof typeof TRANSLATIONS['th']): string => {

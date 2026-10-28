@@ -71,18 +71,19 @@ const LEADERBOARD_DATA: LeaderboardEntry[] = [
 ]
 
 export default function LeaderboardWidget() {
-  const { studentXP, lang } = useApp()
+  const { studentXP, lang, avatar, currentStudent } = useApp()
   // phones start tucked away, so the panel doesn't cover the 3D view
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
   const [filter, setFilter] = useState<'all' | 'faculty'>('all')
 
+  const userNick = avatar?.nickname || currentStudent.nickname
   // Live updated user XP
   const liveData = LEADERBOARD_DATA.map((entry) => {
     if (entry.isUser) {
       return {
         ...entry,
-        nickname: lang === 'th' ? 'ณัฐ (คุณ)' : 'Nat (You)',
-        faculty: lang === 'th' ? 'วิศวกรรมศาสตร์' : 'Engineering',
+        nickname: `${userNick} (${lang === 'th' ? 'คุณ' : 'You'})`,
+        faculty: lang === 'th' ? currentStudent.faculty : (lookupEn(currentStudent.faculty) || 'Engineering'),
         xp: Math.max(entry.xp, studentXP),
       }
     }

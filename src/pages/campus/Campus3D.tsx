@@ -41,7 +41,6 @@ import FlashcardSprint from '@/pages/wardrobe/FlashcardSprint'
 import SpecialQuests, { type SpecialGo } from '@/pages/wardrobe/SpecialQuests'
 import ProfileModal, { BadgeRow, ProfilePic } from '@/pages/wardrobe/ProfileCard'
 import RewardCelebration from '@/pages/wardrobe/RewardCelebration'
-import { useAvatar3DSync } from '@/pages/wardrobe/sync'
 import { BLOCK_QUESTS, recordTalk, wardrobeState } from '@/pages/wardrobe/store'
 import { BLOCK_SPOTS } from '@/pages/wardrobe/quests'
 import type { QuestId } from '@/pages/wardrobe/catalog'
@@ -232,7 +231,6 @@ export default function Campus3D() {
   const [showProfile, setShowProfile] = useState(false)
   const [showFlashcards, setShowFlashcards] = useState(false)
   const [blockQuest, setBlockQuest] = useState<QuestId | null>(null)
-  useAvatar3DSync()
   // phones start with the Quests panel closed, so it doesn't cover the 3D view (the HUD button opens it)
   const [showMissions, setShowMissions] = useState<boolean>(() => window.innerWidth >= 640)
 
