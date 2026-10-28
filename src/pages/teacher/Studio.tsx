@@ -37,7 +37,7 @@ export default function Studio() {
   const {
     topics, generatedContent, startGeneration, isGenerating, activeActivity, setActiveActivity,
     updateActivity, deleteActivity, updateFlashcard, deleteFlashcard,
-    updatePretestQuestion, deletePretestQuestion,
+    updatePretestQuestion, deletePretestQuestion, lang,
   } = useApp()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -80,9 +80,8 @@ export default function Studio() {
     { id: 'Digital Media', name: 'ดิจิทัลมีเดีย' },
   ]
 
-  const [selectedFaculties, setSelectedFaculties] = useState<string[]>(
-    allFaculties.map((f) => f.id)
-  )
+  // Start with empty faculties selection as user will choose manually
+  const [selectedFaculties, setSelectedFaculties] = useState<string[]>([])
 
   // Right Panel & Flow State (Starts UNGENERATED as requested)
   const [hasGenerated, setHasGenerated] = useState(false)
@@ -118,12 +117,10 @@ export default function Studio() {
   // Selected topic metadata
   const currentTopic = topics.find((t) => t.id === selectedTopicId) || topics[1] || topics[0]
 
-  // Toggle faculty chip selection
+  // Toggle faculty chip selection (freely select / deselect)
   const toggleFaculty = (id: string) => {
     if (selectedFaculties.includes(id)) {
-      if (selectedFaculties.length > 1) {
-        setSelectedFaculties(selectedFaculties.filter((f) => f !== id))
-      }
+      setSelectedFaculties(selectedFaculties.filter((f) => f !== id))
     } else {
       setSelectedFaculties([...selectedFaculties, id])
     }
@@ -439,15 +436,17 @@ export default function Studio() {
               </label>
             </div>
 
-            {/* Sec Selection & Number Input Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+            {/* Sec Selection & Number Input Grid (Balanced 2-Column Responsive Layout) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Section Select Dropdown */}
-              <div className="sm:col-span-8">
-                <label className="block text-xs font-bold text-grey-600 mb-1">เลือก Section (กลุ่มเรียน):</label>
+              <div>
+                <label className="block text-xs font-bold text-grey-600 mb-1.5">
+                  {lang === 'th' ? 'เลือก Section (กลุ่มเรียน):' : 'Choose a section:'}
+                </label>
                 <select
                   value={selectedSec}
                   onChange={(e) => setSelectedSec(e.target.value)}
-                  className="w-full rounded-2xl border border-grey-300/80 bg-paper px-3.5 py-2.5 text-xs font-extrabold text-ink outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all cursor-pointer shadow-2xs"
+                  className="w-full h-11 rounded-2xl border border-grey-300/80 bg-paper px-3.5 py-2.5 text-xs font-extrabold text-ink outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all cursor-pointer shadow-2xs"
                 >
                   {sections.map((sec) => (
                     <option key={sec.id} value={sec.id}>
@@ -457,10 +456,17 @@ export default function Studio() {
                 </select>
               </div>
 
-              {/* Exact Number Input for Student Count */}
-              <div className="sm:col-span-4">
-                <label className="block text-xs font-bold text-grey-600 mb-1">จำนวนผู้เรียน (คน):</label>
-                <div className="flex items-center gap-1">
+              {/* Exact Number Input for Student Count (No overlapping text) */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-grey-600">
+                    {lang === 'th' ? 'จำนวนผู้เรียนในคลาส:' : 'Number of students:'}
+                  </label>
+                  <span className="text-xs font-black text-pink-600 font-mono">
+                    {studentCount || 24} {lang === 'th' ? 'คน' : 'students'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -468,24 +474,20 @@ export default function Studio() {
                       setStudentCount(next)
                       setStudentCountInput(String(next))
                     }}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-grey-300/80 bg-paper text-ink font-bold hover:bg-canvas transition-colors cursor-pointer shadow-2xs shrink-0"
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-grey-300/80 bg-paper text-ink font-black hover:bg-pink-50 hover:border-pink-300 active:scale-95 transition-all cursor-pointer shadow-2xs shrink-0 text-base"
+                    aria-label="Decrease student count"
                   >
                     -
                   </button>
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      min={1}
-                      max={500}
-                      value={studentCountInput}
-                      onChange={(e) => handleStudentCountChange(e.target.value)}
-                      onBlur={handleStudentCountBlur}
-                      className="w-full rounded-2xl border border-grey-300/80 bg-paper px-3 py-2 text-sm font-black text-ink text-center outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all shadow-2xs"
-                    />
-                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-pink-600">
-                      คน
-                    </span>
-                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={500}
+                    value={studentCountInput}
+                    onChange={(e) => handleStudentCountChange(e.target.value)}
+                    onBlur={handleStudentCountBlur}
+                    className="w-full h-11 rounded-2xl border border-grey-300/80 bg-paper px-3 py-2 text-base font-black text-ink text-center outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
                   <button
                     type="button"
                     onClick={() => {
@@ -493,7 +495,8 @@ export default function Studio() {
                       setStudentCount(next)
                       setStudentCountInput(String(next))
                     }}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-grey-300/80 bg-paper text-ink font-bold hover:bg-canvas transition-colors cursor-pointer shadow-2xs shrink-0"
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-grey-300/80 bg-paper text-ink font-black hover:bg-pink-50 hover:border-pink-300 active:scale-95 transition-all cursor-pointer shadow-2xs shrink-0 text-base"
+                    aria-label="Increase student count"
                   >
                     +
                   </button>
@@ -501,10 +504,23 @@ export default function Studio() {
               </div>
             </div>
 
-            {/* Faculty Chips */}
-            <div className="space-y-1.5 pt-1">
-              <label className="block text-xs font-bold text-grey-600">คณะในคลาสเรียนนี้:</label>
-              <div className="flex flex-wrap gap-1.5">
+            {/* Faculty Chips (Initially empty, user chooses manually) */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-grey-600">
+                  {lang === 'th' ? 'คณะในคลาสเรียนนี้ (เลือกเองได้อิสระ):' : 'Faculties in this class:'}
+                </label>
+                {selectedFaculties.length === 0 ? (
+                  <span className="text-[11px] font-bold text-pink-500 animate-pulse">
+                    {lang === 'th' ? '(ยังไม่ได้เลือก — กรุณาคลิกเลือกคณะ)' : '(Click to select faculties)'}
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-pink-600">
+                    {lang === 'th' ? `เลือกแล้ว ${selectedFaculties.length} คณะ` : `${selectedFaculties.length} selected`}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
                 {allFaculties.map((f) => {
                   const isSelected = selectedFaculties.includes(f.id)
                   return (
@@ -513,13 +529,14 @@ export default function Studio() {
                       type="button"
                       onClick={() => toggleFaculty(f.id)}
                       className={cn(
-                        'rounded-full px-3.5 py-1.5 text-xs font-bold transition-all border cursor-pointer',
+                        'rounded-full px-4 py-2 text-xs font-bold transition-all border cursor-pointer flex items-center gap-1.5',
                         isSelected
-                          ? 'border-pink-500 bg-pink-50 text-pink-600 shadow-2xs dark:bg-pink-950/60'
-                          : 'border-grey-300/60 bg-canvas text-grey-600 hover:border-grey-300'
+                          ? 'border-pink-500 bg-pink-50 text-pink-600 shadow-2xs ring-1 ring-pink-500/30 dark:bg-pink-950/60 font-black scale-102'
+                          : 'border-grey-300/70 bg-canvas text-grey-600 hover:border-grey-400 hover:text-ink'
                       )}
                     >
-                      {f.name}
+                      <span>{f.name}</span>
+                      {isSelected && <span className="text-[10px]">✓</span>}
                     </button>
                   )
                 })}
