@@ -133,6 +133,25 @@ tool as RPG text boxes; hovering one projects a live preview of the real page an
 5. **Emoji Deduplication**:
    - Removed redundant/duplicate emojis across toasts, badges, dialog rewards, Brain Gym explanation, and battle tabs.
 
+## Wardrobe, special quests and profile (28 Oct, user-approved)
+
+`/create` is now the **Change Outfit** wardrobe (`src/pages/wardrobe/`), styled after cozy dress-up games: the
+character in a room on top, pink tabs and wooden shelf cubbies below. It replaces the old 3D creator and the SPU
+Boutique modal (the HUD coin button, NPC "shop" and the Gate wardrobe station all open it).
+
+- **Art**: a 2D chibi drawn in SVG in one 240×300 space (`draw.ts`, `parts.tsx`, `ChibiAvatar.tsx`). Every item in
+  `catalog.tsx` is drawn once in that space and serves both as a layer and, fitted by `getBBox`, as its thumbnail.
+  No image files.
+- **Items**: 8 slots (hat, hair + colour, eyes, neck, outfit, hand item, effect, scene), ~89 items. Common = free,
+  rare/epic = coins (`AppContext` coins, earned from quests/Brain Gym), legendary = special quests only.
+- **Special quests** (Mario-style, `quests.ts`): five golden **? blocks** float on campus (`MysteryBlocks.tsx`,
+  tap → `BlockQuestion.tsx`), **Flashcard Sprint**, **perfect Brain Gym (3/3)**, **talk to 3 classmates**. Each pops
+  a legendary item; badges in `badges.ts`. They're listed at the top of the Quests panel (`SpecialQuests.tsx`).
+- **Profile**: the chibi is the player's picture: HUD card (+ badges, opens `ProfileCard.tsx`), and the "You" row of
+  the leaderboard. `sync.ts` maps the look onto the 3D avatar (hat/outfit/aura/colour).
+- **State**: `store.ts` (own store, saved in `localStorage` key `classloop_wardrobe_v1`); rewards queue into
+  `RewardCelebration.tsx`. Reset for a fresh demo: `localStorage.removeItem('classloop_wardrobe_v1')`.
+
 ## Verify before each push
 
 `npm run build && npm run lint`, then click through: landing → Student → campus → enter each building → open a

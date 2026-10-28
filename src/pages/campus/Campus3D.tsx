@@ -10,7 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing'
-import { MathUtils, Vector3, Fog, type Group, type Mesh } from 'three'
+import { MathUtils, Vector3, Fog, PerspectiveCamera, type Group, type Mesh } from 'three'
 import {
   Shirt, LayoutGrid, Eye, EyeOff, Globe, Brain, Scroll, Volume2, VolumeX,
 } from 'lucide-react'
@@ -35,7 +35,16 @@ import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './component
 import LeaderboardWidget from './components/LeaderboardWidget'
 import MissionTrackerWidget from './components/MissionTrackerWidget'
 import BrainGymModal from './components/BrainGymModal'
-import AvatarShopModal from './components/AvatarShopModal'
+import MysteryBlocks from '@/pages/wardrobe/MysteryBlocks'
+import BlockQuestion from '@/pages/wardrobe/BlockQuestion'
+import FlashcardSprint from '@/pages/wardrobe/FlashcardSprint'
+import SpecialQuests, { type SpecialGo } from '@/pages/wardrobe/SpecialQuests'
+import ProfileModal, { BadgeRow, ProfilePic } from '@/pages/wardrobe/ProfileCard'
+import RewardCelebration from '@/pages/wardrobe/RewardCelebration'
+import { useAvatar3DSync } from '@/pages/wardrobe/sync'
+import { BLOCK_QUESTS, recordTalk, wardrobeState } from '@/pages/wardrobe/store'
+import { BLOCK_SPOTS } from '@/pages/wardrobe/quests'
+import type { QuestId } from '@/pages/wardrobe/catalog'
 import CampusNPCs, { CAMPUS_NPCS, type CampusNPC } from './components/CampusNPCs'
 import NPCDialogModal from './components/NPCDialogModal'
 import CloudTransition from './components/CloudTransition'
@@ -43,6 +52,7 @@ import {
   playCoinSound,
   playFootstepSound,
   playCloudWhooshSound,
+  playPortalSound,
   isSoundMuted,
   toggleSoundMute,
 } from './soundEngine'
@@ -60,6 +70,9 @@ const GATE_SPAWN = doorPoint(GATE)
 const INTRO_FROM = new Vector3(PLAZA_CENTER[0], 42, PLAZA_CENTER[1] + 26)
 const INTRO_SECONDS = 2.4
 const ENTER_DELAY_MS = 650
+/** HUD shortcuts warp instead of walking: the jump happens under the flash, then it clears. */
+const WARP_SECONDS = 0.7
+const WARP_JUMP_AT = 0.28
 
 // ── Phase 6 Step 3 — Arrival animation ─────────────────────────────────────
 const ARRIVAL_FROM = new Vector3(-24, 26, -10)
@@ -215,7 +228,11 @@ export default function Campus3D() {
 
   // ── Student Gamification Modals & Widgets State ───────────────────────────
   const [showBrainGym, setShowBrainGym] = useState<boolean>(false)
-  const [showAvatarShop, setShowAvatarShop] = useState<boolean>(false)
+  // the coin shop is the wardrobe now (/create); these are its campus-side modals
+  const [showProfile, setShowProfile] = useState(false)
+  const [showFlashcards, setShowFlashcards] = useState(false)
+  const [blockQuest, setBlockQuest] = useState<QuestId | null>(null)
+  useAvatar3DSync()
   // phones start with the Quests panel closed, so it doesn't cover the 3D view (the HUD button opens it)
   const [showMissions, setShowMissions] = useState<boolean>(() => window.innerWidth >= 640)
 
@@ -323,6 +340,62 @@ export default function Campus3D() {
       : BUILDINGS
   }, [isTeacher])
 
+  // Warp: the scene jumps under a flash of light (see warpTo in CampusScene)
+  const warpRef = useRef<(target: [number, number], building: BuildingConfig | null, face?: [number, number]) => boolean>(() => false)
+  const warpFxRef = useRef<HTMLDivElement>(null)
+  const warp = useCallback((target: [number, number], building: BuildingConfig | null, face?: [number, number]) => {
+    if (!warpRef.current(target, building, face)) return
+    playPortalSound()
+    warpFxRef.current?.animate(
+      [
+        { opacity: 0, transform: 'scale(1.25)' },
+        { opacity: 1, transform: 'scale(1)', offset: WARP_JUMP_AT / WARP_SECONDS },
+        { opacity: 0, transform: 'scale(0.96)' },
+      ],
+      { duration: WARP_SECONDS * 1000, easing: 'ease-in-out' },
+    )
+  }, [])
+
+  /** Warp to stand a few steps in front of a spot (towards the plaza), facing it. */
+  const warpNear = useCallback(
+    ([x, z]: [number, number]) => {
+      const dx = PLAZA_CENTER[0] - x
+      const dz = PLAZA_CENTER[1] - z
+      const d = Math.hypot(dx, dz) || 1
+      warp([x + (dx / d) * 4.6, z + (dz / d) * 4.6], null, [x, z])
+    },
+    [warp],
+  )
+  const handleSpecial = useCallback(
+    (go: SpecialGo) => {
+      const st = wardrobeState()
+      if (go === 'flashcards') setShowFlashcards(true)
+      else if (go === 'braingym') setShowBrainGym(true)
+      else if (go === 'blocks') {
+        const i = BLOCK_QUESTS.findIndex((b) => !st.quests.includes(b))
+        if (i >= 0) warpNear(BLOCK_SPOTS[i])
+      } else {
+        const npc = CAMPUS_NPCS.find((n) => !st.npcTalks.includes(n.id)) ?? CAMPUS_NPCS[0]
+        warpNear([npc.position[0], npc.position[2]])
+      }
+    },
+    [warpNear],
+  )
+
+  // The wardrobe's "go do it" buttons land here with { open }
+  const [openOnArrive] = useState(() => (location.state as { open?: string } | null)?.open)
+  useEffect(() => {
+    if (!openOnArrive) return
+    if (openOnArrive === 'braingym') setShowBrainGym(true)
+    else if (openOnArrive === 'flashcards') setShowFlashcards(true)
+    else setShowMissions(true)
+  }, [openOnArrive])
+
+  // talking to classmates counts towards the "make friends" special quest
+  useEffect(() => {
+    if (activeNPC) recordTalk(activeNPC.id)
+  }, [activeNPC])
+
   const handleSelectMission = useCallback(
     (mission: Mission) => {
       if (mission.type === 'drill') {
@@ -413,6 +486,7 @@ export default function Campus3D() {
           avatarPosRef={avatarPosRef}
           avatarRotRef={avatarRotRef}
           walkGroundRef={walkGroundRef}
+          warpRef={warpRef}
           onNearDoor={setNearDoor}
           onNearNPC={setNearNPC}
           onTalkNPC={setActiveNPC}
@@ -422,6 +496,7 @@ export default function Campus3D() {
           turnHeadRef={turnHeadRef}
           isTeacher={isTeacher}
         />
+        {!isTeacher && <MysteryBlocks onOpen={setBlockQuest} />}
 
         {!isMobile && (
           <EffectComposer multisampling={4}>
@@ -587,7 +662,9 @@ export default function Campus3D() {
               <GameIcon name="gradCap" />
             </div>
           ) : (
-            <span className="h-9 w-9 rounded-full border-2 border-white shadow shrink-0" style={{ backgroundColor: me.color }} />
+            <button onClick={() => setShowProfile(true)} className="cursor-pointer rounded-full transition hover:scale-105" aria-label={lang === 'th' ? 'โปรไฟล์' : 'Profile'}>
+              <ProfilePic size={44} />
+            </button>
           )}
           <div className="min-w-[9rem]">
             <p className="text-sm font-bold leading-tight">{isTeacher ? (teacherName || 'อ.ดร.ธนพร') : me.nickname}</p>
@@ -599,6 +676,9 @@ export default function Campus3D() {
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
                   <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: CAMPUS_PALETTE.path }} />
                 </div>
+                <button onClick={() => setShowProfile(true)} className="mt-1 cursor-pointer" aria-label={lang === 'th' ? 'เหรียญตรา' : 'Badges'}>
+                  <BadgeRow max={5} size={18} />
+                </button>
               </>
             )}
           </div>
@@ -665,7 +745,7 @@ export default function Campus3D() {
             <>
               {/* SPU Boutique Shop with Student Coins */}
               <button
-                onClick={() => setShowAvatarShop(true)}
+                onClick={() => navigate('/create')}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/20 px-3 py-2 text-xs font-bold text-amber-300 backdrop-blur-md border border-amber-400/40 hover:bg-amber-500/40 transition-all shadow cursor-pointer"
                 title={`SPU Boutique · ${t.shop}`}
               >
@@ -869,12 +949,16 @@ export default function Campus3D() {
       {!isTeacher && !isArriving && (
         <>
           <LeaderboardWidget />
-          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} onClose={() => setShowMissions(false)} />}
+          {showMissions && <MissionTrackerWidget onSelectMission={handleSelectMission} onClose={() => setShowMissions(false)} header={<SpecialQuests onGo={handleSpecial} />} />}
         </>
       )}
 
       {/* ── SPU Boutique Avatar Shop Modal ── */}
-      {showAvatarShop && <AvatarShopModal onClose={() => setShowAvatarShop(false)} />}
+      {/* ── Wardrobe special quests, profile, and the reward fanfare ── */}
+      {showFlashcards && <FlashcardSprint onClose={() => setShowFlashcards(false)} />}
+      {blockQuest && <BlockQuestion quest={blockQuest} onClose={() => setBlockQuest(null)} />}
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+      <RewardCelebration />
 
       {/* ── Brain Gym Pre-Learning Arena Modal ── */}
       {showBrainGym && <BrainGymModal onClose={() => setShowBrainGym(false)} />}
@@ -901,9 +985,15 @@ export default function Campus3D() {
               setToast(lang === 'th' ? `กำลังนำทางไปที่ ${b.name.th}` : `Guiding to ${b.name.en}`)
             }
           }}
-          onOpenShop={() => setShowAvatarShop(true)}
+          onOpenShop={() => navigate('/create')}
         />
       )}
+
+      {/* ── Warp flash: a tunnel of light the scene jumps under (played by warp()) ── */}
+      <div ref={warpFxRef} className="pointer-events-none absolute inset-0 z-40 opacity-0" aria-hidden>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.97)_0%,rgba(207,250,254,0.9)_30%,rgba(56,189,248,0.6)_58%,rgba(30,27,75,0.15)_85%)]" />
+        <div className="absolute inset-0 bg-[repeating-conic-gradient(from_0deg,rgba(255,255,255,0.45)_0deg_1.5deg,transparent_1.5deg_9deg)] [mask-image:radial-gradient(circle,transparent_22%,black_70%)]" />
+      </div>
 
       {/* ── Soft Cloud Cover & Reveal Transition ── */}
       <CloudTransition active={Boolean(entering)} />
@@ -925,6 +1015,7 @@ type SceneProps = {
   avatarPosRef: RefObject<[number, number]>
   avatarRotRef: RefObject<number>
   walkGroundRef: RefObject<(x: number, z: number, b?: BuildingConfig | null) => void>
+  warpRef: RefObject<(target: [number, number], building: BuildingConfig | null, face?: [number, number]) => boolean>
   onNearDoor: (b: BuildingConfig | null) => void
   onNearNPC: (npc: CampusNPC | null) => void
   onTalkNPC: (npc: CampusNPC) => void
@@ -954,6 +1045,7 @@ function CampusScene({
   avatarPosRef,
   avatarRotRef,
   walkGroundRef,
+  warpRef,
   onNearDoor,
   onNearNPC,
   onTalkNPC,
@@ -1144,6 +1236,27 @@ function CampusScene({
     walkGroundRef.current = walkGround
   })
 
+  // HUD shortcuts (quests, minimap, NPC directions) warp straight there instead of walking.
+  // Only clicking a building in the 3D scene still walks to its door.
+  const warp = useRef<{
+    t: number
+    target: [number, number]
+    building: BuildingConfig | null
+    face?: [number, number]
+    jumped: boolean
+    fov: number
+  } | null>(null)
+  const warpTo = (target: [number, number], building: BuildingConfig | null, face?: [number, number]) => {
+    if (warp.current || entering) return false
+    waypoints.current = []
+    destination.current = null
+    if (markerRef.current) markerRef.current.visible = false
+    warp.current = { t: 0, target, building, face, jumped: false, fov: (camera as PerspectiveCamera).fov }
+    return true
+  }
+  useEffect(() => {
+    warpRef.current = warpTo
+  })
   const look = new Vector3()
   const follow = new Vector3()
   const lookAt = new Vector3()
@@ -1191,6 +1304,39 @@ function CampusScene({
     let vz = 0
     const isFP = fpModeRef.current
 
+    // ── Warp (HUD shortcuts): FOV kick, jump under the flash, settle ─────
+    const w = warp.current
+    if (w) {
+      w.t += dt
+      const cam = camera as PerspectiveCamera
+      cam.fov = w.fov + 22 * Math.sin(Math.PI * Math.min(1, w.t / WARP_SECONDS))
+      cam.updateProjectionMatrix()
+      if (!w.jumped && w.t >= WARP_JUMP_AT) {
+        w.jumped = true
+        const [x, z] = w.target
+        a.position.set(x, 0, z)
+        const facing = w.face ?? w.building?.position
+        if (facing) {
+          // land facing the building's door (or the ? block / classmate warped to)
+          const [bx, bz] = facing
+          a.rotation.y = Math.atan2(bx - x, bz - z)
+          mouseYaw.current = Math.atan2(bx - x, -(bz - z))
+          mousePitch.current = 0
+        }
+        if (!isFP) {
+          // snap the follow camera, or it would glide across the campus after the jump
+          lookTarget(x, z, look)
+          camera.position.copy(look).add(CAMERA_OFFSET)
+          camera.lookAt(look)
+        }
+      }
+      if (w.t >= WARP_SECONDS) {
+        cam.fov = w.fov
+        cam.updateProjectionMatrix()
+        warp.current = null
+        if (w.building) onArrive(w.building, { silent: true })
+      }
+    }
     if (isFP) {
       // First-person head rotation via Keyboard (Instant & smooth!)
       if (k.has('ArrowLeft') || k.has('KeyQ')) {

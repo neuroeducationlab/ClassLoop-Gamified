@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, X, RotateCcw, ArrowRight, Zap } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { playCorrectSound, playWrongSound } from '../soundEngine'
+import { completeQuest } from '@/pages/wardrobe/store'
 import { GameIcon } from '@/components/icons/GameIcon'
 
 interface DrillQuestion {
@@ -125,6 +126,8 @@ export default function BrainGymModal({ onClose }: { onClose: () => void }) {
       setFinished(true)
       addXP(50 + score * 20)
       addCoins(30 + score * 10)
+      // a perfect run is a special quest: it pops the legendary Genius star wand
+      if (score === DRILL_QUESTIONS.length) completeQuest('gym-perfect')
     }
   }
 
