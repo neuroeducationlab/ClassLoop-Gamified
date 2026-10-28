@@ -51,7 +51,7 @@ type FilePhase =
 
 export default function Exams() {
   const navigate = useNavigate()
-  const { generatedContent, topics } = useApp()
+  const { generatedContent, topics, updatePretestQuestion } = useApp()
 
   const [fileState, setFileState] = useState<FilePhase>({ phase: 'idle' })
   const [dragging, setDragging] = useState(false)
@@ -96,13 +96,12 @@ export default function Exams() {
   }
 
   const handleSaveEdit = (qId: string) => {
-    const target = generatedContent.pretest.find((q) => q.id === qId)
-    if (target) {
-      target.stem = editForm.stem
-      target.options = editForm.options
-      target.answerIndex = editForm.answerIndex
-      target.misconception = editForm.misconception
-    }
+    updatePretestQuestion(qId, {
+      stem: editForm.stem,
+      options: editForm.options,
+      answerIndex: editForm.answerIndex,
+      misconception: editForm.misconception,
+    })
     setEditingId(null)
     showToast('แก้ไขและบันทึกข้อสอบเรียบร้อยแล้ว!')
   }
