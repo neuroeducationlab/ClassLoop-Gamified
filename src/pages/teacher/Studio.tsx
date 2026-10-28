@@ -916,7 +916,7 @@ export default function Studio() {
                         className="w-full flex items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-pink-300 bg-pink-50/40 p-4 text-xs font-black text-pink-600 hover:bg-pink-50 hover:border-pink-500 transition-all cursor-pointer group shadow-2xs"
                       >
                         <Plus className="h-4 w-4 transition-transform group-hover:scale-125" />
-                        <span>+ ออกแบบและเพิ่มกิจกรรมด้วยตนเอง (Add Custom Activity)</span>
+                        <span>+ Add Custom Activity</span>
                       </button>
                     ) : (
                       <div className="rounded-3xl border-2 border-pink-500 bg-pink-50/70 p-6 shadow-md space-y-4 animate-fadeIn">
@@ -1209,7 +1209,7 @@ export default function Studio() {
                         className="w-full flex items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-pink-300 bg-pink-50/40 p-4 text-xs font-black text-pink-600 hover:bg-pink-50 hover:border-pink-500 transition-all cursor-pointer group shadow-2xs mt-2"
                       >
                         <Plus className="h-4 w-4 transition-transform group-hover:scale-125" />
-                        <span>+ เพิ่มแฟลชการ์ดที่คุณกำหนดเอง (Add Custom Flashcard)</span>
+                        <span>+ Add Custom Flashcard</span>
                       </button>
                     ) : (
                       <div className="rounded-3xl border-2 border-pink-500 bg-pink-50/70 p-5 shadow-md space-y-3 animate-fadeIn mt-2">
@@ -1448,7 +1448,7 @@ export default function Studio() {
                         className="w-full flex items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-pink-300 bg-pink-50/40 p-4 text-xs font-black text-pink-600 hover:bg-pink-50 hover:border-pink-500 transition-all cursor-pointer group shadow-2xs mt-4"
                       >
                         <Plus className="h-4 w-4 transition-transform group-hover:scale-125" />
-                        <span>+ ออกแบบและเพิ่มข้อสอบใหม่ด้วยตนเอง (Add Custom Question)</span>
+                        <span>+ Add Custom Question</span>
                       </button>
                     ) : (
                       <div className="rounded-3xl border-2 border-pink-500 bg-pink-50/70 p-6 shadow-md space-y-4 animate-fadeIn mt-4">
