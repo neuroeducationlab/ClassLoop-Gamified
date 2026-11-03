@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { restartDemo } from '@/pages/wardrobe/store'
 import {
   GraduationCap,
   Presentation,
@@ -76,6 +77,7 @@ export default function AdminDemoSwitcher() {
   const handleResetDemo = () => {
     playCoinSound()
     resetDemo()
+    restartDemo() // quests, badges and the avatar look, so the next visitor starts clean
     setResetSuccess(true)
     if (resetTimerRef.current) clearTimeout(resetTimerRef.current)
     resetTimerRef.current = setTimeout(() => {

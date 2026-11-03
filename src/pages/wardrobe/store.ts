@@ -19,6 +19,8 @@ type State = {
   npcTalks: string[]
   /** Rewards waiting to be celebrated, oldest first. */
   pending: Reward[]
+  /** Blocks just opened, so they show spent and re-arm a few seconds later. Never saved. */
+  cooling: QuestId[]
 }
 
 const KEY = 'classloop_wardrobe_v1'
@@ -31,17 +33,25 @@ const initial = (): State => ({
   quests: [],
   npcTalks: [],
   pending: [],
+  cooling: [],
 })
+
+/**
+ * sessionStorage, not localStorage: at a demo booth each visitor opens the QR in a fresh
+ * tab and should start from zero, while a reload mid-play keeps their look and coins.
+ */
+const store = () => window.sessionStorage
 
 function load(): State {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = store().getItem(KEY)
     if (!raw) return initial()
     const s = { ...initial(), ...JSON.parse(raw) } as State
     s.look = { ...initial().look, ...s.look }
     // drop ids that no longer exist
     for (const slot of Object.keys(DEFAULT_LOOK) as Slot[]) if (!ITEM_BY_ID[s.look[slot]]) s.look[slot] = DEFAULT_LOOK[slot]
     s.pending = []
+    s.cooling = []
     return s
   } catch {
     return initial()
@@ -54,9 +64,10 @@ const listeners = new Set<() => void>()
 function set(next: Partial<State>) {
   state = { ...state, ...next }
   try {
-    const { pending: _p, ...save } = state
+    const { pending: _p, cooling: _c, ...save } = state
     void _p
-    localStorage.setItem(KEY, JSON.stringify(save))
+    void _c
+    store().setItem(KEY, JSON.stringify(save))
   } catch {
     /* private mode: progress lives in memory only */
   }
@@ -117,13 +128,17 @@ export function buy(it: Item, coins: number, spend: (amount: number) => void) {
   return true
 }
 
-/** A special quest is done: unlock its legendary item, plus any badge it completes. */
+/**
+ * A special quest is done: unlock its legendary item, plus any badge it completes.
+ * Replayable — a visitor can run a quest as often as they like and the coins land every
+ * time; the item and badges are only ever granted once.
+ */
 export function completeQuest(q: QuestId, bonusCoins = 0) {
-  if (state.quests.includes(q)) return false
-  const quests = [...state.quests, q]
+  const repeat = state.quests.includes(q)
+  const quests = repeat ? state.quests : [...state.quests, q]
   const queue: Reward[] = []
   const reward = ITEMS.find((i) => i.unlock.kind === 'quest' && i.unlock.quest === q)
-  if (reward) queue.push({ kind: 'item', id: reward.id })
+  if (reward && !repeat) queue.push({ kind: 'item', id: reward.id })
   if (bonusCoins) queue.push({ kind: 'coins', amount: bonusCoins })
   if (q === 'gym-perfect') award('brainiac', queue)
   if (q === 'flashcards') award('card-master', queue)
@@ -135,6 +150,27 @@ export function completeQuest(q: QuestId, bonusCoins = 0) {
   collectionBadges(state.owned, quests, queue)
   commit({ quests }, queue)
   return true
+}
+
+/** How long a "?" block stays spent before it re-arms, so the demo can be replayed. */
+const BLOCK_RESPAWN_MS = 6000
+
+/** Mark a block spent; it turns gold again a few seconds later. */
+export function coolBlock(q: QuestId) {
+  if (state.cooling.includes(q)) return
+  set({ cooling: [...state.cooling, q] })
+  setTimeout(() => set({ cooling: state.cooling.filter((c) => c !== q) }), BLOCK_RESPAWN_MS)
+}
+
+/** Wipe this visitor's progress so the next person at the booth starts clean. */
+export function restartDemo() {
+  try {
+    store().removeItem(KEY)
+  } catch {
+    /* private mode: nothing was saved anyway */
+  }
+  state = initial()
+  listeners.forEach((l) => l())
 }
 
 /** Talking to three different classmates completes the "social" quest. */

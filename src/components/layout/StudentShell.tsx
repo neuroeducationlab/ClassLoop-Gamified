@@ -61,7 +61,7 @@ export default function StudentShell() {
           </div>
 
           {/* Right: Quick Gateways & System Controls */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex min-w-0 shrink items-center gap-2 sm:gap-2.5">
             {/* Quick Course Selector Pills on Laptop */}
             <div className="hidden lg:flex items-center gap-1.5 rounded-2xl bg-canvas p-1 border border-grey-300/40">
               {coursePacks.map((pack) => {
@@ -158,7 +158,7 @@ export default function StudentShell() {
 
       {/* Bottom Navigation: Shown only on Mobile Screens (< md) */}
       <nav className="fixed inset-x-0 bottom-0 border-t border-grey-300/60 bg-paper/95 backdrop-blur-md z-30 md:hidden shadow-lg">
-        <div className="mx-auto flex max-w-lg">
+        <div className="mx-auto flex w-full max-w-lg">
           {TABS.map(({ to, labelKey, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -166,13 +166,15 @@ export default function StudentShell() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-semibold transition-colors',
+                  // min-w-0: without it a long English label (Assignments, Community)
+                  // refuses to shrink and widens the whole page on a phone
+                  'flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[11px] font-semibold transition-colors',
                   isActive ? 'text-pink-600 font-bold' : 'text-grey-600',
                 )
               }
             >
-              <Icon className="h-5 w-5" />
-              {t(labelKey)}
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className="max-w-full truncate px-0.5">{t(labelKey)}</span>
             </NavLink>
           ))}
         </div>

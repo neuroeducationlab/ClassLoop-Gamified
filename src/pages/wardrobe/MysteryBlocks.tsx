@@ -7,7 +7,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { CanvasTexture, SRGBColorSpace, type Group } from 'three'
 import type { QuestId } from './catalog'
-import { BLOCK_QUESTS, useWardrobe } from './store'
+import { BLOCK_QUESTS, coolBlock, useWardrobe } from './store'
 import { BLOCK_SPOTS } from './quests'
 
 const HEIGHT = 2.9
@@ -71,6 +71,7 @@ function Block({ index, used, onOpen }: { index: number; used: boolean; onOpen: 
   const click = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
     if (e.delta > 6 || used) return
+    coolBlock(BLOCK_QUESTS[index])
     onOpen(BLOCK_QUESTS[index])
   }
 
@@ -91,11 +92,11 @@ function Block({ index, used, onOpen }: { index: number; used: boolean; onOpen: 
 }
 
 export default function MysteryBlocks({ onOpen }: { onOpen: (q: QuestId) => void }) {
-  const { quests } = useWardrobe()
+  const { cooling } = useWardrobe()
   return (
     <>
       {BLOCK_SPOTS.map((_, i) => (
-        <Block key={i} index={i} used={quests.includes(BLOCK_QUESTS[i])} onOpen={onOpen} />
+        <Block key={i} index={i} used={cooling.includes(BLOCK_QUESTS[i])} onOpen={onOpen} />
       ))}
     </>
   )

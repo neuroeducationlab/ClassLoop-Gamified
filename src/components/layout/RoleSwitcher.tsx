@@ -13,7 +13,7 @@ export default function RoleSwitcher() {
   const navigate = useNavigate()
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-full bg-pink-50 p-1">
+    <div className="inline-flex shrink-0 items-center gap-1 rounded-full bg-pink-50 p-1">
       {OPTIONS.map(({ role: value, labelKey, icon: Icon, to }) => (
         <button
           key={value}
@@ -23,14 +23,17 @@ export default function RoleSwitcher() {
             navigate(to)
           }}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+            // icon-only on a phone: both labels side by side are wider than the
+            // screen and would push the whole page sideways
+            'inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-medium transition-colors sm:px-3',
             role === value
               ? 'bg-pink-600 text-paper'
               : 'text-grey-600 hover:text-pink-600',
           )}
+          aria-label={t(labelKey)}
         >
-          <Icon className="h-4 w-4" />
-          {t(labelKey)}
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="hidden sm:inline">{t(labelKey)}</span>
         </button>
       ))}
     </div>

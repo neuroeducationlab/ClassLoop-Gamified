@@ -170,7 +170,7 @@ export default function TeacherShell() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-grey-300/60 bg-paper px-4 md:px-6">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-3 overflow-hidden border-b border-grey-300/60 bg-paper px-4 md:px-6">
           <div className="flex items-center gap-2 md:hidden">
             <button
               type="button"
@@ -183,7 +183,9 @@ export default function TeacherShell() {
             <Brand />
           </div>
 
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          {/* min-w-0 + scroll: on a phone these controls are wider than the screen and
+              would otherwise push the whole page sideways */}
+          <div className="ml-auto flex min-w-0 items-center gap-2 overflow-x-auto no-scrollbar sm:gap-3">
 
             <Link
               to="/campus"
