@@ -30,6 +30,7 @@ import Ground, { CAMPUS_RADIUS } from './components/Ground'
 import { isLowPower } from './lowPower'
 import Minimap from './components/Minimap'
 import TouchJoystick from './components/TouchJoystick'
+import FirstVisitTour from './components/FirstVisitTour'
 import TeacherCommandDeck from './components/TeacherCommandDeck'
 import { SPUUniverseEnvironment, SKY_PRESETS, type TimeOfDay } from './components/SPUUniverse'
 import LeaderboardWidget from './components/LeaderboardWidget'
@@ -148,7 +149,9 @@ const UI = {
     dress: 'แต่งตัว',
     back: 'แดชบอร์ด',
     walkHint: 'คลิกพื้นหรือ WASD เพื่อเดิน · คลิกอาคารเพื่อเข้า',
+    walkHintMobile: 'แตะพื้นเพื่อเดิน · แตะอาคารเพื่อเข้า · ใช้จอยสติ๊กด้านซ้ายล่างก็ได้',
     fpHint: 'WASD เพื่อเดิน · ลากเมาส์/จอ หรือกด ← → / Q E เพื่อหันหัวมอง · E เข้าตึก',
+    fpHintMobile: 'ใช้จอยสติ๊กเดิน · ลากจอเพื่อหันหัว · แตะอาคารเพื่อเข้า',
     turnHead: 'หันมุมมอง',
     turnLeft: 'หันซ้าย 45° (Q หรือ ←)',
     turnRight: 'หันขวา 45° (E หรือ →)',
@@ -184,7 +187,9 @@ const UI = {
     dress: 'Change Outfit',
     back: 'Dashboard',
     walkHint: 'Click ground or WASD to walk · Click a building to enter',
+    walkHintMobile: 'Tap the ground to walk · Tap a building to enter · Joystick at bottom-left works too',
     fpHint: 'WASD to walk · Drag mouse/screen or press ← → / Q E to turn head · E to enter',
+    fpHintMobile: 'Use the joystick to walk · Drag the screen to look · Tap a building to enter',
     turnHead: 'Turn Head',
     turnLeft: 'Turn Left 45° (Q or ←)',
     turnRight: 'Turn Right 45° (E or →)',
@@ -569,7 +574,11 @@ export default function Campus3D() {
                         </p>
                       ) : (
                         <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/25 border border-emerald-400/40 px-2.5 py-0.5 text-[11px] font-bold text-emerald-200 shadow-sm animate-pulse">
-                          <span>{lang === 'th' ? 'กด E หรือคลิกเพื่อเข้า' : 'Press E or Click to enter'}</span>
+                          <span>
+                            {isMobile
+                              ? (lang === 'th' ? 'แตะเพื่อเข้า' : 'Tap to enter')
+                              : (lang === 'th' ? 'กด E หรือคลิกเพื่อเข้า' : 'Press E or Click to enter')}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -860,10 +869,13 @@ export default function Campus3D() {
           </div>
         )}
 
-        {/* Walk hint */}
+        {/* Walk hint — mobile gets a touch-only version; WASD/← → keys are
+            meaningless without a keyboard and would mislead a demo visitor */}
         {!nearDoor && !nearNPC && !isArriving && (
           <p className="rounded-full bg-black/45 px-4 py-1.5 text-xs text-white/95 backdrop-blur-md border border-white/10 shadow">
-            {fpMode ? t.fpHint : t.walkHint}
+            {fpMode
+              ? (isMobile ? t.fpHintMobile : t.fpHint)
+              : (isMobile ? t.walkHintMobile : t.walkHint)}
           </p>
         )}
       </div>
@@ -968,6 +980,9 @@ export default function Campus3D() {
 
       {/* ── Brain Gym Pre-Learning Arena Modal ── */}
       {showBrainGym && <BrainGymModal onClose={() => setShowBrainGym(false)} />}
+
+      {/* First-visit 3-step tutorial — once per tab, skips on reload */}
+      {!isArriving && <FirstVisitTour lang={lang} />}
 
       {/* ── Classmate NPC Dialogue Modal ── */}
       {activeNPC && (

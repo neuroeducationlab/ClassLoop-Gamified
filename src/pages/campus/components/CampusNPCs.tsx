@@ -211,9 +211,9 @@ export const CAMPUS_NPCS: CampusNPC[] = [
     greeting: 'สวัสดีครับ! ยินดีต้อนรับสู่ ClassLoop SPU Universe!',
     greetingEn: 'Hello! Welcome to the ClassLoop SPU Universe!',
     dialogue:
-      'คุณสามารถเดินสำรวจมหาลัยด้วยปุ่ม W A S D หรือคลิกลากเมาส์เพื่อหันมองรอบทิศทาง สามารถเก็บเหรียญ SPU Coins จากการเรียนมาแต่งตัวที่ร้าน Boutique ได้เลย!',
+      'คุณเดินสำรวจมหาลัยได้ทั่ว แค่แตะพื้นหรือใช้จอยสติ๊กด้านซ้ายล่าง เก็บเหรียญ SPU Coins จากทุกอาคาร มาแต่งตัวที่ร้าน Boutique ได้เลย!',
     dialogueEn:
-      'You can freely roam SPU campus with WASD or mouse drag. Earn study coins across all buildings to customize your 3D outfit in the Boutique!',
+      'Roam the SPU campus freely — tap the ground or use the joystick at bottom-left. Earn SPU Coins across every building and dress up at the Boutique!',
     options: [
       {
         label: 'เปิดร้านค้าแฟชั่น SPU Boutique ตอนนี้',
