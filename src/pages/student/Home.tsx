@@ -38,14 +38,31 @@ export default function Home() {
   const currentTopic = activeCoursePack.topics[activeCoursePack.currentWeek - 1]
   const revealRef = useReveal(true)
 
-  // Top 5 Leaderboard Data sorted by XP/spokeCount
-  const leaderboardData = [
-    { rank: 1, name: 'ณัฐ', nickname: 'นัท', faculty: 'Digital Media', xp: 240, badge: '1' },
-    { rank: 2, name: 'วรรณา', nickname: 'นุ้ย', faculty: 'Accounting', xp: 210, badge: '2' },
-    { rank: 3, name: 'ธีรวัฒน์', nickname: 'ต้น', faculty: 'Engineering', xp: 190, badge: '3' },
-    { rank: 4, name: 'พรรณี', nickname: 'พลอย', faculty: 'Business Admin', xp: 160, badge: '4' },
-    { rank: 5, name: 'สมชาย', nickname: 'แมน', faculty: 'Law', xp: 140, badge: '5' },
+  // Top 5 live leaderboard. The user's row is inserted with their actual
+  // nickname + XP from AppContext and re-sorted every render, so the "You"
+  // badge appears next to the right row no matter what their XP is.
+  const CLASS_ROSTER = [
+    { id: 'c-nut',   name: 'ณัฐ',     nickname: 'นัท',   faculty: 'Digital Media', xp: 240 },
+    { id: 'c-nuy',   name: 'วรรณา',  nickname: 'นุ้ย',  faculty: 'Accounting',    xp: 210 },
+    { id: 'c-ton',   name: 'ธีรวัฒน์', nickname: 'ต้น',  faculty: 'Engineering',   xp: 190 },
+    { id: 'c-ploy',  name: 'พรรณี',  nickname: 'พลอย', faculty: 'Business Admin', xp: 160 },
+    { id: 'c-mann',  name: 'สมชาย',  nickname: 'แมน',  faculty: 'Law',           xp: 140 },
   ]
+  // Full-name match was the old bug: comparing "ณัฐ" to "ณัฐวุฒิ สิทธิชัย"
+  // never hit, so no row ever showed "You". Now the user IS a row, flagged by id.
+  const leaderboardData = [
+    ...CLASS_ROSTER,
+    {
+      id: 'me',
+      name: currentStudent.name,
+      nickname: avatar?.nickname || currentStudent.nickname,
+      faculty: currentStudent.faculty,
+      xp: studentXP > 0 ? studentXP : 120,
+    },
+  ]
+    .sort((a, b) => b.xp - a.xp)
+    .slice(0, 5)
+    .map((p, i) => ({ ...p, rank: i + 1 }))
 
   // Pre-test vs Post-test Growth Comparison Data
   const progressComparisonData = [
@@ -407,14 +424,16 @@ export default function Home() {
             {/* Leaderboard List */}
             <div className="space-y-2">
               {leaderboardData.map((player) => {
-                const isMe = player.name === currentStudent.name || player.nickname === currentStudent.nickname
+                const isMe = player.id === 'me'
                 return (
                   <div
-                    key={player.rank}
+                    key={player.id}
                     className={cn(
-                      'flex items-center justify-between rounded-2xl p-2.5 sm:p-3 border transition-all',
+                      // transform transition keeps the entry smooth if its rank
+                      // slot reshuffles between renders (e.g. XP ticks up)
+                      'flex items-center justify-between rounded-2xl p-2.5 sm:p-3 border transition-all duration-500',
                       isMe
-                        ? 'bg-pink-50/90 border-pink-300 shadow-xs'
+                        ? 'bg-pink-50/90 border-pink-300 shadow-sm ring-1 ring-pink-300/60'
                         : 'bg-canvas border-grey-300/40 hover:bg-grey-50',
                     )}
                   >
